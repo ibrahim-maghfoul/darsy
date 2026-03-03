@@ -1,0 +1,1 @@
+cd "c:\Users\ibo\Desktop\Darsy\darsy-web" && npm run dev

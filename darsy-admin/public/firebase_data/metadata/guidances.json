@@ -1,0 +1,147 @@
+[
+  {
+    "id": "15fd540f-307e-4175-9540-d8be17f9ec93",
+    "levelId": "61dad7ec-ee31-43bb-aa70-16d05145f522",
+    "title": "General"
+  },
+  {
+    "id": "70cf0ba2-8466-4d45-aefe-c11d49252019",
+    "levelId": "52f5b503-4c7d-4f11-b465-b170ce0cf5f6",
+    "title": "General"
+  },
+  {
+    "id": "67a9c2b6-65bf-4a7b-8d26-ea2166a0e5e6",
+    "levelId": "a78f7c96-a868-4865-88a8-1a393b15a1d7",
+    "title": "General"
+  },
+  {
+    "id": "38af6e44-24fb-468a-b81b-25083beca2e8",
+    "levelId": "ef670d28-d391-40a6-abce-982b41d0444a",
+    "title": "Sciences Mathématiques"
+  },
+  {
+    "id": "a2732138-8aac-4359-a3ac-7a52d8b1624c",
+    "levelId": "ef670d28-d391-40a6-abce-982b41d0444a",
+    "title": "Sciences Expérimentales"
+  },
+  {
+    "id": "7310830c-8e05-436b-9301-9845c04a5503",
+    "levelId": "ef670d28-d391-40a6-abce-982b41d0444a",
+    "title": "Sciences et Technologies Électriques"
+  },
+  {
+    "id": "099d55be-6cbf-459a-af6b-e79ef092798e",
+    "levelId": "ef670d28-d391-40a6-abce-982b41d0444a",
+    "title": "Sciences et Technologies Mécaniques"
+  },
+  {
+    "id": "b6f38461-1884-4758-ad9e-572f3a3cfb9d",
+    "levelId": "ef670d28-d391-40a6-abce-982b41d0444a",
+    "title": "Sciences Économiques et Gestion"
+  },
+  {
+    "id": "420ba887-08a2-4405-b4c6-e503a0a4c0a4",
+    "levelId": "ef670d28-d391-40a6-abce-982b41d0444a",
+    "title": "Lettres et Sciences Humaines"
+  },
+  {
+    "id": "f7e09e03-1a0a-4a9d-8d50-4ef530a6700d",
+    "levelId": "877aaa8f-8350-4682-8c27-7dc7a6ef70e2",
+    "title": "Sciences Mathématiques A"
+  },
+  {
+    "id": "48e3155e-f33f-4389-8a0c-a7e455631d5d",
+    "levelId": "877aaa8f-8350-4682-8c27-7dc7a6ef70e2",
+    "title": "Sciences Mathématiques B"
+  },
+  {
+    "id": "f0119006-979a-439e-b10e-becef58c0af8",
+    "levelId": "877aaa8f-8350-4682-8c27-7dc7a6ef70e2",
+    "title": "Sciences Physiques"
+  },
+  {
+    "id": "6cadc3b7-5224-4ac1-9317-3e216103e94a",
+    "levelId": "877aaa8f-8350-4682-8c27-7dc7a6ef70e2",
+    "title": "Sciences de la Vie et de la Terre (SVT)"
+  },
+  {
+    "id": "1aa59eeb-74b9-4171-ae69-d13460321adc",
+    "levelId": "877aaa8f-8350-4682-8c27-7dc7a6ef70e2",
+    "title": "Sciences Agronomiques"
+  },
+  {
+    "id": "f399b71b-3049-49b8-b882-78e1a4e0a339",
+    "levelId": "877aaa8f-8350-4682-8c27-7dc7a6ef70e2",
+    "title": "Sciences et Technologies Électriques"
+  },
+  {
+    "id": "369a2338-be50-420a-8f6e-2a308f5a9e3b",
+    "levelId": "877aaa8f-8350-4682-8c27-7dc7a6ef70e2",
+    "title": "Sciences et Technologies Mécaniques"
+  },
+  {
+    "id": "936da674-94b5-4698-a46f-48688c61f91d",
+    "levelId": "877aaa8f-8350-4682-8c27-7dc7a6ef70e2",
+    "title": "Sciences Économiques"
+  },
+  {
+    "id": "1958aa41-8b77-44eb-9da9-fe787f47a28c",
+    "levelId": "877aaa8f-8350-4682-8c27-7dc7a6ef70e2",
+    "title": "Sciences de Gestion Comptable (SGC)"
+  },
+  {
+    "id": "ac6625e2-17ee-48ac-b59d-453221b4c4dd",
+    "levelId": "877aaa8f-8350-4682-8c27-7dc7a6ef70e2",
+    "title": "Lettres"
+  },
+  {
+    "id": "5880728b-269f-4c84-8147-10399a707e7e",
+    "levelId": "877aaa8f-8350-4682-8c27-7dc7a6ef70e2",
+    "title": "Sciences Humaines"
+  },
+  {
+    "id": "99205962-1c63-4025-91f0-5c67cc3e0ce0",
+    "levelId": "78030c13-5509-40e1-9a55-b7d715ebf7d3",
+    "title": "Sciences"
+  },
+  {
+    "id": "2b185be2-f4f0-41ed-8e0c-c46b44599b4d",
+    "levelId": "78030c13-5509-40e1-9a55-b7d715ebf7d3",
+    "title": "Technologies"
+  },
+  {
+    "id": "77cd95ca-3690-4654-98c1-491598585cc9",
+    "levelId": "78030c13-5509-40e1-9a55-b7d715ebf7d3",
+    "title": "Lettres et Sciences Humaines"
+  },
+  {
+    "id": "d81d7599-5a8a-4970-a0ea-036202905294",
+    "levelId": "d96c9687-6ed9-423d-b369-c163cf811a1d",
+    "title": "General"
+  },
+  {
+    "id": "c1b67d06-7b96-4120-8f3a-6bd397309231",
+    "levelId": "1131eb82-031b-4485-b2ec-2a772c73b45a",
+    "title": "General"
+  },
+  {
+    "id": "8ea6b78e-f9c3-4649-85f8-0352b0100248",
+    "levelId": "d2ccda85-3b62-4d0e-8c1e-b2eaaff0a90b",
+    "title": "General"
+  },
+  {
+    "id": "5393faf0-1b9f-4398-be6e-cb2130acd045",
+    "levelId": "eb9c123c-89da-40f4-8b42-f4ef33c78ca9",
+    "title": "General"
+  },
+  {
+    "id": "bff5b9b9-462f-4041-9207-24249146b347",
+    "levelId": "10f65cdd-40d2-420b-a91e-6a224d0d460f",
+    "title": "General"
+  },
+  {
+    "id": "eb8a35a1-3656-4e7b-8f85-326f1b60f601",
+    "levelId": "ff4906f8-b647-4104-956a-7493bbbcbb1d",
+    "title": "General"
+  }
+]

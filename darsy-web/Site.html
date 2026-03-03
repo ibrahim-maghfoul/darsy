@@ -1,0 +1,2241 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Flowkit — Learn Together</title>
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,wght@0,300;0,400;0,500;0,600;0,700;1,400&display=swap" rel="stylesheet">
+<style>
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+:root {
+  --green: #3aaa6a;
+  --dark:  #1a3a2a;
+  --bg:    #e4e8e3;
+}
+
+body {
+  background: var(--bg);
+  font-family: 'DM Sans', sans-serif;
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  overflow-x: hidden;
+}
+
+/* ═══════════════════════════════════════
+   NAVBAR — fully transparent glassmorphism
+═══════════════════════════════════════ */
+.navbar {
+  position: fixed;
+  top: 0; left: 0; right: 0;
+  z-index: 500;
+  height: 62px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 clamp(16px, 5vw, 48px);
+  /* True transparent glass — no colored background */
+  background: rgba(255,255,255,0.08);
+  backdrop-filter: blur(20px) saturate(160%);
+  -webkit-backdrop-filter: blur(20px) saturate(160%);
+  border-bottom: 1px solid rgba(255,255,255,0.18);
+}
+.nav-logo { display:flex; align-items:center; gap:9px; }
+.nav-logo-icon {
+  width:32px; height:32px;
+  background: linear-gradient(135deg, var(--green), var(--dark));
+  border-radius:9px;
+  display:flex; align-items:center; justify-content:center;
+  font-size:16px;
+  box-shadow: 0 2px 12px rgba(58,170,106,0.35);
+}
+.nav-logo-text { font-size:14px; font-weight:700; color:var(--dark); letter-spacing:-0.3px; }
+.nav-links { display:flex; align-items:center; gap:0; }
+.nav-links a {
+  text-decoration:none; font-size:13px; font-weight:500; color:#4a6a58;
+  padding:6px 13px; border-radius:8px; transition:background .2s, color .2s;
+}
+.nav-links a:hover { background:rgba(58,170,106,0.1); color:var(--dark); }
+.nav-links a.active { color:var(--dark); font-weight:600; }
+@media(max-width:600px){ .nav-links { display:none; } }
+.nav-right { display:flex; align-items:center; gap:8px; }
+.nav-btn {
+  font-family:'DM Sans',sans-serif; font-size:13px; font-weight:600;
+  border:none; cursor:pointer; padding:9px 20px; border-radius:10px; transition:all .2s;
+}
+.nav-btn.ghost { background:rgba(255,255,255,0.22); color:#4a6a58; border:1px solid rgba(255,255,255,0.35); }
+.nav-btn.ghost:hover { background:rgba(255,255,255,0.4); }
+.nav-btn.primary { background:linear-gradient(135deg,var(--green),#2a8a50); color:white; box-shadow:0 2px 12px rgba(58,170,106,0.38); }
+.nav-btn.primary:hover { transform:translateY(-1px); box-shadow:0 4px 18px rgba(58,170,106,0.5); }
+
+/* ═══════════════════════════════════════
+   HERO SECTION — above diagram
+═══════════════════════════════════════ */
+.hero {
+  padding-top: 82px;
+  text-align: center;
+  padding-bottom: 0;
+}
+.hero-title {
+  font-size: clamp(26px, 4.5vw, 52px);
+  font-weight: 700;
+  color: var(--dark);
+  line-height: 1.12;
+  letter-spacing: -0.04em;
+  max-width: 640px;
+  margin: 0 auto;
+}
+.hero-title em { font-style: normal; color: var(--green); }
+
+/* ═══════════════════════════════════════
+   MAIN SCENE — cards on sides, diagram center
+═══════════════════════════════════════ */
+.scene-outer {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  position: relative; /* anchor for #connSvg */
+}
+.scene {
+  flex: 1;
+  display: grid;
+  /* side columns shrink/hide on small screens; diagram is priority */
+  grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr);
+  align-items: stretch;
+  padding: 12px 0 16px;
+  min-height: 0;
+  position: relative;
+}
+
+/* ── CARD COLUMNS ── */
+.cards-col {
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  padding: 4px clamp(8px, 2vw, 36px);
+  /* Allow cards to disappear on very narrow screens */
+  min-width: 0;
+  overflow: hidden;
+}
+.cards-col.left  { align-items: flex-end; }
+.cards-col.right { align-items: flex-start; }
+
+/* ── CARDS ── */
+.card {
+  /* Cards shrink to accommodate diagram — capped at 180px */
+  width: clamp(130px, 15vw, 180px);
+  background: rgba(255,255,255,0.96);
+  border-radius: 14px;
+  padding: 10px 12px;
+  box-shadow: 0 4px 18px rgba(0,0,0,0.08), 0 1px 4px rgba(0,0,0,0.04);
+  display: flex; flex-direction: row; align-items: center; gap: 9px;
+  transition: box-shadow .3s;
+  position: relative;
+  z-index: 5;
+}
+/* Hide cards entirely on very narrow screens */
+@media(max-width:520px) { .cards-col { display:none; } }
+
+.card.card-active {
+  box-shadow: 0 0 0 2.5px var(--green), 0 6px 24px rgba(58,170,106,0.25);
+  animation: cardPump .5s cubic-bezier(.22,1,.36,1);
+}
+@keyframes cardPump {
+  0%   { transform:scale(1); }
+  35%  { transform:scale(1.08); }
+  65%  { transform:scale(0.95); }
+  100% { transform:scale(1); }
+}
+.card-icon {
+  width:32px; height:32px; flex-shrink:0;
+  border-radius:9px; font-size:15px;
+  display:flex; align-items:center; justify-content:center;
+  position:relative;
+}
+.card-body { display:flex; flex-direction:column; gap:2px; min-width:0; }
+.card-title { font-size:10px; font-weight:600; color:var(--dark); line-height:1.25; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+.card-msg   { font-size:9px;  font-weight:400; color:#7a9488; line-height:1.45; }
+
+/* Green countdown badge */
+.card-counter {
+  position:absolute; top:-6px; right:-6px;
+  width:16px; height:16px;
+  background:var(--green); color:white;
+  font-size:8px; font-weight:700;
+  border-radius:50%;
+  display:flex; align-items:center; justify-content:center;
+  opacity:0; transition:opacity .2s;
+  box-shadow:0 1px 6px rgba(58,170,106,0.55);
+  pointer-events:none;
+}
+.card.card-active .card-counter { opacity:1; }
+
+/* ── DIAGRAM CENTER ── */
+.diagram-wrap {
+  width: clamp(300px, 44vw, 500px);
+  position: relative;
+  flex-shrink: 0;
+  z-index: 3; /* above connector line (z-index:1), below cards (z-index:5) */
+}
+.diagram-wrap svg { display:block; width:100%; height:auto; }
+
+/* Shape hover */
+.shape-group { cursor:pointer; }
+.shape-group .ripple {
+  transform:scale(0); opacity:0;
+  transition:transform .5s cubic-bezier(.22,1,.36,1), opacity .5s ease;
+}
+.shape-group:hover .ripple { transform:scale(2); opacity:1; }
+.shape-group .bs { transition:transform .35s cubic-bezier(.22,1,.36,1); }
+.shape-group:hover .bs { transform:scale(1.08); }
+
+/* Hover connectors inside SVG */
+.connector {
+  opacity:0; pointer-events:none;
+  stroke-dasharray:var(--len,200);
+  stroke-dashoffset:var(--len,200);
+  transition:opacity .2s ease;
+}
+.shape-group:hover .connector {
+  opacity:1; stroke-dashoffset:0;
+  transition:opacity .2s ease, stroke-dashoffset .45s cubic-bezier(.4,0,.2,1);
+}
+
+/* ═══════════════════════════════════════
+   FAN LINES — animated draw + pulse (triggered by IntersectionObserver)
+═══════════════════════════════════════ */
+.fan-line {
+  stroke-dasharray: 450;
+  stroke-dashoffset: 450;
+}
+.fan-line.visible {
+  animation: fanDraw 1.6s ease forwards, fanPulse 2.8s 1.8s ease-in-out infinite;
+}
+.fan-line.visible:nth-child(1) { animation-delay: 0.0s, 1.8s; }
+.fan-line.visible:nth-child(2) { animation-delay: 0.1s, 1.9s; }
+.fan-line.visible:nth-child(3) { animation-delay: 0.2s, 2.0s; }
+.fan-line.visible:nth-child(4) { animation-delay: 0.3s, 2.1s; }
+.fan-line.visible:nth-child(5) { animation-delay: 0.4s, 2.2s; }
+.fan-line.visible:nth-child(6) { animation-delay: 0.5s, 2.3s; }
+.fan-line.visible:nth-child(7) { animation-delay: 0.6s, 2.4s; }
+.fan-line.visible:nth-child(8) { animation-delay: 0.7s, 2.5s; }
+.fan-line.visible:nth-child(9) { animation-delay: 0.8s, 2.6s; }
+@keyframes fanDraw  { to { stroke-dashoffset: 0; } }
+@keyframes fanPulse { 0%,100%{opacity:1} 50%{opacity:0.38} }
+
+/* ═══════════════════════════════════════
+   CONNECTOR LINE SVG — absolute inside scene-outer
+   Uses page coordinates so it scrolls with content
+═══════════════════════════════════════ */
+#connSvg {
+  position: absolute;
+  top: 0; left: 0;
+  width: 100%; height: 100%;
+  pointer-events: none;
+  z-index: 1;
+  overflow: visible;
+}
+#trackPath { display: none; }
+/* Animated segment */
+#segPath {
+  fill: none;
+  stroke: var(--green);
+  stroke-width: 3;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  filter: drop-shadow(0 0 6px rgba(58,170,106,.8)) drop-shadow(0 0 12px rgba(58,170,106,.4));
+}
+/* Travelling dot */
+#moveDot {
+  fill: var(--green);
+  filter: drop-shadow(0 0 7px rgba(58,170,106,.9)) drop-shadow(0 0 14px rgba(58,170,106,.5));
+}
+
+/* ═══════════════════════════════════════
+   SECOND SECTION — "We Believe" hero
+═══════════════════════════════════════ */
+.believe-section {
+  position: relative;
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+  padding: clamp(140px, 18vh, 200px) clamp(24px, 6vw, 80px) clamp(140px, 18vh, 200px);
+  /* RADIAL gradient — vivid green at center content area, white at all edges */
+  background: radial-gradient(
+    ellipse 70% 60% at 50% 50%,
+    #3aaa6a 0%,
+    #5dc88a 18%,
+    #a8ecc4 42%,
+    #d8f5e8 62%,
+    #f2fbf5 80%,
+    #ffffff 100%
+  );
+}
+
+/* Subtle noise/texture overlay */
+.believe-section::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  background: radial-gradient(ellipse 55% 40% at 50% 50%, rgba(255,255,255,0.10) 0%, transparent 70%);
+}
+
+/* Floating avatar chips — with real image clipping masks */
+.av-chip {
+  position: absolute;
+  overflow: hidden;
+  box-shadow: 0 8px 32px rgba(0,0,0,0.28);
+  animation: chipFloat 5s ease-in-out infinite;
+  /* All shapes have rounded corners */
+  border-radius: 24px;
+}
+.av-chip img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+}
+/* Different shapes — all with rounded corners */
+.av-chip.round    { border-radius: 50%; }
+.av-chip.squircle { border-radius: 32%; }
+.av-chip.hex {
+  clip-path: path('M 50 4 C 54 4 86 21 90 25 C 94 29 94 71 90 75 C 86 79 54 96 50 96 C 46 96 14 79 10 75 C 6 71 6 29 10 25 C 14 21 46 4 50 4 Z');
+}
+.av-chip.blob {
+  border-radius: 60% 40% 55% 45% / 45% 55% 40% 60%;
+}
+.av-chip.rect   { border-radius: 20px; }
+.av-chip.pill   { border-radius: 50px; }
+
+@keyframes chipFloat {
+  0%,100% { transform: translateY(0px) rotate(var(--r,0deg)); }
+  50%      { transform: translateY(var(--dy,-10px)) rotate(var(--r,0deg)); }
+}
+
+/* Positions — matching reference image layout */
+.av-1  { width:80px;  height:80px;  top:8%;   left:4%;   --dy:-12px; --r:0deg;    animation-delay:0s;   }
+.av-2  { width:96px;  height:96px;  top:22%;  left:10%;  --dy:-8px;  --r:-3deg;  animation-delay:.4s;  }
+.av-3  { width:110px; height:110px; top:42%;  left:7%;   --dy:-14px; --r:0deg;    animation-delay:.8s;  }
+.av-4  { width:76px;  height:76px;  top:70%;  left:3%;   --dy:-10px; --r:2deg;   animation-delay:1.2s; }
+.av-5  { width:88px;  height:88px;  top:6%;   right:12%; --dy:-9px;  --r:0deg;    animation-delay:.2s;  }
+.av-6  { width:80px;  height:80px;  top:20%;  right:5%;  --dy:-13px; --r:1deg;   animation-delay:.6s;  }
+.av-7  { width:100px; height:100px; top:40%;  right:4%;  --dy:-11px; --r:-2deg;  animation-delay:1.0s; }
+.av-8  { width:84px;  height:84px;  top:62%;  right:10%; --dy:-8px;  --r:0deg;    animation-delay:1.4s; }
+
+/* Door illustration */
+.door-wrap {
+  position: relative;
+  z-index: 2;
+  margin-bottom: -24px;
+  opacity: 0.92;
+}
+.door-svg { display: block; width: clamp(140px, 18vw, 220px); height: auto; margin: 0 auto; }
+
+/* Text block */
+.believe-text {
+  position: relative;
+  z-index: 2;
+  text-align: center;
+  padding: 0 20px;
+}
+.believe-title {
+  font-size: clamp(32px, 5.5vw, 68px);
+  font-weight: 700;
+  color: var(--dark);
+  line-height: 1.05;
+  letter-spacing: -0.04em;
+  text-shadow: 0 2px 24px rgba(255,255,255,0.4);
+  margin-bottom: 14px;
+}
+.believe-title span {
+  display: block;
+  font-size: clamp(36px, 6vw, 76px);
+  color: #fff;
+}
+.believe-sub {
+  font-size: clamp(13px, 1.4vw, 16px);
+  color: rgba(255,255,255,0.92);
+  max-width: 340px;
+  margin: 0 auto 28px;
+  line-height: 1.65;
+}
+.believe-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  background: #111;
+  color: white;
+  font-family: 'DM Sans', sans-serif;
+  font-size: 14px;
+  font-weight: 600;
+  padding: 12px 20px 12px 24px;
+  border-radius: 100px;
+  border: none;
+  cursor: pointer;
+  transition: transform .2s, box-shadow .2s;
+  box-shadow: 0 4px 20px rgba(0,0,0,0.25);
+}
+.believe-btn:hover { transform: translateY(-2px); box-shadow: 0 8px 28px rgba(0,0,0,0.3); }
+.believe-btn-icon {
+  width: 28px; height: 28px;
+  background: white;
+  border-radius: 50%;
+  display: flex; align-items: center; justify-content: center;
+  color: #111;
+  font-size: 13px;
+}
+
+/* Entrance animation for the text block */
+.believe-text, .door-wrap {
+  opacity: 0;
+  transform: translateY(28px);
+  transition: opacity .8s ease, transform .8s ease;
+}
+.believe-section.in-view .believe-text,
+.believe-section.in-view .door-wrap {
+  opacity: 1;
+  transform: translateY(0);
+}
+.believe-section.in-view .door-wrap { transition-delay: 0s; }
+.believe-section.in-view .believe-text { transition-delay: 0.15s; }
+
+/* Chips entrance */
+.av-chip {
+  opacity: 0;
+  transition: opacity .6s ease, transform .6s cubic-bezier(.22,1,.36,1);
+}
+.believe-section.in-view .av-chip { opacity: 1; }
+.believe-section.in-view .av-1 { transition-delay: 0.05s; }
+.believe-section.in-view .av-2 { transition-delay: 0.12s; }
+.believe-section.in-view .av-3 { transition-delay: 0.18s; }
+.believe-section.in-view .av-4 { transition-delay: 0.24s; }
+.believe-section.in-view .av-5 { transition-delay: 0.08s; }
+.believe-section.in-view .av-6 { transition-delay: 0.15s; }
+.believe-section.in-view .av-7 { transition-delay: 0.21s; }
+.believe-section.in-view .av-8 { transition-delay: 0.28s; }
+/* ═══════════════════════════════════════
+   THIRD SECTION — 3 Feature Cards
+═══════════════════════════════════════ */
+.courses-section {
+  background: #f0f5f0;
+  padding: 100px clamp(24px, 6vw, 80px) 120px;
+  position: relative;
+  overflow: hidden;
+}
+
+.courses-header {
+  max-width: 680px;
+  margin: 0 auto 64px;
+  position: relative;
+}
+.courses-eyebrow {
+  display: inline-block;
+  font-size: 11px; font-weight: 700;
+  letter-spacing: 0.14em; text-transform: uppercase;
+  color: var(--green);
+  margin-bottom: 14px;
+}
+.courses-title {
+  font-size: clamp(32px, 5vw, 62px);
+  font-weight: 700;
+  color: var(--dark);
+  line-height: 1.08;
+  letter-spacing: -0.04em;
+  margin-bottom: 14px;
+}
+.courses-title em { font-style: normal; color: var(--green); }
+.courses-sub {
+  font-size: clamp(13px, 1.4vw, 16px);
+  color: #6a8a78; line-height: 1.7;
+  max-width: 440px;
+}
+
+/* 3-card row — 4:2:1 proportional widths, top-aligned so heights differ */
+.courses-grid {
+  display: flex;
+  flex-direction: row;
+  gap: 20px;
+  max-width: 1200px;
+  margin: 0 auto;
+  position: relative;
+  align-items: flex-start; /* cards grow downward from top, not stretched */
+}
+@media(max-width: 760px) {
+  .courses-grid { flex-direction: column; }
+}
+
+/* Base card */
+.course-card {
+  border-radius: 28px;
+  padding: 36px 32px 36px;
+  position: relative;
+  overflow: hidden;
+  cursor: pointer;
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-end;
+  opacity: 0;
+  transform: translateY(36px);
+  transition: transform .35s cubic-bezier(.22,1,.36,1), box-shadow .3s;
+  flex-shrink: 0;
+}
+.course-card.card-in {
+  opacity: 1;
+  transform: translateY(0);
+  transition: opacity .65s ease, transform .65s cubic-bezier(.22,1,.36,1), box-shadow .3s;
+}
+.course-card:hover { transform: translateY(-8px); box-shadow: 0 28px 60px rgba(0,0,0,0.22); }
+
+/* Card 1 — largest: 4 parts wide, 4 parts tall */
+.course-card.c1 {
+  flex: 4;
+  height: 480px;
+  background: linear-gradient(155deg, #9ef0b8 0%, #5cd68a 40%, #2aaa62 80%, #0f4428 100%);
+  box-shadow: 0 8px 40px rgba(42,170,98,0.3);
+}
+/* Card 2 — medium: 2 parts wide, 2 parts tall (half of c1) */
+.course-card.c2 {
+  flex: 2;
+  height: 240px;
+  background: linear-gradient(155deg, #52d4a0 0%, #1e9e72 45%, #0d6048 80%, #051e16 100%);
+  box-shadow: 0 8px 40px rgba(13,96,72,0.35);
+  padding: 24px 22px;
+}
+/* Card 3 — smallest: 1 part wide, 1 part tall (half of c2) */
+.course-card.c3 {
+  flex: 1;
+  height: 120px;
+  background: linear-gradient(155deg, #2a4a3c 0%, #1a3028 50%, #0d1e18 100%);
+  box-shadow: 0 8px 40px rgba(0,0,0,0.4);
+  padding: 18px 16px;
+  border-radius: 22px;
+}
+
+/* Person image inside card — hexagon-clipped with rounded corners */
+.card-person {
+  position: absolute;
+  top: 20px;
+  right: 24px;
+  width: clamp(140px, 18vw, 240px);
+  height: clamp(140px, 18vw, 240px);
+  overflow: hidden;
+  /* Perfect regular hexagon (pointy-top) with mathematically correct rounded corners.
+     Coords for 240×240 box, corner radius ~14px. */
+  clip-path: path('M 107.9 11.0 C 114.5 7.1 125.5 7.2 132.1 11.0 L 208.3 55.0 C 215.0 58.9 220.5 68.3 220.5 76.0 L 220.5 164.0 C 220.5 171.7 215.0 181.2 208.3 185.0 L 132.1 229.0 C 125.5 232.8 114.5 232.8 107.9 229.0 L 31.7 185.0 C 25.0 181.2 19.5 171.7 19.5 164.0 L 19.5 76.0 C 19.5 68.3 25.0 58.8 31.7 55.0 Z');
+  box-shadow: 0 10px 32px rgba(0,0,0,0.35);
+}
+/* smaller on medium card — rounded hex path scaled to ~80×80 */
+.course-card.c2 .card-person {
+  width: clamp(55px,6vw,80px);
+  height: clamp(55px,6vw,80px);
+  top:14px; right:14px;
+  clip-path: path('M 36.0 3.7 C 38.2 2.4 41.8 2.4 44.0 3.7 L 69.4 18.3 C 71.7 19.6 73.5 22.8 73.5 25.3 L 73.5 54.7 C 73.5 57.2 71.7 60.4 69.4 61.7 L 44.0 76.3 C 41.8 77.6 38.2 77.6 36.0 76.3 L 10.6 61.7 C 8.3 60.4 6.5 57.2 6.5 54.7 L 6.5 25.3 C 6.5 22.8 8.3 19.6 10.6 18.3 Z');
+}
+/* hidden on tiny card */
+.course-card.c3 .card-person { display: none; }
+
+.card-person img {
+  width: 100%; height: 100%;
+  object-fit: cover;
+  display: block;
+}
+
+/* Small icon badge top-left */
+.card-badge {
+  position: absolute;
+  top: 32px; left: 32px;
+  width: 42px; height: 42px;
+  border-radius: 12px;
+  background: rgba(255,255,255,0.18);
+  backdrop-filter: blur(8px);
+  display: flex; align-items: center; justify-content: center;
+  font-size: 20px;
+  border: 1px solid rgba(255,255,255,0.25);
+}
+.course-card.c2 .card-badge { top:20px; left:18px; width:36px; height:36px; font-size:17px; }
+.course-card.c3 .card-badge { top:18px; left:18px; width:32px; height:32px; font-size:15px; }
+
+/* Card text */
+.card-kicker {
+  font-size: 11px; font-weight: 700;
+  letter-spacing: 0.1em; text-transform: uppercase;
+  color: rgba(255,255,255,0.6);
+  margin-bottom: 8px;
+}
+.card-headline {
+  font-size: clamp(22px, 2.8vw, 34px);
+  font-weight: 700;
+  color: #fff;
+  line-height: 1.1;
+  letter-spacing: -0.03em;
+  margin-bottom: 10px;
+}
+.course-card.c2 .card-headline { font-size: clamp(16px, 2vw, 22px); }
+.course-card.c3 .card-headline { font-size: clamp(13px, 1.4vw, 16px); margin-bottom:6px; }
+.card-headline em { font-style: normal; color: rgba(180,255,220,0.9); }
+.card-desc-text {
+  font-size: 13px; color: rgba(255,255,255,0.68);
+  line-height: 1.65; max-width: 360px;
+}
+.course-card.c2 .card-desc-text { font-size:12px; }
+.course-card.c3 .card-desc-text { font-size:11px; max-width:none; }
+.course-card.c3 .card-kicker { font-size:9px; margin-bottom:4px; }
+
+/* Join / CTA pill bottom-right of page */
+.join-pill {
+  position: fixed;
+  bottom: 32px; right: 32px;
+  background: var(--dark);
+  color: white;
+  font-family: 'DM Sans', sans-serif;
+  font-size: 14px; font-weight: 600;
+  padding: 14px 26px;
+  border-radius: 100px;
+  border: none; cursor: pointer;
+  box-shadow: 0 6px 28px rgba(0,0,0,0.28);
+  z-index: 100;
+  transition: transform .2s, box-shadow .2s;
+}
+.join-pill:hover { transform: translateY(-2px); box-shadow: 0 10px 36px rgba(0,0,0,0.35); }
+.stat-label {
+  font-size: 13px;
+  color: #8aab98;
+  font-weight: 500;
+}
+
+/* Trusted strip */
+.trusted-strip {
+  background: transparent;
+  padding: 16px 0 28px;
+  position: relative;
+  z-index: 5;
+  border-top: 1px solid rgba(58,170,106,0.1);
+}
+.trusted-label {
+  text-align: center;
+  font-size: 10.5px; font-weight: 600;
+  letter-spacing: 0.12em; text-transform: uppercase;
+  color: #8aab98; margin-bottom: 16px;
+}
+.trusted-logos {
+  display: flex; align-items: center; justify-content: center;
+  gap: clamp(32px, 8vw, 100px);
+}
+.trust-logo {
+  opacity: 0.38;
+  transition: opacity .25s;
+  cursor: default;
+  display: flex; align-items: center;
+}
+.trust-logo:hover { opacity: 0.85; }
+.trust-logo svg { display:block; fill: var(--dark); }
+/* ═══════════════════════════════════════
+   FOURTH SECTION — Numbered list hero
+═══════════════════════════════════════ */
+.works-section {
+  background: #f4f6f3;
+  min-height: 100vh;
+  position: relative;
+  overflow: hidden;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 100px clamp(24px, 8vw, 120px);
+}
+
+/* Floating 3D-style icon tiles — positioned on right half */
+.works-float {
+  position: absolute;
+  pointer-events: none;
+  animation: wFloat 6s ease-in-out infinite;
+}
+@keyframes wFloat {
+  0%,100% { transform: translateY(0) rotate(var(--wr,0deg)); }
+  50%      { transform: translateY(var(--wdy,-16px)) rotate(var(--wr,0deg)); }
+}
+
+/* Glassmorphism icon tile */
+.works-icon-tile {
+  border-radius: 22px;
+  background: rgba(255,255,255,0.72);
+  backdrop-filter: blur(16px);
+  border: 1px solid rgba(255,255,255,0.9);
+  box-shadow: 0 8px 32px rgba(58,170,106,0.15), 0 2px 8px rgba(0,0,0,0.06);
+  display: flex; align-items: center; justify-content: center;
+}
+
+/* Icons scattered on BOTH SIDES around the centered text */
+.wf-1 { top:  8%; right: 6%;  width:72px;  height:72px;  --wdy:-18px; --wr: 4deg;  animation-delay:0s;   }
+.wf-2 { top: 20%; left: 4%;   width:88px;  height:88px;  --wdy:-12px; --wr:-3deg;  animation-delay:.8s;  }
+.wf-3 { top: 65%; right: 5%;  width:66px;  height:66px;  --wdy:-20px; --wr: 2deg;  animation-delay:.3s;  }
+.wf-4 { top: 72%; left: 6%;   width:58px;  height:58px;  --wdy:-14px; --wr:-2deg;  animation-delay:1.1s; }
+
+/* Person bubble — right side mid */
+.wf-person {
+  top: 32%; right: 4%;
+  width: 150px; height: 150px;
+  border-radius: 50% 50% 50% 44% / 50% 50% 44% 50%;
+  overflow: hidden;
+  box-shadow: 0 12px 40px rgba(0,0,0,0.2);
+  border: 4px solid rgba(255,255,255,0.9);
+  animation-delay: .5s;
+  --wdy: -10px; --wr: 0deg;
+}
+.wf-person img { width:100%; height:100%; object-fit:cover; display:block; }
+
+/* Main content — centered */
+.works-content {
+  max-width: 780px;
+  width: 100%;
+  position: relative;
+  z-index: 2;
+  text-align: left;
+}
+
+/* Numbered items */
+.works-list { list-style: none; }
+.works-item {
+  display: flex;
+  align-items: baseline;
+  gap: 18px;
+  line-height: 1;
+  padding: 4px 0;
+  cursor: pointer;
+}
+.works-num {
+  font-size: clamp(11px, 1.1vw, 14px);
+  font-weight: 600;
+  color: var(--green);
+  font-family: 'DM Sans', monospace;
+  letter-spacing: 0.05em;
+  white-space: nowrap;
+  flex-shrink: 0;
+  padding-top: 8px;
+}
+.works-label {
+  font-size: clamp(42px, 7vw, 96px);
+  font-weight: 700;
+  color: var(--dark);
+  letter-spacing: -0.04em;
+  line-height: 1.05;
+  transition: color .2s;
+  position: relative;
+  display: inline-block;
+}
+
+/* Green brush underline on highlighted item */
+.works-label.highlighted::after {
+  content: '';
+  position: absolute;
+  bottom: 4px; left: -4px; right: -4px;
+  height: 12px;
+  background: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 200 12'%3E%3Cpath d='M2 9 Q50 2 100 7 Q150 12 198 5' stroke='%2338c070' stroke-width='7' fill='none' stroke-linecap='round'/%3E%3C/svg%3E") no-repeat center/100% 100%;
+  z-index: -1;
+}
+
+/* Description text — always visible under Development */
+.works-desc {
+  display: block;
+  margin-top: 4px;
+  margin-left: calc(clamp(11px,1.1vw,14px) + 18px + 4px);
+  font-size: clamp(13px, 1.2vw, 16px);
+  color: #7a9488;
+  line-height: 1.65;
+  max-width: 440px;
+  padding-bottom: 10px;
+}
+
+/* SVG icons inside tiles */
+.tile-svg { width: 36px; height: 36px; }
+.wf-1 .works-icon-tile .tile-svg { width:32px; height:32px; }
+.wf-3 .works-icon-tile .tile-svg { width:28px; height:28px; }
+.wf-4 .works-icon-tile .tile-svg { width:24px; height:24px; }
+</style>
+<body>
+
+<!-- ══ NAVBAR ══ -->
+<nav class="navbar">
+  <div class="nav-logo">
+    <div class="nav-logo-icon">❄️</div>
+    <span class="nav-logo-text">Flowkit</span>
+  </div>
+  <div class="nav-links">
+    <a href="#" class="active">Overview</a>
+    <a href="#">Courses</a>
+    <a href="#">Community</a>
+    <a href="#">Pricing</a>
+  </div>
+  <div class="nav-right">
+    <button class="nav-btn ghost">Sign in</button>
+    <button class="nav-btn primary">Start learning →</button>
+  </div>
+</nav>
+
+<!-- ══ SCENE OUTER ══ -->
+<div class="scene-outer">
+
+<!-- CONNECTOR SVG — absolute inside scene-outer, scrolls with page -->
+<svg id="connSvg" aria-hidden="true">
+  <path id="trackPath"/>
+  <path id="segPath"/>
+  <circle id="moveDot" r="5"/>
+</svg>
+
+  <!-- HERO TITLE -->
+  <div class="hero">
+    <h1 class="hero-title">Learn the skills that<br><em>actually matter</em></h1>
+  </div>
+
+  <!-- SCENE: left cards | diagram | right cards -->
+  <div class="scene" id="scene">
+
+    <!-- LEFT: card-0 (top) + card-3 (bottom) -->
+    <div class="cards-col left" id="leftCol">
+      <div class="card" id="card-0">
+        <div class="card-icon" style="background:#e8f5ee;">
+          🚀<span class="card-counter" id="counter-0">3</span>
+        </div>
+        <div class="card-body">
+          <div class="card-title">Keep pushing!</div>
+          <div class="card-msg">Progress is progress.</div>
+        </div>
+      </div>
+      <div class="card" id="card-3">
+        <div class="card-icon" style="background:#eef2ff;">
+          💡<span class="card-counter" id="counter-3">3</span>
+        </div>
+        <div class="card-body">
+          <div class="card-title">Think big.</div>
+          <div class="card-msg">Start today, not later.</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- CENTER DIAGRAM -->
+    <div class="diagram-wrap" id="diagramWrap">
+      <svg id="diagramSvg" viewBox="0 0 500 580" xmlns="http://www.w3.org/2000/svg" overflow="visible">
+        <defs>
+          <radialGradient id="gHex"  cx="50%" cy="50%" r="60%"><stop offset="0%" stop-color="#7ddba8"/><stop offset="100%" stop-color="#3aaa6a"/></radialGradient>
+          <radialGradient id="gHexH" cx="50%" cy="50%" r="50%"><stop offset="0%" stop-color="#b8f5d8"/><stop offset="100%" stop-color="#5acc88"/></radialGradient>
+          <radialGradient id="gBlob"  cx="50%" cy="50%" r="60%"><stop offset="0%" stop-color="#1e3d2c"/><stop offset="100%" stop-color="#0a1810"/></radialGradient>
+          <radialGradient id="gBlobH" cx="50%" cy="50%" r="50%"><stop offset="0%" stop-color="#3d7a56"/><stop offset="100%" stop-color="#1e3d2c"/></radialGradient>
+          <radialGradient id="gCirc"  cx="50%" cy="50%" r="60%"><stop offset="0%" stop-color="#2d6044"/><stop offset="100%" stop-color="#142a1e"/></radialGradient>
+          <radialGradient id="gCircH" cx="50%" cy="50%" r="50%"><stop offset="0%" stop-color="#4a9a6e"/><stop offset="100%" stop-color="#2d6044"/></radialGradient>
+          <radialGradient id="gDiam"  cx="50%" cy="50%" r="60%"><stop offset="0%" stop-color="#55c988"/><stop offset="100%" stop-color="#28845a"/></radialGradient>
+          <radialGradient id="gDiamH" cx="50%" cy="50%" r="50%"><stop offset="0%" stop-color="#88f0b8"/><stop offset="100%" stop-color="#44aa78"/></radialGradient>
+
+          <linearGradient id="fanG" x1="0" y1="402" x2="0" y2="565" gradientUnits="userSpaceOnUse">
+            <stop offset="0%"   stop-color="#22c55e" stop-opacity="1"/>
+            <stop offset="65%"  stop-color="#4ade80" stop-opacity="0.65"/>
+            <stop offset="100%" stop-color="#86efac" stop-opacity="0"/>
+          </linearGradient>
+
+          <filter id="shHex"  x="-40%" y="-40%" width="180%" height="180%"><feDropShadow dx="0" dy="8" stdDeviation="10" flood-color="#1a5c38" flood-opacity="0.35"/></filter>
+          <filter id="shBlob" x="-40%" y="-40%" width="180%" height="180%"><feDropShadow dx="0" dy="8" stdDeviation="12" flood-color="#040f08" flood-opacity="0.5"/></filter>
+          <filter id="shCirc" x="-40%" y="-40%" width="180%" height="180%"><feDropShadow dx="0" dy="8" stdDeviation="10" flood-color="#0a2016" flood-opacity="0.45"/></filter>
+          <filter id="shDiam" x="-40%" y="-40%" width="180%" height="180%"><feDropShadow dx="0" dy="10" stdDeviation="13" flood-color="#0a2a16" flood-opacity="0.4"/></filter>
+          <filter id="fanGlow" x="-30%" y="-5%" width="160%" height="120%">
+            <feGaussianBlur in="SourceGraphic" stdDeviation="4" result="b"/>
+            <feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge>
+          </filter>
+
+          <clipPath id="cHex">
+            <path d="M 239.6,24 Q 250,18 260.4,24 L 302,48 Q 312.4,54 312.4,66 L 312.4,114 Q 312.4,126 302,132 L 260.4,156 Q 250,162 239.6,156 L 198,132 Q 187.6,126 187.6,114 L 187.6,66 Q 187.6,54 198,48 Z"/>
+          </clipPath>
+          <clipPath id="cBlob">
+            <path d="M 110,151 C 123,151 122,162 134,169 C 146,176 155,170 161,181 C 168,192 159,197 159,210 C 159,223 168,228 161,239 C 155,250 146,244 134,251 C 122,258 123,269 110,269 C 97,269 98,258 86,251 C 74,244 65,250 59,239 C 52,228 61,223 61,210 C 61,197 52,192 59,181 C 65,170 74,176 86,169 C 98,162 97,151 110,151 Z"/>
+          </clipPath>
+          <clipPath id="cCirc"><circle cx="390" cy="210" r="64"/></clipPath>
+          <clipPath id="cDiam">
+            <path d="M 234.4,266 Q 250,250 265.6,266 L 310.4,310.4 Q 326,326 310.4,341.6 L 265.6,386 Q 250,402 234.4,386 L 189.6,341.6 Q 174,326 189.6,310.4 Z"/>
+          </clipPath>
+        </defs>
+
+        <!-- ══ ANIMATED FAN LINES ══ -->
+        <g filter="url(#fanGlow)">
+          <path class="fan-line" d="M 250,402 Q 250,472  40,525"  stroke="url(#fanG)" stroke-width="8" fill="none" stroke-linecap="round"/>
+          <path class="fan-line" d="M 250,402 Q 250,474 100,525"  stroke="url(#fanG)" stroke-width="8" fill="none" stroke-linecap="round"/>
+          <path class="fan-line" d="M 250,402 Q 250,476 168,525"  stroke="url(#fanG)" stroke-width="8" fill="none" stroke-linecap="round"/>
+          <path class="fan-line" d="M 250,402 Q 250,477 222,525"  stroke="url(#fanG)" stroke-width="8" fill="none" stroke-linecap="round"/>
+          <path class="fan-line" d="M 250,402 Q 250,477 250,525"  stroke="url(#fanG)" stroke-width="8" fill="none" stroke-linecap="round"/>
+          <path class="fan-line" d="M 250,402 Q 250,477 278,525"  stroke="url(#fanG)" stroke-width="8" fill="none" stroke-linecap="round"/>
+          <path class="fan-line" d="M 250,402 Q 250,476 332,525"  stroke="url(#fanG)" stroke-width="8" fill="none" stroke-linecap="round"/>
+          <path class="fan-line" d="M 250,402 Q 250,474 400,525"  stroke="url(#fanG)" stroke-width="8" fill="none" stroke-linecap="round"/>
+          <path class="fan-line" d="M 250,402 Q 250,472 460,525"  stroke="url(#fanG)" stroke-width="8" fill="none" stroke-linecap="round"/>
+        </g>
+
+        <!-- ══ HEXAGON — Data Scientist ══ -->
+        <g class="shape-group" filter="url(#shHex)">
+          <line class="connector" x1="250" y1="162" x2="250" y2="193" stroke="#3fac72" stroke-width="3" stroke-linecap="round" pathLength="1" style="--len:1"/>
+          <path class="bs" fill="url(#gHex)" style="transform-origin:250px 90px"
+            d="M 239.6,24 Q 250,18 260.4,24 L 302,48 Q 312.4,54 312.4,66 L 312.4,114 Q 312.4,126 302,132 L 260.4,156 Q 250,162 239.6,156 L 198,132 Q 187.6,126 187.6,114 L 187.6,66 Q 187.6,54 198,48 Z"/>
+          <g class="bs" clip-path="url(#cHex)" style="transform-origin:250px 90px">
+            <circle class="ripple" cx="250" cy="90" r="60" fill="url(#gHexH)" style="transform-origin:250px 90px"/>
+          </g>
+          <text class="bs" style="transform-origin:250px 90px" font-family="'DM Sans',sans-serif" font-size="13" font-weight="600" fill="white" text-anchor="middle" pointer-events="none">
+            <tspan x="250" y="86">Data</tspan><tspan x="250" dy="17">Scientist</tspan>
+          </text>
+        </g>
+
+        <!-- ══ BLOB — Lead Software ══ -->
+        <g class="shape-group" filter="url(#shBlob)">
+          <line class="connector" x1="161" y1="210" x2="233" y2="210" stroke="#3fac72" stroke-width="3" stroke-linecap="round" pathLength="1" style="--len:1"/>
+          <path class="bs" fill="url(#gBlob)" style="transform-origin:110px 210px"
+            d="M 110,151 C 123,151 122,162 134,169 C 146,176 155,170 161,181 C 168,192 159,197 159,210 C 159,223 168,228 161,239 C 155,250 146,244 134,251 C 122,258 123,269 110,269 C 97,269 98,258 86,251 C 74,244 65,250 59,239 C 52,228 61,223 61,210 C 61,197 52,192 59,181 C 65,170 74,176 86,169 C 98,162 97,151 110,151 Z"/>
+          <g class="bs" clip-path="url(#cBlob)" style="transform-origin:110px 210px">
+            <circle class="ripple" cx="110" cy="210" r="60" fill="url(#gBlobH)" style="transform-origin:110px 210px"/>
+          </g>
+          <text class="bs" style="transform-origin:110px 210px" font-family="'DM Sans',sans-serif" font-size="13" font-weight="600" fill="white" text-anchor="middle" pointer-events="none">
+            <tspan x="110" y="205">Lead</tspan><tspan x="110" dy="17">Software</tspan>
+          </text>
+        </g>
+
+        <!-- ══ CIRCLE — Innovation Researcher ══ -->
+        <g class="shape-group" filter="url(#shCirc)">
+          <line class="connector" x1="326" y1="210" x2="267" y2="210" stroke="#3fac72" stroke-width="3" stroke-linecap="round" pathLength="1" style="--len:1"/>
+          <circle class="bs" fill="url(#gCirc)" cx="390" cy="210" r="64" style="transform-origin:390px 210px"/>
+          <g class="bs" clip-path="url(#cCirc)" style="transform-origin:390px 210px">
+            <circle class="ripple" cx="390" cy="210" r="64" fill="url(#gCircH)" style="transform-origin:390px 210px"/>
+          </g>
+          <text class="bs" style="transform-origin:390px 210px" font-family="'DM Sans',sans-serif" font-size="13" font-weight="600" fill="white" text-anchor="middle" pointer-events="none">
+            <tspan x="390" y="205">Innovation</tspan><tspan x="390" dy="17">Researcher</tspan>
+          </text>
+        </g>
+
+        <!-- ══ DIAMOND — Customer Success ══ -->
+        <g class="shape-group" filter="url(#shDiam)">
+          <line class="connector" x1="250" y1="250" x2="250" y2="227" stroke="#3fac72" stroke-width="3" stroke-linecap="round" pathLength="1" style="--len:1"/>
+          <path class="bs" fill="url(#gDiam)" style="transform-origin:250px 326px"
+            d="M 234.4,266 Q 250,250 265.6,266 L 310.4,310.4 Q 326,326 310.4,341.6 L 265.6,386 Q 250,402 234.4,386 L 189.6,341.6 Q 174,326 189.6,310.4 Z"/>
+          <g class="bs" clip-path="url(#cDiam)" style="transform-origin:250px 326px">
+            <circle class="ripple" cx="250" cy="326" r="80" fill="url(#gDiamH)" style="transform-origin:250px 326px"/>
+          </g>
+          <text class="bs" style="transform-origin:250px 326px" font-family="'DM Sans',sans-serif" font-size="13" font-weight="600" fill="white" text-anchor="middle" pointer-events="none">
+            <tspan x="250" y="320">Customer</tspan><tspan x="250" dy="17">Success</tspan>
+          </text>
+        </g>
+
+        <!-- ══ SNOWFLAKE ══ -->
+        <g id="snowflake" transform="translate(233,193)">
+          <circle id="sf-bg" cx="17" cy="17" r="17" fill="#e4e8e3"
+            stroke="rgba(26,58,42,0.13)" stroke-width="1.5"
+            style="transform-origin:17px 17px;filter:drop-shadow(0 2px 6px rgba(0,0,0,0.07))"/>
+          <circle id="sf-ring" cx="17" cy="17" r="17" fill="none"
+            stroke="#3fac72" stroke-width="2.5" style="transform-origin:17px 17px;opacity:0;"/>
+          <line x1="17" y1="5"    x2="17" y2="29"    stroke="#3fac72" stroke-width="2" stroke-linecap="round"/>
+          <line x1="5"  y1="17"   x2="29" y2="17"    stroke="#3fac72" stroke-width="2" stroke-linecap="round"/>
+          <line x1="8.5" y1="8.5" x2="25.5" y2="25.5" stroke="#3fac72" stroke-width="2" stroke-linecap="round"/>
+          <line x1="25.5" y1="8.5" x2="8.5" y2="25.5" stroke="#3fac72" stroke-width="2" stroke-linecap="round"/>
+          <circle cx="17" cy="6"  r="2" fill="#3fac72"/>
+          <circle cx="17" cy="28" r="2" fill="#3fac72"/>
+          <circle cx="6"  cy="17" r="2" fill="#3fac72"/>
+          <circle cx="28" cy="17" r="2" fill="#3fac72"/>
+        </g>
+
+        <!-- ══ AVATARS ══ -->
+        <g transform="translate(15,500)"  style="filter:drop-shadow(0 3px 8px rgba(0,0,0,0.18))">
+          <circle cx="25" cy="25" r="25" fill="#b07040"/>
+          <ellipse cx="25" cy="42" rx="14" ry="10" fill="#8b5530"/>
+          <circle cx="25" cy="20" r="9" fill="#d4a06a"/>
+          <ellipse cx="25" cy="13" rx="9" ry="6" fill="#2d1a0e"/>
+          <circle cx="25" cy="25" r="25" fill="none" stroke="white" stroke-width="3"/>
+        </g>
+        <g transform="translate(95,502)"  style="filter:drop-shadow(0 3px 8px rgba(0,0,0,0.18))">
+          <circle cx="25" cy="25" r="25" fill="#e05535"/>
+          <ellipse cx="25" cy="42" rx="14" ry="10" fill="#b83820"/>
+          <circle cx="25" cy="20" r="9" fill="#f4b090"/>
+          <ellipse cx="25" cy="12" rx="10" ry="7" fill="#8b1a10"/>
+          <circle cx="25" cy="25" r="25" fill="none" stroke="white" stroke-width="3"/>
+        </g>
+        <g transform="translate(196,497)" style="filter:drop-shadow(0 3px 8px rgba(0,0,0,0.18))">
+          <circle cx="25" cy="25" r="25" fill="#c88830"/>
+          <ellipse cx="25" cy="42" rx="14" ry="10" fill="#8a5518"/>
+          <circle cx="25" cy="20" r="9" fill="#e0a860"/>
+          <ellipse cx="25" cy="12" rx="9" ry="6" fill="#3d1f0a"/>
+          <circle cx="25" cy="25" r="25" fill="none" stroke="white" stroke-width="3"/>
+        </g>
+        <g transform="translate(308,502)" style="filter:drop-shadow(0 3px 8px rgba(0,0,0,0.18))">
+          <circle cx="25" cy="25" r="25" fill="#5a8a6a"/>
+          <ellipse cx="25" cy="42" rx="14" ry="10" fill="#3a6048"/>
+          <circle cx="25" cy="20" r="9" fill="#90c0a0"/>
+          <ellipse cx="25" cy="12" rx="9" ry="6" fill="#1e3826"/>
+          <circle cx="25" cy="25" r="25" fill="none" stroke="white" stroke-width="3"/>
+        </g>
+        <g transform="translate(435,500)" style="filter:drop-shadow(0 3px 8px rgba(0,0,0,0.18))">
+          <circle cx="25" cy="25" r="25" fill="#4a6e9a"/>
+          <ellipse cx="25" cy="42" rx="14" ry="10" fill="#2a4e7a"/>
+          <circle cx="25" cy="20" r="9" fill="#a0c0d8"/>
+          <ellipse cx="25" cy="12" rx="9" ry="6" fill="#1a2f48"/>
+          <circle cx="25" cy="25" r="25" fill="none" stroke="white" stroke-width="3"/>
+        </g>
+      </svg>
+    </div>
+
+    <!-- RIGHT: card-1 (top) + card-2 (bottom) -->
+    <div class="cards-col right" id="rightCol">
+      <div class="card" id="card-1">
+        <div class="card-icon" style="background:#fef6e4;">
+          ✨<span class="card-counter" id="counter-1">3</span>
+        </div>
+        <div class="card-body">
+          <div class="card-title">Great work!</div>
+          <div class="card-msg">Small wins add up fast.</div>
+        </div>
+      </div>
+      <div class="card" id="card-2">
+        <div class="card-icon" style="background:#fef2f2;">
+          🔥<span class="card-counter" id="counter-2">3</span>
+        </div>
+        <div class="card-body">
+          <div class="card-title">Stay consistent.</div>
+          <div class="card-msg">Show up every day.</div>
+        </div>
+      </div>
+    </div>
+
+  </div><!-- /.scene -->
+</div><!-- /.scene-outer -->
+
+<!-- ══ TRUSTED STRIP ══ -->
+<div class="trusted-strip">
+  <div class="trusted-label">Trusted by leading teams worldwide</div>
+  <div class="trusted-logos">
+
+    <!-- Stripe wordmark -->
+    <div class="trust-logo">
+      <svg height="22" viewBox="0 0 67 28" xmlns="http://www.w3.org/2000/svg">
+        <path d="M5.6 10.2c0-1 .8-1.4 2.2-1.4 2 0 4.5.6 6.5 1.7V4.2C12 3.1 9.9 2.7 7.8 2.7 3.2 2.7.2 5.1.2 10c0 7.7 10.6 6.4 10.6 9.7 0 1.2-1 1.5-2.4 1.5-2.1 0-4.8-.9-7-2.2v6.3c2.4 1 4.8 1.5 7 1.5 5.3 0 9-2.3 9-7.3-.1-8.3-10.8-6.8-11.8-9.3zM27.8 3.6l-5.5 1.2-.2 16.3 5.7.1V3.6zm7.5 17.3l5.5-16.4H47l-8.5 22.5H32l-8.5-22.5h6.3l5.5 16.4zm12.4-10.4h11.5C59 7.4 56.9 5.8 54.3 5.8c-2.8 0-5.2 2-6.3 4.7h-.3zm12 7.4c-1.2 1.4-3 2.2-5.2 2.2-3 0-5.5-1.7-6.4-4.2H67c.1-.6.1-1.2.1-1.8C67.1 8 62.7 3.5 57 3.5c-6.3 0-10.5 4.5-10.5 10.7 0 6.3 4.2 10.7 10.8 10.7 3.8 0 6.7-1.4 8.7-3.9l-4.3-2.1z"/>
+      </svg>
+    </div>
+
+    <!-- Notion N mark -->
+    <div class="trust-logo">
+      <svg height="26" viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">
+        <path d="M6.3 6.3l55.6-4.1c6.8-.6 8.6-.2 12.9 2.9l17.8 12.5c2.9 2.1 3.9 2.7 3.9 5.1v68c0 4.4-1.6 7-7.2 7.4l-64.3 3.9c-4.2.2-6.2-.4-8.4-3.1L4.3 83.2c-2.4-3-3.4-5.2-3.4-7.8V13.3c0-3.6 1.6-6.5 5.4-7zm51.4 5.6L29.9 14c-1.3.1-1.7.8-1.7 2.1v54.4c0 1.4.4 2.1 1.7 2.1 1.2 0 1.6-.4 2.7-1.7l27.2-43.2v39.8l-7.7 1.8c-1.3.3-1.6.9-1.4 2l2.2 7.2c.3 1.3 1 1.7 2.4 1.3l20-5.6c1.3-.4 1.6-1.1 1.3-2.2l-1.8-7c-.3-1.1-1.1-1.5-2.2-1.2L70.4 65V23.4c0-1.4-.7-2.1-1.9-2l-10.8.5z"/>
+      </svg>
+    </div>
+
+    <!-- Linear mark -->
+    <div class="trust-logo">
+      <svg height="24" viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">
+        <path d="M1.9 61.5L38.5 98C17.9 93.5 1.5 77.1 1.9 61.5zM0 47.5L52.5 100c2-.2 4-.5 5.9-.9L.9 41.6C.3 43.5 0 45.5 0 47.5zm8.3-21.1l65.2 65.2c2-.8 3.9-1.7 5.7-2.8L11.1 19.9c-1 1.7-2 3.5-2.8 5.5zm14.1-15L93.6 82.6C95 81 96.3 79.3 97.5 77.5L27.6 7.6C25.7 8.7 24 10 22.4 11.4zm18.7-9.1L97.7 60.9C99.1 57 100 52.8 100 48.5l-1.2-1.2C97.8 21.5 78.3 2 52.6.3L41.1 2.3z"/>
+      </svg>
+    </div>
+
+  </div>
+</div>
+
+<!-- ══ SECOND SECTION — We Believe ══ -->
+<section class="believe-section" id="believeSection">
+
+  <!-- subtle overlay already handled by CSS ::before -->
+
+  <!-- Floating avatar chips — LEFT side — real person images with shape clip masks -->
+  <div class="av-chip round   av-1"><img src="https://i.pravatar.cc/160?img=1"  alt="person"/></div>
+  <div class="av-chip squircle av-2"><img src="https://i.pravatar.cc/160?img=5"  alt="person"/></div>
+  <div class="av-chip hex     av-3"><img src="https://i.pravatar.cc/160?img=9"  alt="person"/></div>
+  <div class="av-chip blob    av-4"><img src="https://i.pravatar.cc/160?img=20" alt="person"/></div>
+
+  <!-- Floating avatar chips — RIGHT side -->
+  <div class="av-chip round   av-5"><img src="https://i.pravatar.cc/160?img=32" alt="person"/></div>
+  <div class="av-chip squircle av-6"><img src="https://i.pravatar.cc/160?img=44" alt="person"/></div>
+  <div class="av-chip hex     av-7"><img src="https://i.pravatar.cc/160?img=47" alt="person"/></div>
+  <div class="av-chip blob    av-8"><img src="https://i.pravatar.cc/160?img=56" alt="person"/></div>
+
+  <!-- Door illustration -->
+  <div class="door-wrap">
+    <svg class="door-svg" viewBox="0 0 160 220" fill="none" xmlns="http://www.w3.org/2000/svg">
+      <!-- Door frame -->
+      <rect x="28" y="10" width="104" height="190" rx="3" fill="none" stroke="rgba(255,255,255,0.55)" stroke-width="2.5"/>
+      <!-- Left door panel -->
+      <rect x="28" y="10" width="52" height="190" rx="2" fill="rgba(255,255,255,0.18)" stroke="rgba(255,255,255,0.4)" stroke-width="2"/>
+      <!-- Right door panel (open) — perspective trapezoid -->
+      <path d="M80 10 L132 22 L132 188 L80 200 Z" fill="rgba(255,255,255,0.08)" stroke="rgba(255,255,255,0.35)" stroke-width="2"/>
+      <!-- Dark gap / opening -->
+      <path d="M80 10 L90 14 L90 206 L80 200 Z" fill="rgba(0,0,0,0.55)"/>
+      <!-- Stars in the opening -->
+      <circle cx="85" cy="60"  r="1.8" fill="white" opacity=".9"/>
+      <circle cx="86" cy="100" r="1.2" fill="white" opacity=".7"/>
+      <circle cx="84" cy="140" r="1.5" fill="white" opacity=".8"/>
+      <circle cx="87" cy="175" r="1"   fill="white" opacity=".6"/>
+      <!-- Door handle -->
+      <circle cx="76" cy="108" r="4" fill="rgba(255,255,255,0.6)" stroke="rgba(255,255,255,0.85)" stroke-width="1.5"/>
+      <!-- Floor line shadow -->
+      <line x1="10" y1="200" x2="150" y2="200" stroke="rgba(255,255,255,0.25)" stroke-width="1.5" stroke-dasharray="4 6"/>
+    </svg>
+  </div>
+
+  <!-- Text + CTA -->
+  <div class="believe-text">
+    <h2 class="believe-title">
+      We Believe to
+      <span>a New World</span>
+    </h2>
+    <p class="believe-sub">Leads the team with a focus on strategic innovation and future trends.</p>
+    <button class="believe-btn">
+      View Possibilities
+      <span class="believe-btn-icon">↗</span>
+    </button>
+  </div>
+
+</section>
+
+<script>
+/* ═══════════════════════════════════════════════
+   SYNC: left/right column height = diagram height
+   so top card aligns with top shape, bottom with bottom
+═══════════════════════════════════════════════ */
+function syncColHeights() {
+  const h = document.getElementById('diagramWrap').offsetHeight;
+  ['leftCol','rightCol'].forEach(id => {
+    const el = document.getElementById(id);
+    if (el) el.style.height = h + 'px';
+  });
+}
+
+/* ═══════════════════════════════════════════════
+   SNOWFLAKE PUMP on shape hover
+═══════════════════════════════════════════════ */
+function pumpSnowflake() {
+  const bg   = document.getElementById('sf-bg');
+  const ring = document.getElementById('sf-ring');
+  if (!bg || !ring) return;
+  bg.animate([
+    {transform:'scale(1)',    transformOrigin:'17px 17px',offset:0   },
+    {transform:'scale(1.45)',transformOrigin:'17px 17px',offset:0.3  },
+    {transform:'scale(0.88)',transformOrigin:'17px 17px',offset:0.55 },
+    {transform:'scale(1.15)',transformOrigin:'17px 17px',offset:0.75 },
+    {transform:'scale(1)',    transformOrigin:'17px 17px',offset:1   },
+  ], {duration:550, easing:'ease-out', fill:'none'});
+  ring.animate([
+    {r:'17', opacity:'0.85', strokeWidth:'3',   offset:0},
+    {r:'38', opacity:'0',    strokeWidth:'1.5', offset:1},
+  ], {duration:550, easing:'ease-out', fill:'forwards'})
+    .finished.then(() => ring.setAttribute('r','17'));
+}
+document.querySelectorAll('.shape-group').forEach(s => {
+  let t = null;
+  s.addEventListener('mouseenter', () => { t = setTimeout(pumpSnowflake, 450); });
+  s.addEventListener('mouseleave', () => clearTimeout(t));
+});
+
+/* ═══════════════════════════════════════════════
+   FAN LINES — animate when scrolled into view
+═══════════════════════════════════════════════ */
+const fanGroup = document.querySelector('.fan-line')?.closest('g');
+if (fanGroup) {
+  const observer = new IntersectionObserver((entries) => {
+    entries.forEach(entry => {
+      if (entry.isIntersecting) {
+        document.querySelectorAll('.fan-line').forEach(el => el.classList.add('visible'));
+        observer.disconnect(); // only trigger once
+      }
+    });
+  }, { threshold: 0.2 });
+  observer.observe(fanGroup);
+}
+
+/* ═══════════════════════════════════════════════
+   CARD CONNECTOR — segment-by-segment animation
+
+   Route: card-0 (top-left) → card-1 (top-right)
+          → card-2 (bottom-right) → card-3 (bottom-left)
+          → card-0 (loop)
+
+   Each cycle:
+     HOLD phase  : dot glows at current card, no line drawn
+     TRAVEL phase: line segment grows from current→next, dot rides it
+     Arrival     : clear segment, activate next card, HOLD again
+
+   The fixed #connSvg is at z-index:2 (below cards at z-index:5)
+   so the line passes visibly BEHIND all page elements.
+═══════════════════════════════════════════════ */
+const IDS      = ['card-0','card-1','card-2','card-3'];
+const HOLD_MS  = 2000;
+const TRAVEL_MS= 900;
+
+let cIdx  = 0;
+let phase = 'hold';
+let t0    = 0;
+let pts   = [];
+let raf   = null;
+let cdIv  = null;
+
+const trackEl = document.getElementById('trackPath');
+const segEl   = document.getElementById('segPath');
+const dotEl   = document.getElementById('moveDot');
+
+/* Get PAGE-relative center of a card (not viewport-relative)
+   so coords stay correct when user scrolls */
+function cpt(id) {
+  const el = document.getElementById(id);
+  let x = 0, y = 0, node = el;
+  while (node) {
+    x += node.offsetLeft;
+    y += node.offsetTop;
+    node = node.offsetParent;
+  }
+  return {
+    x: x + el.offsetWidth  * 0.5,
+    y: y + el.offsetHeight * 0.5
+  };
+}
+
+function buildTrack(p) {
+  // Dashed rectangle connecting all 4 card centres
+  return `M${p[0].x},${p[0].y} L${p[1].x},${p[1].y} L${p[2].x},${p[2].y} L${p[3].x},${p[3].y} Z`;
+}
+
+function lerp(a, b, t) { return { x: a.x+(b.x-a.x)*t, y: a.y+(b.y-a.y)*t }; }
+function eio(t) { return t < 0.5 ? 2*t*t : -1+(4-2*t)*t; }
+
+function activateCard(i) {
+  IDS.forEach((id,j) => document.getElementById(id).classList.toggle('card-active', j===i));
+  // countdown badge 3 → 2 → 1
+  let v = 3;
+  badge(i, v);
+  clearInterval(cdIv);
+  cdIv = setInterval(() => {
+    v = Math.max(0, v-1);
+    badge(i, v);
+    if (v <= 0) clearInterval(cdIv);
+  }, HOLD_MS / 3);
+}
+function badge(i, v) {
+  const el = document.getElementById('counter-' + i);
+  if (el) el.textContent = v;
+}
+
+function startAnim() {
+  pts = IDS.map(id => cpt(id));
+  trackEl.setAttribute('d', buildTrack(pts));
+  segEl.setAttribute('d', '');
+  dotEl.setAttribute('cx', pts[0].x);
+  dotEl.setAttribute('cy', pts[0].y);
+  dotEl.setAttribute('r', '5');
+  cIdx  = 0;
+  phase = 'hold';
+  t0    = performance.now();
+  cancelAnimationFrame(raf);
+  activateCard(0);
+  raf = requestAnimationFrame(tick);
+}
+
+function tick(now) {
+  const elapsed = now - t0;
+  const from    = pts[cIdx];
+  const to      = pts[(cIdx + 1) % 4];
+
+  if (phase === 'hold') {
+    /* Dot parked at card, no segment */
+    dotEl.setAttribute('cx', from.x);
+    dotEl.setAttribute('cy', from.y);
+    segEl.setAttribute('d', '');
+
+    if (elapsed >= HOLD_MS) {
+      phase = 'travel';
+      t0    = now;
+    }
+  } else {
+    /* Segment grows from→to */
+    const t   = Math.min(elapsed / TRAVEL_MS, 1);
+    const e   = eio(t);
+    const mid = lerp(from, to, e);
+    segEl.setAttribute('d', `M${from.x},${from.y} L${mid.x},${mid.y}`);
+    dotEl.setAttribute('cx', mid.x);
+    dotEl.setAttribute('cy', mid.y);
+
+    if (t >= 1) {
+      /* Arrived at next card */
+      segEl.setAttribute('d', '');
+      cIdx  = (cIdx + 1) % 4;
+      phase = 'hold';
+      t0    = now;
+      activateCard(cIdx);
+    }
+  }
+
+  raf = requestAnimationFrame(tick);
+}
+
+/* ── Init & resize ── */
+window.addEventListener('load', () => {
+  syncColHeights();
+  setTimeout(startAnim, 200);
+});
+
+let resizeTimer;
+window.addEventListener('resize', () => {
+  clearTimeout(resizeTimer);
+  resizeTimer = setTimeout(() => {
+    syncColHeights();
+    /* Recompute card positions without restarting animation from scratch */
+    pts = IDS.map(id => cpt(id));
+    trackEl.setAttribute('d', buildTrack(pts));
+  }, 150);
+});
+/* ═══════════════════════════════════════════════
+   BELIEVE SECTION — entrance on scroll
+═══════════════════════════════════════════════ */
+const believeSection = document.getElementById('believeSection');
+if (believeSection) {
+  const bObs = new IntersectionObserver((entries) => {
+    entries.forEach(e => {
+      if (e.isIntersecting) {
+        believeSection.classList.add('in-view');
+        bObs.disconnect();
+      }
+    });
+  }, { threshold: 0.12 });
+  bObs.observe(believeSection);
+}
+</script>
+
+<!-- ══ THIRD SECTION — Feature Cards ══ -->
+<section class="courses-section" id="coursesSection">
+
+  <div class="courses-header">
+    <div class="courses-eyebrow">Our services</div>
+    <h2 class="courses-title">Innovate with <em>Purpose</em></h2>
+    <p class="courses-sub">Our users at the heart of our process, ensuring our services are intuitive, accessible, and engaging.</p>
+  </div>
+
+  <div class="courses-grid" id="coursesGrid">
+
+    <!-- Card 1 — largest: big image + headline + long description -->
+    <div class="course-card c1">
+      <div class="card-badge">🎓</div>
+      <div class="card-person">
+        <img src="https://i.pravatar.cc/400?img=47" alt="person"/>
+      </div>
+      <div>
+        <div class="card-kicker">Expert Workflow</div>
+        <div class="card-headline"><em>Expert</em><br>Workflow</div>
+        <div class="card-desc-text">Remote Healthcare and Telemedicine solutions built for modern distributed teams. We combine cutting-edge technology with human-centered design to help professionals work smarter, communicate clearly, and deliver exceptional outcomes at scale.</div>
+      </div>
+    </div>
+
+    <!-- Card 2 — medium: small image + short headline + one-liner -->
+    <div class="course-card c2">
+      <div class="card-badge">🤖</div>
+      <div class="card-person">
+        <img src="https://i.pravatar.cc/200?img=33" alt="person"/>
+      </div>
+      <div>
+        <div class="card-kicker">Intelligence</div>
+        <div class="card-headline">Flexible <em>AI</em></div>
+        <div class="card-desc-text">Data analytics to continually refine outcomes.</div>
+      </div>
+    </div>
+
+    <!-- Card 3 — smallest: no image, just badge + label -->
+    <div class="course-card c3">
+      <div class="card-badge">🔒</div>
+      <div>
+        <div class="card-kicker">Security</div>
+        <div class="card-headline">Secure</div>
+      </div>
+    </div>
+
+  </div><!-- /.courses-grid -->
+
+</section>
+
+<!-- Fixed Join pill -->
+<button class="join-pill">Join →</button>
+
+<script>
+/* ═══ THIRD SECTION — staggered card entrance ═══ */
+const courseCards = document.querySelectorAll('.course-card');
+if (courseCards.length) {
+  const cObs = new IntersectionObserver((entries) => {
+    entries.forEach(entry => {
+      if (entry.isIntersecting) {
+        entry.target.querySelectorAll('.course-card').forEach((c, i) => {
+          setTimeout(() => c.classList.add('card-in'), i * 120);
+        });
+        cObs.disconnect();
+      }
+    });
+  }, { threshold: 0.08 });
+  cObs.observe(document.getElementById('coursesGrid'));
+}
+</script>
+
+
+<!-- ══ FOURTH SECTION — Works, Workshop, Development, Projects ══ -->
+<section class="works-section" id="worksSection">
+
+  <!-- Floating icon tiles — scattered on RIGHT side -->
+  <div class="works-float wf-1">
+    <div class="works-icon-tile" style="width:72px;height:72px;">
+      <svg class="tile-svg" viewBox="0 0 40 40" fill="none">
+        <rect x="6"  y="6"  width="12" height="12" rx="3" fill="#3aaa6a"/>
+        <rect x="22" y="6"  width="12" height="12" rx="3" fill="#3aaa6a" opacity=".5"/>
+        <rect x="6"  y="22" width="12" height="12" rx="3" fill="#3aaa6a" opacity=".5"/>
+        <rect x="22" y="22" width="12" height="12" rx="3" fill="#3aaa6a" opacity=".25"/>
+      </svg>
+    </div>
+  </div>
+
+  <div class="works-float wf-2">
+    <div class="works-icon-tile" style="width:88px;height:88px;">
+      <svg class="tile-svg" viewBox="0 0 44 44" fill="none">
+        <polygon points="22,4 40,34 4,34" fill="none" stroke="#3aaa6a" stroke-width="3" stroke-linejoin="round"/>
+        <polygon points="22,12 34,32 10,32" fill="#3aaa6a" opacity=".25"/>
+      </svg>
+    </div>
+  </div>
+
+  <div class="works-float wf-3">
+    <div class="works-icon-tile" style="width:66px;height:66px;">
+      <svg class="tile-svg" viewBox="0 0 36 36" fill="none">
+        <rect x="4" y="8"  width="28" height="5" rx="2.5" fill="#3aaa6a"/>
+        <rect x="4" y="17" width="20" height="5" rx="2.5" fill="#3aaa6a" opacity=".5"/>
+        <rect x="4" y="26" width="24" height="5" rx="2.5" fill="#3aaa6a" opacity=".25"/>
+      </svg>
+    </div>
+  </div>
+
+  <div class="works-float wf-4">
+    <div class="works-icon-tile" style="width:58px;height:58px;">
+      <svg class="tile-svg" viewBox="0 0 32 32" fill="none">
+        <rect x="5" y="5" width="22" height="22" rx="5" stroke="#3aaa6a" stroke-width="2.5"/>
+        <rect x="10" y="10" width="12" height="12" rx="3" fill="#3aaa6a" opacity=".5"/>
+      </svg>
+    </div>
+  </div>
+
+  <!-- Person bubble photo — right side -->
+  <div class="works-float wf-person">
+    <img src="https://i.pravatar.cc/260?img=44" alt="person"/>
+  </div>
+
+  <!-- Main numbered list — left-aligned -->
+  <div class="works-content">
+    <div class="works-list">
+
+      <div class="works-item" data-index="0">
+        <span class="works-num">{ 01 }</span>
+        <span class="works-label">Works,</span>
+      </div>
+
+      <div class="works-item" data-index="1">
+        <span class="works-num">{ 02 }</span>
+        <span class="works-label">Workshop,</span>
+      </div>
+
+      <!-- Subtitle — always visible beneath Workshop -->
+      <p class="works-desc" id="works-desc-2">Support groups, and wellness resources through video calls, chat, and AI-guided self-help programs.</p>
+
+      <div class="works-item" data-index="2">
+        <span class="works-num">{ 03 }</span>
+        <span class="works-label">Development,</span>
+      </div>
+
+      <div class="works-item" data-index="3">
+        <span class="works-num">{ 04 }</span>
+        <span class="works-label">Projects</span>
+      </div>
+
+    </div>
+  </div>
+
+</section>
+
+<script>
+/* ═══ FOURTH SECTION — hover brush-underline only ═══ */
+const worksItems = document.querySelectorAll('.works-item');
+worksItems.forEach(item => {
+  item.addEventListener('mouseenter', () => {
+    document.querySelectorAll('.works-label').forEach(l => l.classList.remove('highlighted'));
+    item.querySelector('.works-label').classList.add('highlighted');
+  });
+});
+document.getElementById('worksSection').addEventListener('mouseleave', () => {
+  document.querySelectorAll('.works-label').forEach(l => l.classList.remove('highlighted'));
+});
+</script>
+
+
+<!-- ══ FIFTH SECTION — Our Dream Team ══ -->
+<section class="team-section" id="teamSection">
+
+  <!-- Header -->
+  <div class="team-header">
+    <h2 class="team-title">Our <strong>Dream</strong> <span class="team-title-highlight">Team</span></h2>
+    <p class="team-sub">Our mission is to revolutionize the online experience<br>by developing web-based services</p>
+  </div>
+
+  <!-- Cards carousel wrapper -->
+  <div class="team-slider-wrap">
+    <div class="team-carousel" id="teamCarousel">
+
+      <!-- PAGE 1 -->
+      <div class="team-page active" id="team-page-0">
+        <div class="team-card-wrap" style="--rot:-2.3deg">
+          <div class="team-card tc-green">
+            <div class="team-card-img"><img src="https://i.pravatar.cc/400?img=11" alt="Lowe Oberg"/></div>
+            <div class="team-card-info"><div class="team-name">Lowe Oberg</div><div class="team-role-desc">Clients search for a mentor based on their needs.</div></div>
+          </div>
+          <div class="team-card-footer">
+            <button class="team-role-pill">Co-founder</button>
+            <div class="team-socials">
+              <a href="#" class="team-social-btn"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 2h-3a5 5 0 0 0-5 5v3H7v4h3v8h4v-8h3l1-4h-4V7a1 1 0 0 1 1-1h3z"/></svg></a>
+              <a href="#" class="team-social-btn"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 4l16 16M20 4L4 20"/></svg></a>
+              <a href="#" class="team-social-btn"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="2" width="20" height="20" rx="5"/><path d="M8 11v5M8 8v.01M12 16v-5M12 13a2 2 0 0 1 4 0v3"/></svg></a>
+            </div>
+          </div>
+        </div>
+        <div class="team-card-wrap" style="--rot:1.5deg">
+          <div class="team-card tc-mint">
+            <div class="team-card-bg-pattern"></div>
+            <div class="team-card-img"><img src="https://i.pravatar.cc/400?img=15" alt="Gunnar Goransson"/></div>
+            <div class="team-card-info tc-info-mid"><div class="team-name">Gunnar Goransson</div><div class="team-role-desc">Review available gigs posted by mentors.</div></div>
+          </div>
+          <div class="team-card-footer">
+            <button class="team-role-pill">Teacher</button>
+            <div class="team-socials">
+              <a href="#" class="team-social-btn"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 2h-3a5 5 0 0 0-5 5v3H7v4h3v8h4v-8h3l1-4h-4V7a1 1 0 0 1 1-1h3z"/></svg></a>
+              <a href="#" class="team-social-btn"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 4l16 16M20 4L4 20"/></svg></a>
+              <a href="#" class="team-social-btn"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="2" width="20" height="20" rx="5"/><path d="M8 11v5M8 8v.01M12 16v-5M12 13a2 2 0 0 1 4 0v3"/></svg></a>
+            </div>
+          </div>
+        </div>
+        <div class="team-card-wrap" style="--rot:-1.0deg">
+          <div class="team-card tc-light">
+            <div class="team-card-bg-pattern tc-pattern-coral"></div>
+            <div class="team-card-img"><img src="https://i.pravatar.cc/400?img=25" alt="Eveline Henriksson"/></div>
+            <div class="team-card-info tc-info-dark"><div class="team-name">Eveline Henriksson</div><div class="team-role-desc">Contact the mentor and start working on the project.</div></div>
+          </div>
+          <div class="team-card-footer">
+            <button class="team-role-pill">Developer</button>
+            <div class="team-socials">
+              <a href="#" class="team-social-btn"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 2h-3a5 5 0 0 0-5 5v3H7v4h3v8h4v-8h3l1-4h-4V7a1 1 0 0 1 1-1h3z"/></svg></a>
+              <a href="#" class="team-social-btn"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 4l16 16M20 4L4 20"/></svg></a>
+              <a href="#" class="team-social-btn"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="2" width="20" height="20" rx="5"/><path d="M8 11v5M8 8v.01M12 16v-5M12 13a2 2 0 0 1 4 0v3"/></svg></a>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- PAGE 2 -->
+      <div class="team-page" id="team-page-1">
+        <div class="team-card-wrap" style="--rot:2.1deg">
+          <div class="team-card" style="background:#a8d8c8">
+            <div class="team-card-img"><img src="https://i.pravatar.cc/400?img=32" alt="Sofia Lindqvist"/></div>
+            <div class="team-card-info" style="background:rgba(40,110,80,0.92)"><div class="team-name">Sofia Lindqvist</div><div class="team-role-desc">Crafting interfaces that delight and inspire every user.</div></div>
+          </div>
+          <div class="team-card-footer">
+            <button class="team-role-pill">Designer</button>
+            <div class="team-socials">
+              <a href="#" class="team-social-btn"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 2h-3a5 5 0 0 0-5 5v3H7v4h3v8h4v-8h3l1-4h-4V7a1 1 0 0 1 1-1h3z"/></svg></a>
+              <a href="#" class="team-social-btn"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 4l16 16M20 4L4 20"/></svg></a>
+              <a href="#" class="team-social-btn"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="2" width="20" height="20" rx="5"/><path d="M8 11v5M8 8v.01M12 16v-5M12 13a2 2 0 0 1 4 0v3"/></svg></a>
+            </div>
+          </div>
+        </div>
+        <div class="team-card-wrap" style="--rot:-2.7deg">
+          <div class="team-card" style="background:#3aaa6a">
+            <div class="team-card-img"><img src="https://i.pravatar.cc/400?img=55" alt="Marcus Engstrom"/></div>
+            <div class="team-card-info" style="background:rgba(15,50,30,0.92)"><div class="team-name">Marcus Engstrom</div><div class="team-role-desc">Turning research into strategies that drive growth.</div></div>
+          </div>
+          <div class="team-card-footer">
+            <button class="team-role-pill">Strategist</button>
+            <div class="team-socials">
+              <a href="#" class="team-social-btn"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 2h-3a5 5 0 0 0-5 5v3H7v4h3v8h4v-8h3l1-4h-4V7a1 1 0 0 1 1-1h3z"/></svg></a>
+              <a href="#" class="team-social-btn"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 4l16 16M20 4L4 20"/></svg></a>
+              <a href="#" class="team-social-btn"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="2" width="20" height="20" rx="5"/><path d="M8 11v5M8 8v.01M12 16v-5M12 13a2 2 0 0 1 4 0v3"/></svg></a>
+            </div>
+          </div>
+        </div>
+        <div class="team-card-wrap" style="--rot:1.2deg">
+          <div class="team-card" style="background:#e8d5b8">
+            <div class="team-card-bg-pattern"></div>
+            <div class="team-card-img"><img src="https://i.pravatar.cc/400?img=60" alt="Petra Holm"/></div>
+            <div class="team-card-info tc-info-dark"><div class="team-name">Petra Holm</div><div class="team-role-desc">Building resilient systems that scale with confidence.</div></div>
+          </div>
+          <div class="team-card-footer">
+            <button class="team-role-pill">Engineer</button>
+            <div class="team-socials">
+              <a href="#" class="team-social-btn"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 2h-3a5 5 0 0 0-5 5v3H7v4h3v8h4v-8h3l1-4h-4V7a1 1 0 0 1 1-1h3z"/></svg></a>
+              <a href="#" class="team-social-btn"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 4l16 16M20 4L4 20"/></svg></a>
+              <a href="#" class="team-social-btn"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="2" width="20" height="20" rx="5"/><path d="M8 11v5M8 8v.01M12 16v-5M12 13a2 2 0 0 1 4 0v3"/></svg></a>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- PAGE 3 -->
+      <div class="team-page" id="team-page-2">
+        <div class="team-card-wrap" style="--rot:-1.8deg">
+          <div class="team-card" style="background:#b8d4a8">
+            <div class="team-card-img"><img src="https://i.pravatar.cc/400?img=41" alt="Asa Bergstrom"/></div>
+            <div class="team-card-info" style="background:rgba(30,80,45,0.92)"><div class="team-name">Asa Bergstrom</div><div class="team-role-desc">Aligning vision with execution to ship great products.</div></div>
+          </div>
+          <div class="team-card-footer">
+            <button class="team-role-pill">Product Lead</button>
+            <div class="team-socials">
+              <a href="#" class="team-social-btn"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 2h-3a5 5 0 0 0-5 5v3H7v4h3v8h4v-8h3l1-4h-4V7a1 1 0 0 1 1-1h3z"/></svg></a>
+              <a href="#" class="team-social-btn"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 4l16 16M20 4L4 20"/></svg></a>
+              <a href="#" class="team-social-btn"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="2" width="20" height="20" rx="5"/><path d="M8 11v5M8 8v.01M12 16v-5M12 13a2 2 0 0 1 4 0v3"/></svg></a>
+            </div>
+          </div>
+        </div>
+        <div class="team-card-wrap" style="--rot:2.9deg">
+          <div class="team-card tc-mint">
+            <div class="team-card-img"><img src="https://i.pravatar.cc/400?img=49" alt="Erik Sandstrom"/></div>
+            <div class="team-card-info tc-info-mid"><div class="team-name">Erik Sandstrom</div><div class="team-role-desc">Uncovering insights that shape the future of learning.</div></div>
+          </div>
+          <div class="team-card-footer">
+            <button class="team-role-pill">Researcher</button>
+            <div class="team-socials">
+              <a href="#" class="team-social-btn"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 2h-3a5 5 0 0 0-5 5v3H7v4h3v8h4v-8h3l1-4h-4V7a1 1 0 0 1 1-1h3z"/></svg></a>
+              <a href="#" class="team-social-btn"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 4l16 16M20 4L4 20"/></svg></a>
+              <a href="#" class="team-social-btn"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="2" width="20" height="20" rx="5"/><path d="M8 11v5M8 8v.01M12 16v-5M12 13a2 2 0 0 1 4 0v3"/></svg></a>
+            </div>
+          </div>
+        </div>
+        <div class="team-card-wrap" style="--rot:-0.8deg">
+          <div class="team-card" style="background:#4a7a5a">
+            <div class="team-card-img"><img src="https://i.pravatar.cc/400?img=23" alt="Mia Karlsson"/></div>
+            <div class="team-card-info" style="background:rgba(10,30,18,0.92)"><div class="team-name">Mia Karlsson</div><div class="team-role-desc">Scaling reach through data-driven growth experiments.</div></div>
+          </div>
+          <div class="team-card-footer">
+            <button class="team-role-pill">Growth</button>
+            <div class="team-socials">
+              <a href="#" class="team-social-btn"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 2h-3a5 5 0 0 0-5 5v3H7v4h3v8h4v-8h3l1-4h-4V7a1 1 0 0 1 1-1h3z"/></svg></a>
+              <a href="#" class="team-social-btn"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 4l16 16M20 4L4 20"/></svg></a>
+              <a href="#" class="team-social-btn"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="2" width="20" height="20" rx="5"/><path d="M8 11v5M8 8v.01M12 16v-5M12 13a2 2 0 0 1 4 0v3"/></svg></a>
+            </div>
+          </div>
+        </div>
+      </div>
+
+    </div><!-- /.team-carousel -->
+
+    <!-- 3 Dots — one per page of 3 -->
+    <div class="team-dots">
+      <span class="team-dot active" data-page="0"></span>
+      <span class="team-dot" data-page="1"></span>
+      <span class="team-dot" data-page="2"></span>
+    </div>
+  </div>
+
+</section>
+
+<!-- FOOTER -->
+<footer class="site-footer">
+  <div class="footer-inner">
+    <div class="footer-top">
+      <div class="footer-brand">
+        <div class="footer-logo">
+          <div class="footer-logo-icon">&#10052;</div>
+          <span class="footer-logo-text">Flowkit</span>
+        </div>
+        <p class="footer-tagline">Learn the skills that<br>actually matter &mdash; together.</p>
+        <div class="footer-socials">
+          <a href="#" class="footer-social"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 4l16 16M20 4L4 20"/></svg></a>
+          <a href="#" class="footer-social"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="2" width="20" height="20" rx="5"/><path d="M8 11v5M8 8v.01M12 16v-5M12 13a2 2 0 0 1 4 0v3"/></svg></a>
+          <a href="#" class="footer-social"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="2" width="20" height="20" rx="5"/><circle cx="12" cy="12" r="5"/><circle cx="17.5" cy="6.5" r="1" fill="currentColor" stroke="none"/></svg></a>
+          <a href="#" class="footer-social"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22.5 6.5a3 3 0 0 0-2.1-2.1C18.6 4 12 4 12 4s-6.6 0-8.4.4a3 3 0 0 0-2.1 2.1C1 8.3 1 12 1 12s0 3.7.5 5.5a3 3 0 0 0 2.1 2.1C5.4 20 12 20 12 20s6.6 0 8.4-.4a3 3 0 0 0 2.1-2.1C23 15.7 23 12 23 12s0-3.7-.5-5.5z"/><polygon points="10 15 15 12 10 9 10 15" fill="currentColor" stroke="none"/></svg></a>
+        </div>
+      </div>
+      <div class="footer-links-group">
+        <div class="footer-col">
+          <h4 class="footer-col-title">Product</h4>
+          <a href="#">Overview</a><a href="#">Courses</a><a href="#">Pricing</a><a href="#">Changelog</a>
+        </div>
+        <div class="footer-col">
+          <h4 class="footer-col-title">Community</h4>
+          <a href="#">Forum</a><a href="#">Events</a><a href="#">Mentorship</a><a href="#">Newsletter</a>
+        </div>
+        <div class="footer-col">
+          <h4 class="footer-col-title">Company</h4>
+          <a href="#">About</a><a href="#">Blog</a><a href="#">Careers</a><a href="#">Contact</a>
+        </div>
+      </div>
+      <div class="footer-newsletter">
+        <h4 class="footer-col-title">Stay in the loop</h4>
+        <p>Get updates on new courses, features, and community highlights.</p>
+        <div class="footer-form">
+          <input type="email" placeholder="your@email.com" class="footer-input"/>
+          <button class="footer-submit">&#8594;</button>
+        </div>
+      </div>
+    </div>
+    <div class="footer-bottom">
+      <span>&copy; 2025 Flowkit. All rights reserved.</span>
+      <div class="footer-bottom-links">
+        <a href="#">Privacy</a><a href="#">Terms</a><a href="#">Cookies</a>
+      </div>
+    </div>
+  </div>
+</footer>
+
+<style>
+/* ═══════════════════════════════════════
+   FIFTH SECTION — Dream Team
+═══════════════════════════════════════ */
+.team-section {
+  background: #f0f2ee;
+  min-height: 100vh;
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 80px clamp(24px, 6vw, 80px) 60px;
+  overflow: visible;
+}
+
+.team-flower {
+  position: fixed;          /* fixed = viewport coords, immune to all overflow:hidden ancestors */
+  width: clamp(52px, 6vw, 72px);
+  height: clamp(52px, 6vw, 72px);
+  z-index: 200;
+  pointer-events: none;
+  filter: drop-shadow(0 4px 16px rgba(58,170,106,0.55));
+  animation: flowerSpin 12s linear infinite;
+  top: -200px; left: -200px; /* offscreen until JS places it */
+  opacity: 0;
+  transition: opacity 0.4s ease;
+}
+.team-flower.visible { opacity: 1; }
+@keyframes flowerSpin { to { transform: rotate(360deg); } }
+
+.team-header {
+  text-align: center;
+  margin-bottom: clamp(32px, 5vw, 52px);
+  position: relative;
+  z-index: 2;
+}
+.team-title {
+  font-size: clamp(36px, 6vw, 72px);
+  font-weight: 400;
+  color: var(--dark);
+  letter-spacing: -0.03em;
+  line-height: 1.05;
+  margin-bottom: 14px;
+}
+.team-title strong { font-weight: 800; }
+.team-title-highlight {
+  font-weight: 800;
+  color: var(--dark);
+  position: relative;
+  display: inline-block;
+}
+.team-title-highlight::after {
+  content: '';
+  position: absolute;
+  left: -4px; right: -4px;
+  bottom: 4px;
+  height: 10px;
+  background: var(--green);
+  z-index: -1;
+  border-radius: 3px;
+  opacity: 0.55;
+}
+.team-sub {
+  font-size: clamp(13px, 1.4vw, 16px);
+  color: #6a8a78;
+  line-height: 1.7;
+}
+
+/* Slider wrapper */
+.team-slider-wrap {
+  width: 100%;
+  max-width: 980px;
+  position: relative;
+  z-index: 2;
+}
+.team-slider, .team-page {
+  display: flex;
+  gap: clamp(14px, 2vw, 22px);
+  align-items: flex-start;
+}
+
+/* Card wrapper — holds card + hover footer together */
+.team-card-wrap {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+}
+
+/* Card itself */
+.team-card {
+  border-radius: 24px;
+  overflow: hidden;
+  position: relative;
+  width: 100%;
+  height: clamp(300px, 40vw, 460px);
+  cursor: pointer;
+  transition: box-shadow .35s;
+  box-shadow: 0 8px 32px rgba(0,0,0,0.10);
+}
+.team-card-wrap:hover .team-card {
+  box-shadow: 0 20px 48px rgba(0,0,0,0.18);
+}
+
+.tc-green { background: #5dc88a; }
+.tc-mint  { background: #c8eeda; }
+.tc-light { background: #d8ead2; }
+
+/* Diagonal pattern */
+.team-card-bg-pattern {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  background-image: repeating-linear-gradient(
+    45deg,
+    transparent,
+    transparent 10px,
+    rgba(220,80,60,0.18) 10px,
+    rgba(220,80,60,0.18) 12px
+  );
+}
+.tc-pattern-coral {
+  background-image: repeating-linear-gradient(
+    45deg,
+    transparent,
+    transparent 10px,
+    rgba(220,80,60,0.15) 10px,
+    rgba(220,80,60,0.15) 12px
+  );
+}
+
+/* Person photo fills card */
+.team-card-img {
+  position: absolute;
+  inset: 0;
+}
+.team-card-img img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  object-position: top center;
+  display: block;
+}
+
+/* Name / desc overlay at bottom of card */
+.team-card-info {
+  position: absolute;
+  bottom: 0; left: 0; right: 0;
+  padding: 16px 18px 18px;
+  background: rgba(93,200,138,0.92);
+  backdrop-filter: blur(4px);
+}
+.tc-info-mid  { background: rgba(70,160,100,0.92); }
+.tc-info-dark { background: rgba(20,40,30,0.92); }
+
+.team-name {
+  font-size: clamp(14px, 1.6vw, 18px);
+  font-weight: 700;
+  color: #fff;
+  margin-bottom: 4px;
+  letter-spacing: -0.02em;
+}
+.team-role-desc {
+  font-size: clamp(11px, 1.1vw, 13px);
+  color: rgba(255,255,255,0.85);
+  line-height: 1.5;
+}
+
+/* Hover footer — role pill + socials, hidden until hover */
+.team-card-footer {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-top: 14px;
+  padding: 0 4px;
+  opacity: 0;
+  transform: translateY(8px);
+  transition: opacity .28s ease, transform .28s cubic-bezier(.22,1,.36,1);
+  pointer-events: none;
+}
+.team-card-wrap:hover .team-card-footer {
+  opacity: 1;
+  transform: translateY(0);
+  pointer-events: auto;
+}
+
+/* Role pill */
+.team-role-pill {
+  font-family: 'DM Sans', sans-serif;
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--dark);
+  background: transparent;
+  border: 1.5px solid var(--dark);
+  border-radius: 100px;
+  padding: 7px 18px;
+  cursor: pointer;
+  white-space: nowrap;
+  transition: background .2s, color .2s;
+}
+.team-role-pill:hover { background: var(--dark); color: #fff; }
+
+/* Social buttons */
+.team-socials { display: flex; gap: 7px; }
+.team-social-btn {
+  width: 32px; height: 32px;
+  border-radius: 50%;
+  border: 1.5px solid rgba(26,58,42,0.3);
+  display: flex; align-items: center; justify-content: center;
+  color: var(--dark);
+  text-decoration: none;
+  transition: background .2s, border-color .2s, color .2s;
+}
+.team-social-btn:hover { background: var(--dark); color: #fff; border-color: var(--dark); }
+.team-social-btn svg { width: 13px; height: 13px; }
+
+/* Dots — centered below cards */
+.team-dots {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  margin-top: 32px;
+}
+.team-dot {
+  width: 28px; height: 5px;
+  border-radius: 3px;
+  background: rgba(26,58,42,0.18);
+  cursor: pointer;
+  transition: background .3s, width .3s;
+}
+.team-dot.active {
+  background: var(--dark);
+  width: 44px;
+}
+
+/* Carousel container — clips overflow for slide effect */
+.team-carousel {
+  width: 100%;
+  position: relative;
+  overflow: hidden;
+  /* height will be set by JS to match tallest page */
+}
+
+/* Each page sits in a layer stack */
+.team-page {
+  display: flex;
+  gap: clamp(14px, 2vw, 22px);
+  align-items: flex-start;
+  position: absolute;
+  top: 0; left: 0; right: 0;
+  opacity: 0;
+  pointer-events: none;
+  transform: translateX(60px);
+  transition: opacity 0.55s cubic-bezier(.4,0,.2,1), transform 0.55s cubic-bezier(.4,0,.2,1);
+  will-change: opacity, transform;
+}
+.team-page.active {
+  position: relative;
+  opacity: 1;
+  pointer-events: auto;
+  transform: translateX(0);
+}
+.team-page.exit-left {
+  position: absolute;
+  opacity: 0;
+  pointer-events: none;
+  transform: translateX(-60px);
+}
+.team-page.enter-right {
+  position: absolute;
+  opacity: 0;
+  pointer-events: none;
+  transform: translateX(60px);
+}
+.team-page.enter-left {
+  position: absolute;
+  opacity: 0;
+  pointer-events: none;
+  transform: translateX(-60px);
+}
+.team-page.exit-right {
+  position: absolute;
+  opacity: 0;
+  pointer-events: none;
+  transform: translateX(60px);
+}
+
+/* Card stagger — cards enter one by one */
+.team-card-wrap {
+  opacity: 0;
+  transform: rotate(var(--rot, 0deg)) translateY(24px);
+  transition: opacity 0.45s ease, transform 0.45s cubic-bezier(.22,1,.36,1);
+}
+.team-card-wrap.card-visible {
+  opacity: 1;
+  transform: rotate(var(--rot, 0deg)) translateY(0);
+}
+.team-card-wrap.card-visible:hover {
+  transform: rotate(0deg) translateY(-6px) !important;
+}
+
+/* Random rotation — handled by stagger CSS above */
+
+/* ═══════════════════════════════════════
+   FOOTER
+═══════════════════════════════════════ */
+.site-footer {
+  background: var(--dark);
+  color: rgba(255,255,255,0.7);
+  font-family: 'DM Sans', sans-serif;
+}
+.footer-inner {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 0 clamp(24px, 6vw, 80px);
+}
+.footer-top {
+  display: grid;
+  grid-template-columns: 1.4fr 2fr 1.4fr;
+  gap: clamp(32px, 5vw, 72px);
+  padding: 72px 0 52px;
+  border-bottom: 1px solid rgba(255,255,255,0.1);
+}
+@media(max-width: 900px) {
+  .footer-top { grid-template-columns: 1fr 1fr; }
+}
+@media(max-width: 560px) {
+  .footer-top { grid-template-columns: 1fr; }
+}
+
+/* Brand column */
+.footer-brand { display: flex; flex-direction: column; gap: 16px; }
+.footer-logo { display: flex; align-items: center; gap: 9px; }
+.footer-logo-icon {
+  width: 34px; height: 34px;
+  background: linear-gradient(135deg, var(--green), #2a8a50);
+  border-radius: 10px;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 16px;
+  box-shadow: 0 2px 12px rgba(58,170,106,0.4);
+}
+.footer-logo-text { font-size: 15px; font-weight: 700; color: white; letter-spacing: -0.3px; }
+.footer-tagline { font-size: 14px; line-height: 1.65; color: rgba(255,255,255,0.5); }
+.footer-socials { display: flex; gap: 8px; }
+.footer-social {
+  width: 34px; height: 34px;
+  border-radius: 50%;
+  border: 1px solid rgba(255,255,255,0.15);
+  display: flex; align-items: center; justify-content: center;
+  color: rgba(255,255,255,0.55);
+  text-decoration: none;
+  transition: background .2s, color .2s, border-color .2s;
+}
+.footer-social:hover { background: var(--green); color: white; border-color: var(--green); }
+.footer-social svg { width: 13px; height: 13px; }
+
+/* Links group */
+.footer-links-group { display: flex; gap: clamp(24px, 4vw, 56px); }
+.footer-col { display: flex; flex-direction: column; gap: 10px; }
+.footer-col-title {
+  font-size: 11px; font-weight: 700;
+  letter-spacing: 0.12em; text-transform: uppercase;
+  color: white; margin-bottom: 4px;
+}
+.footer-col a {
+  font-size: 14px; color: rgba(255,255,255,0.5);
+  text-decoration: none;
+  transition: color .2s;
+}
+.footer-col a:hover { color: white; }
+
+/* Newsletter */
+.footer-newsletter { display: flex; flex-direction: column; gap: 12px; }
+.footer-newsletter p { font-size: 13px; line-height: 1.65; color: rgba(255,255,255,0.45); }
+.footer-form {
+  display: flex;
+  background: rgba(255,255,255,0.07);
+  border: 1px solid rgba(255,255,255,0.14);
+  border-radius: 12px;
+  overflow: hidden;
+  transition: border-color .2s;
+}
+.footer-form:focus-within { border-color: var(--green); }
+.footer-input {
+  flex: 1; background: transparent;
+  border: none; outline: none;
+  padding: 12px 14px;
+  font-family: 'DM Sans', sans-serif;
+  font-size: 13px; color: white;
+}
+.footer-input::placeholder { color: rgba(255,255,255,0.3); }
+.footer-submit {
+  background: var(--green);
+  border: none; cursor: pointer;
+  padding: 0 18px;
+  font-size: 16px; color: white;
+  font-family: 'DM Sans', sans-serif;
+  font-weight: 700;
+  transition: background .2s;
+  display: flex; align-items: center; justify-content: center;
+}
+.footer-submit:hover { background: #2a9a5a; }
+
+/* Bottom bar */
+.footer-bottom {
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 22px 0;
+  font-size: 12px; color: rgba(255,255,255,0.3);
+}
+.footer-bottom-links { display: flex; gap: 20px; }
+.footer-bottom-links a { color: rgba(255,255,255,0.3); text-decoration: none; transition: color .2s; }
+.footer-bottom-links a:hover { color: white; }
+</style>
+
+<script>
+/* ═══ TEAM CAROUSEL — slide+fade with auto-advance ═══ */
+(function() {
+  const pages    = Array.from(document.querySelectorAll('.team-page'));
+  const dots     = Array.from(document.querySelectorAll('.team-dot'));
+  const carousel = document.getElementById('teamCarousel');
+  let current    = 0;
+  let timer      = null;
+  const INTERVAL = 2000;
+  const ANIM_MS  = 550;
+
+  /* Lock carousel height to avoid layout jumps during transition */
+  function lockHeight() {
+    const h = carousel.getBoundingClientRect().height;
+    if (h > 0) carousel.style.minHeight = h + 'px';
+  }
+
+  function staggerCards(page, delay) {
+    const cards = page.querySelectorAll('.team-card-wrap');
+    cards.forEach(c => c.classList.remove('card-visible'));
+    cards.forEach((c, i) => {
+      setTimeout(() => c.classList.add('card-visible'), delay + i * 140);
+    });
+  }
+
+  function goTo(next, direction) {
+    if (next === current) return;
+    lockHeight();
+
+    const prev = current;
+    current = next;
+
+    const enterClass = direction === 'forward' ? 'enter-right' : 'enter-left';
+    const exitClass  = direction === 'forward' ? 'exit-left'   : 'exit-right';
+
+    /* Reset incoming cards to invisible before slide starts */
+    pages[next].querySelectorAll('.team-card-wrap').forEach(c => c.classList.remove('card-visible'));
+
+    /* Prep incoming page off-screen */
+    pages[next].classList.remove('active', 'exit-left', 'exit-right', 'enter-left', 'enter-right');
+    pages[next].classList.add(enterClass);
+    void pages[next].offsetWidth; /* force reflow */
+
+    /* Slide both pages */
+    pages[prev].classList.remove('active');
+    pages[prev].classList.add(exitClass);
+    pages[next].classList.remove(enterClass);
+    pages[next].classList.add('active');
+
+    /* Update dots */
+    dots.forEach((d, i) => d.classList.toggle('active', i === current));
+
+    /* Stagger cards in after slide settles */
+    staggerCards(pages[next], ANIM_MS * 0.5);
+
+    /* Clean up prev page */
+    setTimeout(() => {
+      pages[prev].classList.remove(exitClass, 'exit-left', 'exit-right');
+    }, ANIM_MS + 50);
+  }
+
+  function advance() {
+    goTo((current + 1) % pages.length, 'forward');
+  }
+
+  function startTimer() {
+    clearInterval(timer);
+    timer = setInterval(advance, INTERVAL);
+  }
+
+  /* Dot clicks */
+  dots.forEach((dot, i) => {
+    dot.addEventListener('click', () => {
+      const dir = i > current ? 'forward' : 'backward';
+      goTo(i, dir);
+      startTimer(); /* reset timer on manual click */
+    });
+  });
+
+  /* Pause on hover */
+  carousel.addEventListener('mouseenter', () => clearInterval(timer));
+  carousel.addEventListener('mouseleave', startTimer);
+
+  /* Swipe support on touch */
+  let touchStartX = 0;
+  carousel.addEventListener('touchstart', e => { touchStartX = e.touches[0].clientX; }, { passive: true });
+  carousel.addEventListener('touchend', e => {
+    const dx = e.changedTouches[0].clientX - touchStartX;
+    if (Math.abs(dx) > 40) {
+      dx < 0 ? goTo((current + 1) % pages.length, 'forward')
+             : goTo((current - 1 + pages.length) % pages.length, 'backward');
+      startTimer();
+    }
+  });
+
+  /* Flower: position:fixed uses viewport coords — immune to all overflow:hidden */
+  function positionFlower() {
+    const flower    = document.getElementById('teamFlower');
+    const firstCard = document.querySelector('#team-page-0 .team-card-wrap');
+    if (!flower || !firstCard) return;
+    const rect   = firstCard.getBoundingClientRect();
+    const flSize = flower.offsetWidth || 62;
+    /* Snap to top-left corner of first card in viewport space */
+    flower.style.left = (rect.left - flSize * 0.5) + 'px';
+    flower.style.top  = (rect.top  - flSize * 0.5) + 'px';
+    /* Only show when the section is in view */
+    const section = document.getElementById('teamSection');
+    if (section) {
+      const sr = section.getBoundingClientRect();
+      const inView = sr.top < window.innerHeight && sr.bottom > 0;
+      flower.classList.toggle('visible', inView);
+    }
+  }
+
+  window.addEventListener('load', () => {
+    positionFlower();
+    setTimeout(positionFlower, 200);
+    /* Stagger first page cards on load */
+    staggerCards(pages[0], 200);
+    startTimer();
+  });
+  window.addEventListener('scroll', positionFlower, { passive: true });
+  window.addEventListener('resize', positionFlower);
+})();
+</script>
+
+<!-- Flower: position:fixed so NO ancestor overflow:hidden can clip it -->
+<div class="team-flower" id="teamFlower">
+  <svg viewBox="0 0 80 80" fill="none" xmlns="http://www.w3.org/2000/svg">
+    <ellipse cx="40" cy="12" rx="10" ry="16" fill="#3aaa6a" transform="rotate(0 40 40)" opacity="0.95"/>
+    <ellipse cx="40" cy="12" rx="10" ry="16" fill="#2d9558" transform="rotate(45 40 40)" opacity="0.90"/>
+    <ellipse cx="40" cy="12" rx="10" ry="16" fill="#3aaa6a" transform="rotate(90 40 40)" opacity="0.85"/>
+    <ellipse cx="40" cy="12" rx="10" ry="16" fill="#2d9558" transform="rotate(135 40 40)" opacity="0.90"/>
+    <ellipse cx="40" cy="12" rx="10" ry="16" fill="#3aaa6a" transform="rotate(180 40 40)" opacity="0.85"/>
+    <ellipse cx="40" cy="12" rx="10" ry="16" fill="#2d9558" transform="rotate(225 40 40)" opacity="0.90"/>
+    <ellipse cx="40" cy="12" rx="10" ry="16" fill="#3aaa6a" transform="rotate(270 40 40)" opacity="0.85"/>
+    <ellipse cx="40" cy="12" rx="10" ry="16" fill="#2d9558" transform="rotate(315 40 40)" opacity="0.90"/>
+    <circle cx="40" cy="40" r="13" fill="#fff" opacity="0.95"/>
+    <circle cx="40" cy="40" r="9" fill="#3aaa6a"/>
+  </svg>
+</div>
+
+</body>
+</html>

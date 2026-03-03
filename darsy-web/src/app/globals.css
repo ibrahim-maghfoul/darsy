@@ -1,0 +1,179 @@
+@import "tailwindcss";
+
+@theme {
+  --color-green: #3aaa6a;
+  --color-dark: #1a3a2a;
+  --color-bg: #e4e8e3;
+  --font-sans: var(--font-cairo), sans-serif;
+  --font-cairo: var(--font-cairo), sans-serif;
+
+  --shadow-card: 0 4px 18px rgba(0, 0, 0, 0.08), 0 1px 4px rgba(0, 0, 0, 0.04);
+  --shadow-card-active: 0 0 0 2.5px var(--color-green), 0 6px 24px rgba(58, 170, 106, 0.25);
+
+  --breakpoint-mobile: 520px;
+}
+
+:root {
+  --background: #ffffff;
+  --foreground: var(--color-dark);
+}
+
+body {
+  background: var(--background);
+  color: var(--foreground);
+  font-family: var(--font-cairo);
+  min-height: 100vh;
+  overflow-x: hidden;
+}
+
+@keyframes fanDraw {
+  to {
+    stroke-dashoffset: 0;
+  }
+}
+
+@keyframes fanPulse {
+
+  0%,
+  100% {
+    opacity: 1;
+  }
+
+  50% {
+    opacity: 0.38;
+  }
+}
+
+.fan-line {
+  stroke-dasharray: 450;
+  stroke-dashoffset: 450;
+  opacity: 0;
+  transition: opacity 0.4s ease;
+}
+
+.fan-line.visible {
+  opacity: 1;
+  animation:
+    fanDraw 2.2s cubic-bezier(0.22, 1, 0.36, 1) forwards,
+    fanPulse 2.5s ease-in-out infinite alternate 2.6s;
+}
+
+@keyframes chipFloat {
+
+  0%,
+  100% {
+    transform: translateY(0px) rotate(var(--r, 0deg));
+  }
+
+  50% {
+    transform: translateY(var(--dy, -10px)) rotate(var(--r, 0deg));
+  }
+}
+
+@keyframes wFloat {
+
+  0%,
+  100% {
+    transform: translateY(0) rotate(var(--wr, 0deg));
+  }
+
+  50% {
+    transform: translateY(var(--wdy, -16px)) rotate(var(--wr, 0deg));
+  }
+}
+
+@keyframes cardPump {
+  0% {
+    transform: scale(1);
+  }
+
+  35% {
+    transform: scale(1.08);
+  }
+
+  65% {
+    transform: scale(0.95);
+  }
+
+  100% {
+    transform: scale(1);
+  }
+}
+
+.clip-hex {
+  clip-path: path('M 50 4 C 54 4 86 21 90 25 C 94 29 94 71 90 75 C 86 79 54 96 50 96 C 46 96 14 79 10 75 C 6 71 6 29 10 25 C 14 21 46 4 50 4 Z');
+}
+
+.clip-hex-rounded {
+  clip-path: path('M 107.9 11.0 C 114.5 7.1 125.5 7.2 132.1 11.0 L 208.3 55.0 C 215.0 58.9 220.5 68.3 220.5 76.0 L 220.5 164.0 C 220.5 171.7 215.0 181.2 208.3 185.0 L 132.1 229.0 C 125.5 232.8 114.5 232.8 107.9 229.0 L 31.7 185.0 C 25.0 181.2 19.5 171.7 19.5 164.0 L 19.5 76.0 C 19.5 68.3 25.0 58.8 31.7 55.0 Z');
+}
+
+.clip-hex-rounded-small {
+  clip-path: path('M 36.0 3.7 C 38.2 2.4 41.8 2.4 44.0 3.7 L 69.4 18.3 C 71.7 19.6 73.5 22.8 73.5 25.3 L 73.5 54.7 C 73.5 57.2 71.7 60.4 69.4 61.7 L 44.0 76.3 C 41.8 77.6 38.2 77.6 36.0 76.3 L 10.6 61.7 C 8.3 60.4 6.5 57.2 6.5 54.7 L 6.5 25.3 C 6.5 22.8 8.3 19.6 10.6 18.3 Z');
+}
+
+/* Modern Chat UI Utilities */
+.glass-effect {
+  background: rgba(255, 255, 255, 0.7);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border: 1px solid rgba(255, 255, 255, 0.3);
+}
+
+.glass-effect-dark {
+  background: rgba(26, 58, 42, 0.8);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+/* Custom Thin Scrollbar */
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+::-webkit-scrollbar-thumb {
+  background: rgba(58, 170, 106, 0.2);
+  border-radius: 10px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: rgba(58, 170, 106, 0.4);
+}
+
+@keyframes float {
+  0% {
+    transform: translateY(0px);
+  }
+
+  50% {
+    transform: translateY(-10px);
+  }
+
+  100% {
+    transform: translateY(0px);
+  }
+}
+
+.floating {
+  animation: float 3s ease-in-out infinite;
+}
+
+@keyframes spin-slow {
+  from {
+    transform: rotate(0deg);
+  }
+
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+.animate-spin-slow {
+  animation: spin-slow 8s linear infinite;
+}

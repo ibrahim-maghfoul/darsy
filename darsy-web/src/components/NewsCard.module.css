@@ -1,0 +1,376 @@
+.card {
+    position: relative;
+    width: 100%;
+    max-width: 370px;
+    background: #ffffff;
+    /* Light mode bg */
+    border-radius: 0.75rem;
+    padding: 10px;
+    box-sizing: border-box;
+    overflow: visible;
+    font-family: var(--font-cairo), Arial, sans-serif;
+    --pill-height: 38px;
+    --notch-gap: 8px;
+    --bg-color: var(--color-bg);
+    /* Match the page's global background for smooth cutouts */
+    /* Must match the page's background for smooth cutouts */
+    --scoop-size: 20px;
+    color: #1a1f2e;
+    /* Light mode text */
+    height: 340px;
+    display: flex;
+    flex-direction: column;
+    margin: 10px auto;
+    transition: transform 0.3s;
+}
+
+.card:hover {
+    transform: translateY(-6px);
+}
+
+/* --- DYNAMIC PILL WIDTHS --- */
+.pricePill,
+.counter {
+    width: 32%;
+    font-size: 13px;
+}
+
+/* --- DEEP CONCAVE SCOOPS --- */
+.cornerTl {
+    position: absolute;
+    top: calc(38px + 8px);
+    left: 0;
+    width: 20px;
+    height: 20px;
+    background: transparent;
+    border-top-left-radius: 100%;
+    box-shadow: -20px -20px 0 20px var(--bg-color);
+    z-index: 2;
+}
+
+.cornerTlSide {
+    position: absolute;
+    top: 0;
+    left: calc(32% + 8px);
+    width: 20px;
+    height: 20px;
+    background: transparent;
+    border-top-left-radius: 100%;
+    box-shadow: -20px -20px 0 20px var(--bg-color);
+    z-index: 2;
+}
+
+.cornerBr {
+    position: absolute;
+    bottom: calc(38px + 8px);
+    right: 0;
+    width: 20px;
+    height: 20px;
+    background: transparent;
+    border-bottom-right-radius: 100%;
+    box-shadow: 20px 20px 0 20px var(--bg-color);
+    z-index: 2;
+}
+
+.cornerBrSide {
+    position: absolute;
+    bottom: 0;
+    right: calc(32% + 8px);
+    width: 20px;
+    height: 20px;
+    background: transparent;
+    border-bottom-right-radius: 100%;
+    box-shadow: 20px 20px 0 20px var(--bg-color);
+    z-index: 2;
+}
+
+/* --- NOTCH BACKGROUNDS --- */
+.card::before {
+    content: '';
+    position: absolute;
+    top: -8px;
+    left: -8px;
+    width: calc(32% + 16px);
+    height: calc(38px + 16px);
+    background: var(--bg-color);
+    border-radius: 25px;
+    z-index: 1;
+}
+
+.card::after {
+    content: '';
+    position: absolute;
+    bottom: -8px;
+    right: -8px;
+    width: calc(32% + 16px);
+    height: calc(38px + 16px);
+    background: var(--bg-color);
+    border-radius: 25px;
+    z-index: 1;
+}
+
+/* --- PILLS (Green) --- */
+.pricePill {
+    position: absolute;
+    top: 0;
+    left: 0;
+    height: 38px;
+    background: #3aaa6a;
+    border-radius: 25px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: bold;
+    font-size: 12px;
+    z-index: 3;
+    padding: 0 8px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    color: white;
+}
+
+.counter {
+    position: absolute;
+    bottom: 0;
+    right: 0;
+    height: 38px;
+    background: #3aaa6a;
+    border-radius: 25px;
+    display: flex;
+    align-items: center;
+    justify-content: space-around;
+    gap: 6px;
+    z-index: 3;
+    padding: 0 10px;
+    color: white;
+}
+
+.moreText {
+    font-weight: 800;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    font-size: 13px;
+    display: flex;
+    align-items: center;
+    gap: 4px;
+}
+
+/* --- TOP TEXT --- */
+.topText {
+    margin-left: calc(32% + 18px);
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    direction: ltr;
+    text-align: left;
+    height: 38px;
+    overflow: hidden;
+}
+
+.title {
+    font-weight: bold;
+    font-size: 15px;
+    margin: 0;
+    direction: ltr;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    color: #1a1f2e;
+}
+
+.subtitle {
+    font-size: 12px;
+    margin: 0;
+    direction: ltr;
+    color: #64748b;
+    /* Slate 500 */
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+/* --- IMAGE --- */
+.image {
+    width: 100%;
+    flex: 1;
+    min-height: 160px;
+    border-radius: 14px;
+    background-position: center;
+    background-size: cover;
+    background-repeat: no-repeat;
+    margin: 10px 0;
+    transition: transform 0.4s;
+    border: 1px solid rgba(0, 0, 0, 0.04);
+}
+
+.card:hover .image {
+    transform: scale(1.03);
+}
+
+/* --- BOTTOM TEXT --- */
+.bottomText {
+    margin-right: calc(32% + 10px);
+    margin-left: 10px;
+    font-size: 11px;
+    line-height: 1.4;
+    direction: ltr;
+    text-align: left;
+    height: 38px;
+    overflow: hidden;
+    display: -webkit-box;
+    -webkit-line-clamp: 3;
+    -webkit-box-orient: vertical;
+    line-clamp: 3;
+    color: #64748b;
+}
+
+/* ─── Blob Button (READ pill) ─────────────────────────────────────────────── */
+
+.blobBtn {
+    z-index: 1;
+    position: absolute;
+    bottom: 0;
+    right: 0;
+    padding: 0;
+    width: 110px;
+    height: 38px;
+    text-align: center;
+    text-transform: uppercase;
+    color: #ffffff;
+    font-size: 13px;
+    font-weight: 700;
+    background-color: #3aaa6a;
+    outline: none;
+    border: none;
+    transition: color 0.5s;
+    cursor: pointer;
+    border-radius: 19px;
+    font-family: var(--font-cairo), Arial, sans-serif;
+    letter-spacing: 0.5px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 5px;
+}
+
+.blobBtn::before {
+    content: none;
+}
+
+.blobBtn::after {
+    content: "";
+    z-index: -2;
+    position: absolute;
+    left: 3px;
+    top: 3px;
+    width: 100%;
+    height: 100%;
+    transition: all 0.3s 0.2s;
+    border-radius: 19px;
+}
+
+.blobBtn:hover,
+.cardWrapper:hover .blobBtn {
+    color: #3aaa6a;
+}
+
+.blobBtn:hover::after,
+.cardWrapper:hover .blobBtn::after {
+    transition: all 0.3s;
+    left: 0;
+    top: 0;
+}
+
+.blobBtnInner {
+    z-index: -1;
+    overflow: hidden;
+    position: absolute;
+    left: 0;
+    top: 0;
+    width: 100%;
+    height: 100%;
+    border-radius: 19px;
+    background: transparent;
+}
+
+.blobBtnBlobs {
+    position: relative;
+    display: block;
+    height: 100%;
+    filter: url('#goo');
+}
+
+.blobBtnBlob {
+    position: absolute;
+    top: 2px;
+    width: 25%;
+    /* 100% / 4 blobs */
+    height: 100%;
+    background: #ffffff;
+    border-radius: 100%;
+    transform: translate3d(0, 150%, 0) scale(1.4);
+    transition: transform 0.45s;
+}
+
+.blobBtnBlob:nth-child(1) {
+    left: 0%;
+    transition-delay: 0s;
+}
+
+.blobBtnBlob:nth-child(2) {
+    left: 30%;
+    transition-delay: 0.08s;
+}
+
+.blobBtnBlob:nth-child(3) {
+    left: 60%;
+    transition-delay: 0.16s;
+}
+
+.blobBtnBlob:nth-child(4) {
+    left: 90%;
+    transition-delay: 0.24s;
+}
+
+.blobBtn:hover .blobBtnBlob,
+.cardWrapper:hover .blobBtnBlob {
+    transform: translateZ(0) scale(1.4);
+}
+
+/* Label & arrow that sit above the blobs */
+.blobBtnLabel {
+    position: relative;
+    z-index: 2;
+    display: flex;
+    align-items: center;
+    gap: 5px;
+    pointer-events: none;
+}
+
+/* ─── Hover states & Shadowing ───────────────────────────────────────────── */
+
+.cardWrapper {
+    transition: transform 0.3s ease;
+}
+
+.cardWrapper:hover {
+    transform: translateY(-4px);
+    /* lift up subtly, optional but nice */
+}
+
+.cardShape {
+    display: block;
+    transition: filter 0.3s ease;
+}
+
+
+.svgHoverLayer {
+    opacity: 0;
+    transition: opacity 0.3s ease;
+}
+
+.cardWrapper:hover .svgHoverLayer {
+    opacity: 1;
+    /* light green pump color constrained to card bg */
+}

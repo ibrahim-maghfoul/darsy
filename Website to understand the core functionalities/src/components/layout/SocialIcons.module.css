@@ -1,0 +1,126 @@
+.iconContainer {
+    display: flex;
+    gap: 12px;
+    justify-content: center;
+    align-items: center;
+    margin-top: 20px;
+}
+
+.icon {
+    cursor: pointer;
+    position: relative;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    overflow: hidden;
+    transition: all 0.25s ease;
+    background: transparent;
+    z-index: 1;
+}
+
+.icon::before,
+.icon::after {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    height: 100%;
+    width: 100%;
+    transition: all 0.25s ease;
+    border-radius: 50%;
+    z-index: -1;
+}
+
+.icon svg {
+    position: relative;
+    color: #FFFFFF;
+    width: 20px;
+    height: 20px;
+    transition: all 0.25s ease;
+    z-index: 2;
+}
+
+/* icon-fill - Facebook - Green in original, but using Blue for FB */
+.iconFill::before {
+    transition-duration: 0.5s;
+    box-shadow: inset 0 0 0 1px #1877F2;
+}
+
+.iconFill:hover::before {
+    box-shadow: inset 0 0 0 40px #1877F2;
+}
+
+/* icon-enter - Instagram - Orange/Pink */
+.iconEnter::after {
+    box-shadow: inset 0 0 0 1px #E4405F;
+}
+
+.iconEnter::before {
+    border-radius: 0;
+    margin-left: -100%;
+    box-shadow: inset 0 0 0 40px #E4405F;
+}
+
+.iconEnter:hover::before {
+    margin-left: 0;
+}
+
+/* icon-expand - Twitter/X - Red in original, keeping Red as requested or using Blue? User requested these specific animations. */
+.iconExpand::after {
+    box-shadow: inset 0 0 0 1px #1DA1F2;
+}
+
+.iconExpand::before {
+    background: #1DA1F2;
+    box-shadow: inset 0 0 0 40px #09090b;
+    /* matching background color */
+}
+
+.iconExpand:hover::before {
+    box-shadow: inset 0 0 0 1px #09090b;
+}
+
+/* icon-collapse - Linkedin - Green-l */
+.iconCollapse::before {
+    border-radius: 0;
+}
+
+.iconCollapse:hover::before {
+    box-shadow:
+        inset 0 20px 0 0 #0A66C2,
+        inset 0 -20px 0 0 #0A66C2;
+}
+
+.iconCollapse::after {
+    box-shadow: inset 0 0 0 1px #0A66C2;
+}
+
+/* icon-rotate - WhatsApp - Purple */
+.iconRotate {
+    box-shadow: inset 0 0 0 1px #25D366;
+}
+
+.iconRotate::after,
+.iconRotate::before {
+    border: 0px solid #25D366;
+    transition: border-width 0.3s ease, border-color 0.3s ease;
+    box-sizing: border-box;
+}
+
+.iconRotate:hover::before {
+    border-top-width: 40px;
+    border-top-color: #25D366;
+}
+
+.iconRotate:hover::after {
+    border-left-width: 40px;
+    border-left-color: #25D366;
+}
+
+.iconRotate:hover {
+    transition: background 0.001s ease 0.3s;
+    background: #25D366;
+}

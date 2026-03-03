@@ -1,0 +1,62 @@
+[
+  {
+    "id": "61dad7ec-ee31-43bb-aa70-16d05145f522",
+    "schoolId": "ce4b8bcc-c719-48cb-9353-8779cd951dba",
+    "title": "1ère année"
+  },
+  {
+    "id": "52f5b503-4c7d-4f11-b465-b170ce0cf5f6",
+    "schoolId": "ce4b8bcc-c719-48cb-9353-8779cd951dba",
+    "title": "2ème année"
+  },
+  {
+    "id": "a78f7c96-a868-4865-88a8-1a393b15a1d7",
+    "schoolId": "ce4b8bcc-c719-48cb-9353-8779cd951dba",
+    "title": "3ème année"
+  },
+  {
+    "id": "ef670d28-d391-40a6-abce-982b41d0444a",
+    "schoolId": "e7a1f356-20c6-4052-85ff-cc05abb563d0",
+    "title": "1ère Bac"
+  },
+  {
+    "id": "877aaa8f-8350-4682-8c27-7dc7a6ef70e2",
+    "schoolId": "e7a1f356-20c6-4052-85ff-cc05abb563d0",
+    "title": "2ème Bac"
+  },
+  {
+    "id": "78030c13-5509-40e1-9a55-b7d715ebf7d3",
+    "schoolId": "e7a1f356-20c6-4052-85ff-cc05abb563d0",
+    "title": "Tronc Commun"
+  },
+  {
+    "id": "d96c9687-6ed9-423d-b369-c163cf811a1d",
+    "schoolId": "8c79ad0b-ea05-42c4-8efe-11d4eece5de3",
+    "title": "1ère année"
+  },
+  {
+    "id": "1131eb82-031b-4485-b2ec-2a772c73b45a",
+    "schoolId": "8c79ad0b-ea05-42c4-8efe-11d4eece5de3",
+    "title": "2ème année"
+  },
+  {
+    "id": "d2ccda85-3b62-4d0e-8c1e-b2eaaff0a90b",
+    "schoolId": "8c79ad0b-ea05-42c4-8efe-11d4eece5de3",
+    "title": "3ème année"
+  },
+  {
+    "id": "eb9c123c-89da-40f4-8b42-f4ef33c78ca9",
+    "schoolId": "8c79ad0b-ea05-42c4-8efe-11d4eece5de3",
+    "title": "4ème année"
+  },
+  {
+    "id": "10f65cdd-40d2-420b-a91e-6a224d0d460f",
+    "schoolId": "8c79ad0b-ea05-42c4-8efe-11d4eece5de3",
+    "title": "5ème année"
+  },
+  {
+    "id": "ff4906f8-b647-4104-956a-7493bbbcbb1d",
+    "schoolId": "8c79ad0b-ea05-42c4-8efe-11d4eece5de3",
+    "title": "6ème année"
+  }
+]

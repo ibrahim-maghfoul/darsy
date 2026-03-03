@@ -1,0 +1,233 @@
+.firebase-upload {
+    padding: 2rem;
+    max-width: 1200px;
+    margin: 0 auto;
+}
+
+.firebase-upload h1 {
+    margin-bottom: 1rem;
+    color: #333;
+}
+
+.description {
+    color: #666;
+    margin-bottom: 2rem;
+    line-height: 1.6;
+}
+
+.upload-section {
+    margin-bottom: 2rem;
+}
+
+.upload-btn {
+    padding: 1rem 2rem;
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: white;
+    border: none;
+    border-radius: 8px;
+    font-size: 1.1rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: transform 0.2s, box-shadow 0.2s;
+    box-shadow: 0 4px 12px rgba(102, 126, 234, 0.3);
+}
+
+.upload-btn:hover:not(:disabled) {
+    transform: translateY(-2px);
+    box-shadow: 0 6px 16px rgba(102, 126, 234, 0.4);
+}
+
+.upload-btn:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+}
+
+.delete-all-btn {
+    padding: 1rem 2rem;
+    background: white;
+    color: #f44336;
+    border: 2px solid #f44336;
+    border-radius: 8px;
+    font-size: 1.1rem;
+    font-weight: 600;
+    cursor: pointer;
+    margin-left: 1rem;
+    transition: all 0.2s;
+}
+
+.delete-all-btn:hover:not(:disabled) {
+    background: #fff5f5;
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(244, 67, 54, 0.1);
+}
+
+.delete-all-btn:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+}
+
+.overall-progress {
+    margin-top: 1.5rem;
+    padding: 1.5rem;
+    background: white;
+    border-radius: 8px;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+}
+
+.progress-bar {
+    width: 100%;
+    height: 24px;
+    background: #e0e0e0;
+    border-radius: 12px;
+    overflow: hidden;
+    margin-bottom: 0.5rem;
+}
+
+.progress-fill {
+    height: 100%;
+    background: linear-gradient(90deg, #667eea, #764ba2);
+    transition: width 0.3s ease;
+    border-radius: 12px;
+}
+
+.progress-text {
+    text-align: center;
+    color: #666;
+    font-weight: 600;
+}
+
+.collections-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+    gap: 1.5rem;
+    margin-bottom: 2rem;
+}
+
+.collection-card {
+    background: white;
+    border-radius: 8px;
+    padding: 1.5rem;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+    transition: transform 0.2s, box-shadow 0.2s;
+}
+
+.collection-card:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+}
+
+.collection-card.uploading {
+    border-left: 4px solid #2196F3;
+}
+
+.collection-card.complete {
+    border-left: 4px solid #4CAF50;
+}
+
+.collection-card.error {
+    border-left: 4px solid #f44336;
+}
+
+.collection-header {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    margin-bottom: 1rem;
+}
+
+.status-icon {
+    font-size: 1.5rem;
+}
+
+.collection-header h3 {
+    margin: 0;
+    color: #333;
+    font-size: 1.1rem;
+    text-transform: capitalize;
+}
+
+.collection-stats {
+    margin-top: 0.75rem;
+}
+
+.progress-info {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+}
+
+.mini-progress-bar {
+    width: 100%;
+    height: 8px;
+    background: #e0e0e0;
+    border-radius: 4px;
+    overflow: hidden;
+}
+
+.mini-progress-fill {
+    height: 100%;
+    background: linear-gradient(90deg, #667eea, #764ba2);
+    transition: width 0.3s ease;
+    border-radius: 4px;
+}
+
+.count {
+    font-size: 0.9rem;
+    color: #666;
+    font-weight: 600;
+}
+
+.status-text {
+    font-size: 0.9rem;
+    color: #999;
+    font-style: italic;
+}
+
+.errors-section {
+    background: #fff3f3;
+    border: 2px solid #f44336;
+    border-radius: 8px;
+    padding: 1.5rem;
+    margin-bottom: 2rem;
+}
+
+.errors-section h3 {
+    margin: 0 0 1rem 0;
+    color: #d32f2f;
+}
+
+.errors-section ul {
+    margin: 0;
+    padding-left: 1.5rem;
+}
+
+.errors-section li {
+    color: #d32f2f;
+    margin-bottom: 0.5rem;
+}
+
+.success-message {
+    background: linear-gradient(135deg, #4CAF50 0%, #45a049 100%);
+    color: white;
+    border-radius: 8px;
+    padding: 2rem;
+    text-align: center;
+    box-shadow: 0 4px 12px rgba(76, 175, 80, 0.3);
+}
+
+.success-message h3 {
+    margin: 0 0 0.5rem 0;
+    font-size: 1.5rem;
+}
+
+.success-message p {
+    margin: 0;
+    font-size: 1.1rem;
+    opacity: 0.95;
+}
+
+@media (max-width: 768px) {
+    .collections-grid {
+        grid-template-columns: 1fr;
+    }
+}

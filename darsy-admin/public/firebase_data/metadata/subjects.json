@@ -1,0 +1,1877 @@
+[
+  {
+    "id": "b78ce819-1fce-40f3-95b0-cc2702f2ed21",
+    "guidanceId": "15fd540f-307e-4175-9540-d8be17f9ec93",
+    "title": "Mathématiques"
+  },
+  {
+    "id": "7a502898-163e-4236-b31a-accc9907db8e",
+    "guidanceId": "15fd540f-307e-4175-9540-d8be17f9ec93",
+    "title": "Mathématiques (Fr)"
+  },
+  {
+    "id": "070dddf1-9e80-48fc-8b7c-a45c9f2198b4",
+    "guidanceId": "15fd540f-307e-4175-9540-d8be17f9ec93",
+    "title": "Physique et Chimie"
+  },
+  {
+    "id": "966dbf57-adb9-4e0b-aeb7-77e75754bf1f",
+    "guidanceId": "15fd540f-307e-4175-9540-d8be17f9ec93",
+    "title": "Physique et Chimie (Fr)"
+  },
+  {
+    "id": "e97ff35f-cf44-408a-9fd6-cfaa1480d3b8",
+    "guidanceId": "15fd540f-307e-4175-9540-d8be17f9ec93",
+    "title": "Sciences de la Vie et de la Terre (SVT)"
+  },
+  {
+    "id": "9e915e08-22b3-4ec6-9463-d80b81650a7c",
+    "guidanceId": "15fd540f-307e-4175-9540-d8be17f9ec93",
+    "title": "Sciences de la vie et de la Terre (SVT Fr)"
+  },
+  {
+    "id": "d4da5373-14ca-4080-9221-3333fd879c7c",
+    "guidanceId": "15fd540f-307e-4175-9540-d8be17f9ec93",
+    "title": "Informatique"
+  },
+  {
+    "id": "22623aa1-0fc3-4d20-ad61-bafe1bc8b9b5",
+    "guidanceId": "15fd540f-307e-4175-9540-d8be17f9ec93",
+    "title": "Arabe"
+  },
+  {
+    "id": "f824bf73-bd01-4764-b690-906c92ef5db3",
+    "guidanceId": "15fd540f-307e-4175-9540-d8be17f9ec93",
+    "title": "Français"
+  },
+  {
+    "id": "a52f4108-587b-4e4e-87e0-16524516117d",
+    "guidanceId": "15fd540f-307e-4175-9540-d8be17f9ec93",
+    "title": "Anglais"
+  },
+  {
+    "id": "7719d1f0-71c1-45ec-bb43-2255a8afca0b",
+    "guidanceId": "15fd540f-307e-4175-9540-d8be17f9ec93",
+    "title": "Histoire Géographie"
+  },
+  {
+    "id": "93b190de-d6cc-4a2e-bb4b-ce3a69af87bd",
+    "guidanceId": "15fd540f-307e-4175-9540-d8be17f9ec93",
+    "title": "Education Islamique"
+  },
+  {
+    "id": "ee1d0511-2874-463c-b9d9-a1ced3a4f1ef",
+    "guidanceId": "15fd540f-307e-4175-9540-d8be17f9ec93",
+    "title": "Mathématiques"
+  },
+  {
+    "id": "ac34d0d9-818f-4d75-b54c-145844eb7812",
+    "guidanceId": "15fd540f-307e-4175-9540-d8be17f9ec93",
+    "title": "Mathématiques (Fr)"
+  },
+  {
+    "id": "71bc9b35-8bbe-4371-a3dd-4abacc03e6ce",
+    "guidanceId": "15fd540f-307e-4175-9540-d8be17f9ec93",
+    "title": "Physique et Chimie"
+  },
+  {
+    "id": "ab2e1eb4-0054-482a-82dc-70be732771ac",
+    "guidanceId": "15fd540f-307e-4175-9540-d8be17f9ec93",
+    "title": "Physique et Chimie (Fr)"
+  },
+  {
+    "id": "bbc7fbab-9f08-4f70-b7c6-3d1ff6265644",
+    "guidanceId": "15fd540f-307e-4175-9540-d8be17f9ec93",
+    "title": "Sciences de la Vie et de la Terre (SVT)"
+  },
+  {
+    "id": "b0c7cdf0-694e-455a-8c4f-eecf4970f38c",
+    "guidanceId": "15fd540f-307e-4175-9540-d8be17f9ec93",
+    "title": "Sciences de la vie et de la Terre (SVT Fr)"
+  },
+  {
+    "id": "284e2494-086a-4d6e-be46-7f3715d9b53e",
+    "guidanceId": "15fd540f-307e-4175-9540-d8be17f9ec93",
+    "title": "Informatique"
+  },
+  {
+    "id": "28b4d652-db9e-43f6-be20-c62751e001ae",
+    "guidanceId": "15fd540f-307e-4175-9540-d8be17f9ec93",
+    "title": "Arabe"
+  },
+  {
+    "id": "66adb6ad-6daa-465d-8725-de0117573608",
+    "guidanceId": "15fd540f-307e-4175-9540-d8be17f9ec93",
+    "title": "Français"
+  },
+  {
+    "id": "21ab87fb-da10-4ed6-a347-a74003e9540e",
+    "guidanceId": "15fd540f-307e-4175-9540-d8be17f9ec93",
+    "title": "Anglais"
+  },
+  {
+    "id": "338da3fc-9d20-4b02-bf18-235725862b15",
+    "guidanceId": "15fd540f-307e-4175-9540-d8be17f9ec93",
+    "title": "Histoire Géographie"
+  },
+  {
+    "id": "0a0aa0de-f498-47f5-b5d2-2f99b2b3e80b",
+    "guidanceId": "15fd540f-307e-4175-9540-d8be17f9ec93",
+    "title": "Education Islamique"
+  },
+  {
+    "id": "8a8fd1e0-bbc7-4c86-b8a5-41cea80c56f3",
+    "guidanceId": "70cf0ba2-8466-4d45-aefe-c11d49252019",
+    "title": "Mathématiques"
+  },
+  {
+    "id": "86b832eb-cce6-4ccb-9840-eb6c546bbd75",
+    "guidanceId": "70cf0ba2-8466-4d45-aefe-c11d49252019",
+    "title": "Mathématiques (Fr)"
+  },
+  {
+    "id": "aa328022-e589-477c-8707-a8a5f4ac896e",
+    "guidanceId": "70cf0ba2-8466-4d45-aefe-c11d49252019",
+    "title": "Physique et Chimie"
+  },
+  {
+    "id": "985b3def-498d-49e7-8b20-96bd761d08a8",
+    "guidanceId": "70cf0ba2-8466-4d45-aefe-c11d49252019",
+    "title": "Physique et Chimie (Fr)"
+  },
+  {
+    "id": "5b4b2be8-4fa7-447c-9d6b-59297fc04d5a",
+    "guidanceId": "70cf0ba2-8466-4d45-aefe-c11d49252019",
+    "title": "Sciences de la Vie et de la Terre (SVT)"
+  },
+  {
+    "id": "d4c3d69c-ad0d-4583-adc6-649fa0c4b6cb",
+    "guidanceId": "70cf0ba2-8466-4d45-aefe-c11d49252019",
+    "title": "Sciences de la vie et de la Terre (SVT Fr)"
+  },
+  {
+    "id": "ec86d6a6-66d1-4489-ae6c-90d06a4c4e16",
+    "guidanceId": "70cf0ba2-8466-4d45-aefe-c11d49252019",
+    "title": "Informatique"
+  },
+  {
+    "id": "de78aaf7-3bed-4be5-989f-40f6d8332b9f",
+    "guidanceId": "70cf0ba2-8466-4d45-aefe-c11d49252019",
+    "title": "Technologie Industrielle"
+  },
+  {
+    "id": "a27d0bee-c237-4a1f-beef-4c2194ae793d",
+    "guidanceId": "70cf0ba2-8466-4d45-aefe-c11d49252019",
+    "title": "Arabe"
+  },
+  {
+    "id": "caae6812-117f-4c2d-bfc0-7a80c955eb01",
+    "guidanceId": "70cf0ba2-8466-4d45-aefe-c11d49252019",
+    "title": "Français"
+  },
+  {
+    "id": "952da58b-f0a6-4f4c-89a8-7fe522d3e4d6",
+    "guidanceId": "70cf0ba2-8466-4d45-aefe-c11d49252019",
+    "title": "Anglais"
+  },
+  {
+    "id": "15771cc6-500b-4827-97e7-ada872d61983",
+    "guidanceId": "70cf0ba2-8466-4d45-aefe-c11d49252019",
+    "title": "Histoire Géographie"
+  },
+  {
+    "id": "0f954977-7c80-449f-bef1-cae3f1ed0005",
+    "guidanceId": "70cf0ba2-8466-4d45-aefe-c11d49252019",
+    "title": "Education Islamique"
+  },
+  {
+    "id": "de5ad0f2-32bb-44f9-aa1b-55e22e06f225",
+    "guidanceId": "70cf0ba2-8466-4d45-aefe-c11d49252019",
+    "title": "Mathématiques"
+  },
+  {
+    "id": "163499d0-f897-4338-b761-6405f5096c12",
+    "guidanceId": "70cf0ba2-8466-4d45-aefe-c11d49252019",
+    "title": "Mathématiques (Fr)"
+  },
+  {
+    "id": "c92758b6-c75f-4378-ad49-130e89f134b6",
+    "guidanceId": "70cf0ba2-8466-4d45-aefe-c11d49252019",
+    "title": "Physique et Chimie"
+  },
+  {
+    "id": "27667b2c-722e-485b-9540-2cfba14820c6",
+    "guidanceId": "70cf0ba2-8466-4d45-aefe-c11d49252019",
+    "title": "Physique et Chimie (Fr)"
+  },
+  {
+    "id": "477ad3df-1bfb-4e04-8bcd-d2261232a2ae",
+    "guidanceId": "70cf0ba2-8466-4d45-aefe-c11d49252019",
+    "title": "Sciences de la Vie et de la Terre (SVT)"
+  },
+  {
+    "id": "84395319-bbdb-4dda-8e5b-b3744a015d12",
+    "guidanceId": "70cf0ba2-8466-4d45-aefe-c11d49252019",
+    "title": "Sciences de la vie et de la Terre (SVT Fr)"
+  },
+  {
+    "id": "1ae2bc06-92ec-427a-a4cb-015c7893f179",
+    "guidanceId": "70cf0ba2-8466-4d45-aefe-c11d49252019",
+    "title": "Informatique"
+  },
+  {
+    "id": "568c4bc8-664d-4600-9b55-1c0c7ea5cf37",
+    "guidanceId": "70cf0ba2-8466-4d45-aefe-c11d49252019",
+    "title": "Technologie Industrielle"
+  },
+  {
+    "id": "2e87a49c-e96b-422c-a82e-ddb94e1bd7c8",
+    "guidanceId": "70cf0ba2-8466-4d45-aefe-c11d49252019",
+    "title": "Arabe"
+  },
+  {
+    "id": "25aa87a8-ba61-438b-901d-3a7f9165d579",
+    "guidanceId": "70cf0ba2-8466-4d45-aefe-c11d49252019",
+    "title": "Français"
+  },
+  {
+    "id": "0d3afbec-476f-410a-96d9-3b449c973039",
+    "guidanceId": "70cf0ba2-8466-4d45-aefe-c11d49252019",
+    "title": "Anglais"
+  },
+  {
+    "id": "256dff02-8672-42fd-a6d3-2beb4afd2f0c",
+    "guidanceId": "70cf0ba2-8466-4d45-aefe-c11d49252019",
+    "title": "Histoire Géographie"
+  },
+  {
+    "id": "9647b6b7-362c-4cd0-b294-f7d3b8e581da",
+    "guidanceId": "70cf0ba2-8466-4d45-aefe-c11d49252019",
+    "title": "Education Islamique"
+  },
+  {
+    "id": "1153567f-9355-4c51-b5ec-48ea35496fbf",
+    "guidanceId": "67a9c2b6-65bf-4a7b-8d26-ea2166a0e5e6",
+    "title": "Mathématiques"
+  },
+  {
+    "id": "01e1b0ef-ba3b-47ca-8ff4-39aebe1a0733",
+    "guidanceId": "67a9c2b6-65bf-4a7b-8d26-ea2166a0e5e6",
+    "title": "Mathématiques (Fr)"
+  },
+  {
+    "id": "19079795-b27b-4317-9f2c-2a68554b1533",
+    "guidanceId": "67a9c2b6-65bf-4a7b-8d26-ea2166a0e5e6",
+    "title": "Physique et Chimie"
+  },
+  {
+    "id": "e158f07b-1c45-414c-8252-ba1447c396a2",
+    "guidanceId": "67a9c2b6-65bf-4a7b-8d26-ea2166a0e5e6",
+    "title": "Physique et Chimie (Fr)"
+  },
+  {
+    "id": "53f57a64-71e3-4c5b-ba6a-f6ab90309d12",
+    "guidanceId": "67a9c2b6-65bf-4a7b-8d26-ea2166a0e5e6",
+    "title": "Sciences de la Vie et de la Terre (SVT)"
+  },
+  {
+    "id": "fea7902f-f92b-4987-a2a2-2639e310fd57",
+    "guidanceId": "67a9c2b6-65bf-4a7b-8d26-ea2166a0e5e6",
+    "title": "Sciences de la vie et de la Terre (SVT Fr)"
+  },
+  {
+    "id": "4886364e-183e-46cd-84b2-0d5d7a2a77a7",
+    "guidanceId": "67a9c2b6-65bf-4a7b-8d26-ea2166a0e5e6",
+    "title": "Informatique"
+  },
+  {
+    "id": "11341ef6-06bc-42c4-a502-972af7d0a638",
+    "guidanceId": "67a9c2b6-65bf-4a7b-8d26-ea2166a0e5e6",
+    "title": "Technologie Industrielle"
+  },
+  {
+    "id": "b77771cb-69f5-47a5-bd95-c1defd56a860",
+    "guidanceId": "67a9c2b6-65bf-4a7b-8d26-ea2166a0e5e6",
+    "title": "Arabe"
+  },
+  {
+    "id": "da30e304-e47a-45fd-a02b-74908fec4274",
+    "guidanceId": "67a9c2b6-65bf-4a7b-8d26-ea2166a0e5e6",
+    "title": "Français"
+  },
+  {
+    "id": "29e7edb0-620d-4928-9edc-82cc4e47693f",
+    "guidanceId": "67a9c2b6-65bf-4a7b-8d26-ea2166a0e5e6",
+    "title": "Anglais"
+  },
+  {
+    "id": "a3f1a6f9-ef56-459c-9fa4-69e635dcebe6",
+    "guidanceId": "67a9c2b6-65bf-4a7b-8d26-ea2166a0e5e6",
+    "title": "Histoire Géographie"
+  },
+  {
+    "id": "1372a2e0-3c10-40ca-a6b7-226e4e1b082a",
+    "guidanceId": "67a9c2b6-65bf-4a7b-8d26-ea2166a0e5e6",
+    "title": "Education Islamique"
+  },
+  {
+    "id": "931b664f-a265-4b46-8a21-ff81b343b87d",
+    "guidanceId": "67a9c2b6-65bf-4a7b-8d26-ea2166a0e5e6",
+    "title": "Mathématiques"
+  },
+  {
+    "id": "c9ef5366-714a-4861-abf6-5425400a09e3",
+    "guidanceId": "67a9c2b6-65bf-4a7b-8d26-ea2166a0e5e6",
+    "title": "Mathématiques (Fr)"
+  },
+  {
+    "id": "80c34cf8-c08e-4765-ae5b-6ce2d57229da",
+    "guidanceId": "67a9c2b6-65bf-4a7b-8d26-ea2166a0e5e6",
+    "title": "Physique et Chimie"
+  },
+  {
+    "id": "d0af6746-be9b-43e2-8a91-3ebadc802b7a",
+    "guidanceId": "67a9c2b6-65bf-4a7b-8d26-ea2166a0e5e6",
+    "title": "Physique et Chimie (Fr)"
+  },
+  {
+    "id": "969cfc1b-0d56-4419-93d2-c37df6df480a",
+    "guidanceId": "67a9c2b6-65bf-4a7b-8d26-ea2166a0e5e6",
+    "title": "Sciences de la Vie et de la Terre (SVT)"
+  },
+  {
+    "id": "754c3fb7-0bf2-409a-8137-6653d8500f2e",
+    "guidanceId": "67a9c2b6-65bf-4a7b-8d26-ea2166a0e5e6",
+    "title": "Sciences de la vie et de la Terre (SVT Fr)"
+  },
+  {
+    "id": "c7df0815-8b55-4ed5-8c81-549f0f6d1ec6",
+    "guidanceId": "67a9c2b6-65bf-4a7b-8d26-ea2166a0e5e6",
+    "title": "Informatique"
+  },
+  {
+    "id": "d1d9869d-6052-4524-b3bc-8a127725180c",
+    "guidanceId": "67a9c2b6-65bf-4a7b-8d26-ea2166a0e5e6",
+    "title": "Technologie Industrielle"
+  },
+  {
+    "id": "8182956e-ebc9-42da-93b0-591e88b88136",
+    "guidanceId": "67a9c2b6-65bf-4a7b-8d26-ea2166a0e5e6",
+    "title": "Arabe"
+  },
+  {
+    "id": "2ca86d5b-32ea-45ac-bcda-585c7026d614",
+    "guidanceId": "67a9c2b6-65bf-4a7b-8d26-ea2166a0e5e6",
+    "title": "Français"
+  },
+  {
+    "id": "51e73362-a836-4e08-aa0e-7949dd702517",
+    "guidanceId": "67a9c2b6-65bf-4a7b-8d26-ea2166a0e5e6",
+    "title": "Anglais"
+  },
+  {
+    "id": "8dc17d64-2072-477a-bec5-d479f0f38374",
+    "guidanceId": "67a9c2b6-65bf-4a7b-8d26-ea2166a0e5e6",
+    "title": "Histoire Géographie"
+  },
+  {
+    "id": "c821708c-c526-468c-b71d-3883dbb5d7ab",
+    "guidanceId": "67a9c2b6-65bf-4a7b-8d26-ea2166a0e5e6",
+    "title": "Education Islamique"
+  },
+  {
+    "id": "9ee6ef9b-18e6-4147-bc3c-063e5a690be5",
+    "guidanceId": "38af6e44-24fb-468a-b81b-25083beca2e8",
+    "title": "Mathématiques (BIOF)"
+  },
+  {
+    "id": "ceddbc59-9e7d-4fad-a154-6405c2f458b8",
+    "guidanceId": "38af6e44-24fb-468a-b81b-25083beca2e8",
+    "title": "Mathématiques"
+  },
+  {
+    "id": "70609adb-ecbd-4160-b80e-8e7b1a6feb9f",
+    "guidanceId": "38af6e44-24fb-468a-b81b-25083beca2e8",
+    "title": "Sciences de la Vie et de la Terre (SVT)"
+  },
+  {
+    "id": "1c21453c-ed8e-4f30-b27b-3af560ae87f0",
+    "guidanceId": "38af6e44-24fb-468a-b81b-25083beca2e8",
+    "title": "Sciences de la vie et de la Terre (SVT BIOF)"
+  },
+  {
+    "id": "7d37e538-e6e0-4155-887e-d044fa5500ac",
+    "guidanceId": "38af6e44-24fb-468a-b81b-25083beca2e8",
+    "title": "Physique et Chimie"
+  },
+  {
+    "id": "c00cb4a3-4021-4a04-8c0e-97e2cf926d5b",
+    "guidanceId": "38af6e44-24fb-468a-b81b-25083beca2e8",
+    "title": "Physique et Chimie (BIOF)"
+  },
+  {
+    "id": "f9dc2fed-aac1-4bda-87d7-2c36465aeb2e",
+    "guidanceId": "38af6e44-24fb-468a-b81b-25083beca2e8",
+    "title": "Anglais"
+  },
+  {
+    "id": "7b416143-0e7f-4044-8cb8-c2f2faa22bed",
+    "guidanceId": "38af6e44-24fb-468a-b81b-25083beca2e8",
+    "title": "Arabe"
+  },
+  {
+    "id": "03a77418-a08e-4f9e-99db-4a13613ab50c",
+    "guidanceId": "38af6e44-24fb-468a-b81b-25083beca2e8",
+    "title": "Français"
+  },
+  {
+    "id": "9b638fc7-5adc-4a55-9b74-18ee188a8018",
+    "guidanceId": "38af6e44-24fb-468a-b81b-25083beca2e8",
+    "title": "Philosophie"
+  },
+  {
+    "id": "1ed5c249-10d0-42ca-ac93-7288c024def5",
+    "guidanceId": "38af6e44-24fb-468a-b81b-25083beca2e8",
+    "title": "Histoire Géographie"
+  },
+  {
+    "id": "47fe4d8c-2bea-4211-b6f7-ee05e52b2e97",
+    "guidanceId": "38af6e44-24fb-468a-b81b-25083beca2e8",
+    "title": "Education Islamique"
+  },
+  {
+    "id": "07053632-b165-4316-b5f9-f67931788c14",
+    "guidanceId": "a2732138-8aac-4359-a3ac-7a52d8b1624c",
+    "title": "Mathématiques (BIOF)"
+  },
+  {
+    "id": "dd360221-7d03-46c8-a6d2-da9c13893b09",
+    "guidanceId": "a2732138-8aac-4359-a3ac-7a52d8b1624c",
+    "title": "Mathématiques"
+  },
+  {
+    "id": "9ab0e36c-a62d-46af-a2c7-dca3d9d1bd2f",
+    "guidanceId": "a2732138-8aac-4359-a3ac-7a52d8b1624c",
+    "title": "Sciences de la Vie et de la Terre (SVT)"
+  },
+  {
+    "id": "0a0fa0bb-06ba-410d-9ca0-8f192ef8eca4",
+    "guidanceId": "a2732138-8aac-4359-a3ac-7a52d8b1624c",
+    "title": "Sciences de la vie et de la Terre (SVT BIOF)"
+  },
+  {
+    "id": "2bf4beef-2266-4a4c-960f-e2f18e6e95c2",
+    "guidanceId": "a2732138-8aac-4359-a3ac-7a52d8b1624c",
+    "title": "Physique et Chimie"
+  },
+  {
+    "id": "6edd1248-aee5-4722-8cf3-f77052cee501",
+    "guidanceId": "a2732138-8aac-4359-a3ac-7a52d8b1624c",
+    "title": "Physique et Chimie (BIOF)"
+  },
+  {
+    "id": "46cf55ef-e481-446d-bcc8-0516dc21e655",
+    "guidanceId": "a2732138-8aac-4359-a3ac-7a52d8b1624c",
+    "title": "Anglais"
+  },
+  {
+    "id": "e04a0605-0299-491f-99a0-5470b697f768",
+    "guidanceId": "a2732138-8aac-4359-a3ac-7a52d8b1624c",
+    "title": "Arabe"
+  },
+  {
+    "id": "f0531877-8c16-4898-9501-9d93270c57c4",
+    "guidanceId": "a2732138-8aac-4359-a3ac-7a52d8b1624c",
+    "title": "Français"
+  },
+  {
+    "id": "ff7e7c37-df92-478b-9783-74e3c9d9e147",
+    "guidanceId": "a2732138-8aac-4359-a3ac-7a52d8b1624c",
+    "title": "Philosophie"
+  },
+  {
+    "id": "5eed46ff-1e1e-48df-9b9b-c6ed68dae364",
+    "guidanceId": "a2732138-8aac-4359-a3ac-7a52d8b1624c",
+    "title": "Histoire Géographie"
+  },
+  {
+    "id": "8c7c5c49-1eb4-41da-95f5-e49957bdf63c",
+    "guidanceId": "a2732138-8aac-4359-a3ac-7a52d8b1624c",
+    "title": "Education Islamique"
+  },
+  {
+    "id": "bee386ad-b1c1-4e93-b8cc-8a6477eb92c7",
+    "guidanceId": "7310830c-8e05-436b-9301-9845c04a5503",
+    "title": "Mathématiques (BIOF)"
+  },
+  {
+    "id": "7b93c941-0e2e-4986-ba48-8f961d552243",
+    "guidanceId": "7310830c-8e05-436b-9301-9845c04a5503",
+    "title": "Mathématiques"
+  },
+  {
+    "id": "65cdb632-d5f4-410a-b3cb-451e2acc6d53",
+    "guidanceId": "7310830c-8e05-436b-9301-9845c04a5503",
+    "title": "Sciences de l'ingénieur"
+  },
+  {
+    "id": "173f7042-a6a2-4fad-9dc8-544808cf5142",
+    "guidanceId": "7310830c-8e05-436b-9301-9845c04a5503",
+    "title": "Physique et Chimie"
+  },
+  {
+    "id": "4ccdb87e-0543-4b74-bbb6-64b0d09c7896",
+    "guidanceId": "7310830c-8e05-436b-9301-9845c04a5503",
+    "title": "Physique et Chimie (BIOF)"
+  },
+  {
+    "id": "a3396458-e45f-4e70-8fa4-8ba7802defad",
+    "guidanceId": "7310830c-8e05-436b-9301-9845c04a5503",
+    "title": "Arabe"
+  },
+  {
+    "id": "8ec52f2f-e2e5-47c4-94c4-91e7c88bb4f7",
+    "guidanceId": "7310830c-8e05-436b-9301-9845c04a5503",
+    "title": "Anglais"
+  },
+  {
+    "id": "1879c6ce-1f53-499d-b02f-4017e26a6e9f",
+    "guidanceId": "7310830c-8e05-436b-9301-9845c04a5503",
+    "title": "Philosophie"
+  },
+  {
+    "id": "c29fcfec-c9ce-4226-9cbe-dae6f9c61bfe",
+    "guidanceId": "7310830c-8e05-436b-9301-9845c04a5503",
+    "title": "Education Islamique"
+  },
+  {
+    "id": "382fa745-b9c0-47ab-b32e-c67d4389efa6",
+    "guidanceId": "7310830c-8e05-436b-9301-9845c04a5503",
+    "title": "Français"
+  },
+  {
+    "id": "e5173d60-21e2-4418-93ac-387d7a5a2777",
+    "guidanceId": "099d55be-6cbf-459a-af6b-e79ef092798e",
+    "title": "Mathématiques (BIOF)"
+  },
+  {
+    "id": "77ecf18c-cc7a-4265-9ba8-184cb855582f",
+    "guidanceId": "099d55be-6cbf-459a-af6b-e79ef092798e",
+    "title": "Mathématiques"
+  },
+  {
+    "id": "adf6c900-b200-4e30-9870-d4f4340ac063",
+    "guidanceId": "099d55be-6cbf-459a-af6b-e79ef092798e",
+    "title": "Sciences de l'ingénieur"
+  },
+  {
+    "id": "40e960f7-69b9-4a7c-a7df-0fae6f6add85",
+    "guidanceId": "099d55be-6cbf-459a-af6b-e79ef092798e",
+    "title": "Arabe"
+  },
+  {
+    "id": "543a0b6a-3086-4c9c-9f98-9647feabb64c",
+    "guidanceId": "099d55be-6cbf-459a-af6b-e79ef092798e",
+    "title": "Physique et Chimie"
+  },
+  {
+    "id": "2d54fa87-e8b3-4765-a7bc-93c51f4649df",
+    "guidanceId": "099d55be-6cbf-459a-af6b-e79ef092798e",
+    "title": "Physique et Chimie (BIOF)"
+  },
+  {
+    "id": "b33565f4-ee2d-4a76-9427-516a0216be35",
+    "guidanceId": "099d55be-6cbf-459a-af6b-e79ef092798e",
+    "title": "Anglais"
+  },
+  {
+    "id": "f373f597-3730-4da2-bf6e-5b678cc50c2b",
+    "guidanceId": "099d55be-6cbf-459a-af6b-e79ef092798e",
+    "title": "Philosophie"
+  },
+  {
+    "id": "7a537e60-e1e5-4a51-8bbd-84139190a9ec",
+    "guidanceId": "099d55be-6cbf-459a-af6b-e79ef092798e",
+    "title": "Education Islamique"
+  },
+  {
+    "id": "4382ab66-8e99-40fc-98f9-e687fa70f66c",
+    "guidanceId": "099d55be-6cbf-459a-af6b-e79ef092798e",
+    "title": "Français"
+  },
+  {
+    "id": "268d1ffb-c3bd-44f1-ad3b-837ee02992bf",
+    "guidanceId": "b6f38461-1884-4758-ad9e-572f3a3cfb9d",
+    "title": "Mathématiques"
+  },
+  {
+    "id": "f6a4efab-cd42-47df-9833-dcac7272d772",
+    "guidanceId": "b6f38461-1884-4758-ad9e-572f3a3cfb9d",
+    "title": "Anglais"
+  },
+  {
+    "id": "9cf20028-49aa-45a3-a7ad-d4c947174cfd",
+    "guidanceId": "b6f38461-1884-4758-ad9e-572f3a3cfb9d",
+    "title": "Français"
+  },
+  {
+    "id": "78288e55-ecd4-4bda-98b4-03767250309b",
+    "guidanceId": "b6f38461-1884-4758-ad9e-572f3a3cfb9d",
+    "title": "Arabe"
+  },
+  {
+    "id": "c016ab86-c3f1-4a98-8d86-361af43ec4a2",
+    "guidanceId": "b6f38461-1884-4758-ad9e-572f3a3cfb9d",
+    "title": "Philosophie"
+  },
+  {
+    "id": "4583cbbd-17da-4884-b2d9-3716c6a57e81",
+    "guidanceId": "b6f38461-1884-4758-ad9e-572f3a3cfb9d",
+    "title": "Histoire Géographie"
+  },
+  {
+    "id": "fb9b7e77-2e3f-481f-a683-1ce2e7298d45",
+    "guidanceId": "b6f38461-1884-4758-ad9e-572f3a3cfb9d",
+    "title": "Économie et Organisation Administrative des Entreprises"
+  },
+  {
+    "id": "c6cc9fb2-5136-4692-85ce-f20f326567a7",
+    "guidanceId": "b6f38461-1884-4758-ad9e-572f3a3cfb9d",
+    "title": "Comptabilité et Mathématiques financières"
+  },
+  {
+    "id": "912ad4d5-a872-49e1-89ee-84960b2a89e4",
+    "guidanceId": "b6f38461-1884-4758-ad9e-572f3a3cfb9d",
+    "title": "Education Islamique"
+  },
+  {
+    "id": "55ac8f9f-9a0c-4e3f-a064-e415d502de6a",
+    "guidanceId": "b6f38461-1884-4758-ad9e-572f3a3cfb9d",
+    "title": "Droit"
+  },
+  {
+    "id": "fec760b8-bd69-4f6a-9d47-f354a2f11534",
+    "guidanceId": "b6f38461-1884-4758-ad9e-572f3a3cfb9d",
+    "title": "Informatique de gestion"
+  },
+  {
+    "id": "7d030778-9dd9-45c8-8796-5d48425ab03f",
+    "guidanceId": "b6f38461-1884-4758-ad9e-572f3a3cfb9d",
+    "title": "Économie générale et Statistiques"
+  },
+  {
+    "id": "ab6a5e18-fb90-45c9-a341-fb652c6d40eb",
+    "guidanceId": "420ba887-08a2-4405-b4c6-e503a0a4c0a4",
+    "title": "Sciences de la Vie et de la Terre (SVT)"
+  },
+  {
+    "id": "020f0770-690b-4f0c-8790-04b93bacafa0",
+    "guidanceId": "420ba887-08a2-4405-b4c6-e503a0a4c0a4",
+    "title": "Arabe"
+  },
+  {
+    "id": "f60b1db2-5199-4bf6-aae2-ca1506759ba7",
+    "guidanceId": "420ba887-08a2-4405-b4c6-e503a0a4c0a4",
+    "title": "Anglais"
+  },
+  {
+    "id": "a4555d6b-af2c-4617-bb63-15476ccd0fc4",
+    "guidanceId": "420ba887-08a2-4405-b4c6-e503a0a4c0a4",
+    "title": "Histoire Géographie"
+  },
+  {
+    "id": "7a05d982-9477-44a1-b517-229afaf25b64",
+    "guidanceId": "420ba887-08a2-4405-b4c6-e503a0a4c0a4",
+    "title": "Mathématiques"
+  },
+  {
+    "id": "fb2b788d-0441-463f-8a1e-62c6ce3b1f18",
+    "guidanceId": "420ba887-08a2-4405-b4c6-e503a0a4c0a4",
+    "title": "Français"
+  },
+  {
+    "id": "8333fbcd-7711-44b2-9479-2c8c45d8f416",
+    "guidanceId": "420ba887-08a2-4405-b4c6-e503a0a4c0a4",
+    "title": "Philosophie"
+  },
+  {
+    "id": "6e63c738-28b6-40a9-9ab5-03423a3f6438",
+    "guidanceId": "420ba887-08a2-4405-b4c6-e503a0a4c0a4",
+    "title": "Education Islamique"
+  },
+  {
+    "id": "6a695cdf-f6c3-4d25-8c55-f02bd843fdb0",
+    "guidanceId": "f7e09e03-1a0a-4a9d-8d50-4ef530a6700d",
+    "title": "Mathématiques"
+  },
+  {
+    "id": "cd54e63b-5c06-4ec8-aec8-c3d0deabc953",
+    "guidanceId": "f7e09e03-1a0a-4a9d-8d50-4ef530a6700d",
+    "title": "Mathématiques (BIOF)"
+  },
+  {
+    "id": "377afe00-e93d-4852-9b70-90e851bc82f7",
+    "guidanceId": "f7e09e03-1a0a-4a9d-8d50-4ef530a6700d",
+    "title": "Physique et Chimie"
+  },
+  {
+    "id": "a3ff564f-421b-49e9-8c88-23cf5797740d",
+    "guidanceId": "f7e09e03-1a0a-4a9d-8d50-4ef530a6700d",
+    "title": "Physique et Chimie (BIOF)"
+  },
+  {
+    "id": "10fcc128-c691-42d3-b277-1cb25409c4cc",
+    "guidanceId": "f7e09e03-1a0a-4a9d-8d50-4ef530a6700d",
+    "title": "Sciences de la Vie et de la Terre (SVT)"
+  },
+  {
+    "id": "d9722eff-a0c4-4b10-b6b1-09fad896f3af",
+    "guidanceId": "f7e09e03-1a0a-4a9d-8d50-4ef530a6700d",
+    "title": "Sciences de la vie et de la Terre (SVT BIOF)"
+  },
+  {
+    "id": "09b5b090-598d-4ed3-a848-020dd2d981af",
+    "guidanceId": "f7e09e03-1a0a-4a9d-8d50-4ef530a6700d",
+    "title": "Arabe"
+  },
+  {
+    "id": "84286db7-c3b0-4f4f-82db-51ff0f98f9f2",
+    "guidanceId": "f7e09e03-1a0a-4a9d-8d50-4ef530a6700d",
+    "title": "Français"
+  },
+  {
+    "id": "00501d35-ad70-4cbd-9865-f2ae78cf38dd",
+    "guidanceId": "f7e09e03-1a0a-4a9d-8d50-4ef530a6700d",
+    "title": "Anglais"
+  },
+  {
+    "id": "41cf6016-f581-4031-ba66-2bab43ddbd49",
+    "guidanceId": "f7e09e03-1a0a-4a9d-8d50-4ef530a6700d",
+    "title": "Education Islamique"
+  },
+  {
+    "id": "9fc014d4-030c-4097-994a-12ceb1e1ea55",
+    "guidanceId": "f7e09e03-1a0a-4a9d-8d50-4ef530a6700d",
+    "title": "Philosophie"
+  },
+  {
+    "id": "d8dd066e-a693-4418-9e41-f0f18fd906c4",
+    "guidanceId": "f7e09e03-1a0a-4a9d-8d50-4ef530a6700d",
+    "title": "Vocabulaire"
+  },
+  {
+    "id": "b2350bf3-1efa-4dc1-88b4-ec2b8625ff2b",
+    "guidanceId": "48e3155e-f33f-4389-8a0c-a7e455631d5d",
+    "title": "Mathématiques"
+  },
+  {
+    "id": "6fa13e58-61a0-461a-9322-8b723c2e9e38",
+    "guidanceId": "48e3155e-f33f-4389-8a0c-a7e455631d5d",
+    "title": "Mathématiques (BIOF)"
+  },
+  {
+    "id": "077ffa31-a5c1-4016-84fe-435bb2fdfa0a",
+    "guidanceId": "48e3155e-f33f-4389-8a0c-a7e455631d5d",
+    "title": "Physique et Chimie"
+  },
+  {
+    "id": "a1689e27-5898-4b7e-a6ef-c0894a6b54ae",
+    "guidanceId": "48e3155e-f33f-4389-8a0c-a7e455631d5d",
+    "title": "Physique et Chimie (BIOF)"
+  },
+  {
+    "id": "5a99969e-282f-4dda-9ecb-569fd22254f0",
+    "guidanceId": "48e3155e-f33f-4389-8a0c-a7e455631d5d",
+    "title": "Sciences de l'ingénieur"
+  },
+  {
+    "id": "9ebfd52b-dedd-4b2d-b265-e2359693a7fe",
+    "guidanceId": "48e3155e-f33f-4389-8a0c-a7e455631d5d",
+    "title": "Arabe"
+  },
+  {
+    "id": "d474c191-3492-4f72-8fc7-14246050be42",
+    "guidanceId": "48e3155e-f33f-4389-8a0c-a7e455631d5d",
+    "title": "Français"
+  },
+  {
+    "id": "9298564a-7ba0-4c4c-853d-4682ae18f7bc",
+    "guidanceId": "48e3155e-f33f-4389-8a0c-a7e455631d5d",
+    "title": "Anglais"
+  },
+  {
+    "id": "f6c9c6e0-5f09-4f50-bc99-62789af3c0de",
+    "guidanceId": "48e3155e-f33f-4389-8a0c-a7e455631d5d",
+    "title": "Education Islamique"
+  },
+  {
+    "id": "4c151b2e-ba35-408a-bbcb-3d380c35c22d",
+    "guidanceId": "48e3155e-f33f-4389-8a0c-a7e455631d5d",
+    "title": "Philosophie"
+  },
+  {
+    "id": "71b8db0d-1dc3-4a37-96b5-6c0268b7410e",
+    "guidanceId": "48e3155e-f33f-4389-8a0c-a7e455631d5d",
+    "title": "Vocabulaire"
+  },
+  {
+    "id": "fdba244c-060b-4594-93ee-f80031425b57",
+    "guidanceId": "f0119006-979a-439e-b10e-becef58c0af8",
+    "title": "Mathématiques"
+  },
+  {
+    "id": "8efdfe2b-2e3d-4df5-8f55-5b9dac3b0258",
+    "guidanceId": "f0119006-979a-439e-b10e-becef58c0af8",
+    "title": "Mathématiques (BIOF)"
+  },
+  {
+    "id": "f457ee7e-7dc4-4ec5-a708-3d1e8e0c5073",
+    "guidanceId": "f0119006-979a-439e-b10e-becef58c0af8",
+    "title": "Physique et Chimie"
+  },
+  {
+    "id": "ef2be3ff-e8ed-4b9a-8c83-3eeb73a4eadf",
+    "guidanceId": "f0119006-979a-439e-b10e-becef58c0af8",
+    "title": "Physique et Chimie (BIOF)"
+  },
+  {
+    "id": "c2bad375-cb27-48dd-be45-c435f650b19e",
+    "guidanceId": "f0119006-979a-439e-b10e-becef58c0af8",
+    "title": "Sciences de la Vie et de la Terre (SVT)"
+  },
+  {
+    "id": "24c59458-0cb7-4ccb-835d-a27520fe2606",
+    "guidanceId": "f0119006-979a-439e-b10e-becef58c0af8",
+    "title": "Sciences de la Vie et de la Terre (SVT BIOF)"
+  },
+  {
+    "id": "74d4714f-a4a6-4e00-833f-fcfe457cbb23",
+    "guidanceId": "f0119006-979a-439e-b10e-becef58c0af8",
+    "title": "Arabe"
+  },
+  {
+    "id": "246af48a-55f3-4242-8d98-3542acca844f",
+    "guidanceId": "f0119006-979a-439e-b10e-becef58c0af8",
+    "title": "Français"
+  },
+  {
+    "id": "f204b020-5af5-45f1-9084-269e798a07a9",
+    "guidanceId": "f0119006-979a-439e-b10e-becef58c0af8",
+    "title": "Anglais"
+  },
+  {
+    "id": "0859c48e-531c-4a2b-8367-98deb374f10c",
+    "guidanceId": "f0119006-979a-439e-b10e-becef58c0af8",
+    "title": "Education Islamique"
+  },
+  {
+    "id": "c67791ec-e85d-4255-b8d0-82110b47f60c",
+    "guidanceId": "f0119006-979a-439e-b10e-becef58c0af8",
+    "title": "Philosophie"
+  },
+  {
+    "id": "19eff5c1-8b5d-44ad-9219-6f6ff88cdc87",
+    "guidanceId": "f0119006-979a-439e-b10e-becef58c0af8",
+    "title": "Vocabulaire"
+  },
+  {
+    "id": "632a888c-991b-4721-86d0-e2c2a3676689",
+    "guidanceId": "6cadc3b7-5224-4ac1-9317-3e216103e94a",
+    "title": "Mathématiques"
+  },
+  {
+    "id": "11a12a0e-be20-4304-8e8e-0f68a95b7144",
+    "guidanceId": "6cadc3b7-5224-4ac1-9317-3e216103e94a",
+    "title": "Mathématiques (BIOF)"
+  },
+  {
+    "id": "e5ebc36f-ae28-447d-9217-b74efb5df243",
+    "guidanceId": "6cadc3b7-5224-4ac1-9317-3e216103e94a",
+    "title": "Physique et Chimie"
+  },
+  {
+    "id": "e3cde186-7941-4da7-ae44-12e5b995691a",
+    "guidanceId": "6cadc3b7-5224-4ac1-9317-3e216103e94a",
+    "title": "Physique et Chimie (BIOF)"
+  },
+  {
+    "id": "3e9baedd-4bdf-4229-b6f1-8ade807eb80b",
+    "guidanceId": "6cadc3b7-5224-4ac1-9317-3e216103e94a",
+    "title": "Sciences de la Vie et de la Terre (SVT)"
+  },
+  {
+    "id": "e45c5153-deed-4e8f-b0f9-4f32e82b6e66",
+    "guidanceId": "6cadc3b7-5224-4ac1-9317-3e216103e94a",
+    "title": "Sciences de la vie et de la Terre (SVT BIOF)"
+  },
+  {
+    "id": "cf841abd-f3cd-437d-adc5-658e3178bfb6",
+    "guidanceId": "6cadc3b7-5224-4ac1-9317-3e216103e94a",
+    "title": "Arabe"
+  },
+  {
+    "id": "a60cb4da-6557-4784-adb9-6fa3d34a13f8",
+    "guidanceId": "6cadc3b7-5224-4ac1-9317-3e216103e94a",
+    "title": "Français"
+  },
+  {
+    "id": "30332eb0-4e65-4b55-a27c-2c58fc645a61",
+    "guidanceId": "6cadc3b7-5224-4ac1-9317-3e216103e94a",
+    "title": "Anglais"
+  },
+  {
+    "id": "633f80c0-487c-4479-8946-93a966338f7e",
+    "guidanceId": "6cadc3b7-5224-4ac1-9317-3e216103e94a",
+    "title": "Education Islamique"
+  },
+  {
+    "id": "35a7d14d-baa2-4c04-a51c-c8e552d111d6",
+    "guidanceId": "6cadc3b7-5224-4ac1-9317-3e216103e94a",
+    "title": "Philosophie"
+  },
+  {
+    "id": "7470d4a3-1980-4046-aa8a-6f1d11d47768",
+    "guidanceId": "6cadc3b7-5224-4ac1-9317-3e216103e94a",
+    "title": "Vocabulaire"
+  },
+  {
+    "id": "7e4f5147-eb07-4ca1-acf1-8d789b19fd01",
+    "guidanceId": "1aa59eeb-74b9-4171-ae69-d13460321adc",
+    "title": "Mathématiques"
+  },
+  {
+    "id": "908c7e5c-992e-4923-9e9a-a3961c892885",
+    "guidanceId": "1aa59eeb-74b9-4171-ae69-d13460321adc",
+    "title": "Mathématiques (BIOF)"
+  },
+  {
+    "id": "d40ea70d-caaa-4ba5-b016-0365a9da5303",
+    "guidanceId": "1aa59eeb-74b9-4171-ae69-d13460321adc",
+    "title": "Physique et Chimie"
+  },
+  {
+    "id": "735254c6-b71d-45e5-9298-82e06c8a5535",
+    "guidanceId": "1aa59eeb-74b9-4171-ae69-d13460321adc",
+    "title": "Physique et Chimie (BIOF)"
+  },
+  {
+    "id": "90346606-ad55-4ae9-99a6-fd3835fc8147",
+    "guidanceId": "1aa59eeb-74b9-4171-ae69-d13460321adc",
+    "title": "Sciences de la Vie et de la Terre (SVT)"
+  },
+  {
+    "id": "5b81b726-6c1d-4c5d-8934-e5fa3f7ffa3e",
+    "guidanceId": "1aa59eeb-74b9-4171-ae69-d13460321adc",
+    "title": "Sciences Végétales et Animales (SVA)"
+  },
+  {
+    "id": "cb591f3e-8801-4e5f-af5f-8f9bdf271d51",
+    "guidanceId": "1aa59eeb-74b9-4171-ae69-d13460321adc",
+    "title": "Arabe"
+  },
+  {
+    "id": "20311f8f-afbf-469d-a90f-1d4b3455b684",
+    "guidanceId": "1aa59eeb-74b9-4171-ae69-d13460321adc",
+    "title": "Français"
+  },
+  {
+    "id": "26373ac3-4168-49b2-9814-e50191310b69",
+    "guidanceId": "1aa59eeb-74b9-4171-ae69-d13460321adc",
+    "title": "Anglais"
+  },
+  {
+    "id": "fdeed8d7-b78d-42ba-91f6-77467f59cf9c",
+    "guidanceId": "1aa59eeb-74b9-4171-ae69-d13460321adc",
+    "title": "Histoire Géographie"
+  },
+  {
+    "id": "6ccde1ff-04bf-4700-be25-4ca6f36292dd",
+    "guidanceId": "1aa59eeb-74b9-4171-ae69-d13460321adc",
+    "title": "Education Islamique"
+  },
+  {
+    "id": "0ccb73b6-9c8c-4834-ab66-4f26fe6a5e6b",
+    "guidanceId": "1aa59eeb-74b9-4171-ae69-d13460321adc",
+    "title": "Philosophie"
+  },
+  {
+    "id": "f0521dc3-2c22-4dab-912a-6df04032f2a8",
+    "guidanceId": "1aa59eeb-74b9-4171-ae69-d13460321adc",
+    "title": "Vocabulaire"
+  },
+  {
+    "id": "e61fd66e-7a6c-45d1-92cd-39426e9a7e8f",
+    "guidanceId": "f399b71b-3049-49b8-b882-78e1a4e0a339",
+    "title": "Mathématiques"
+  },
+  {
+    "id": "4ad435fb-3453-4bbb-92a4-b7c4a91b0834",
+    "guidanceId": "f399b71b-3049-49b8-b882-78e1a4e0a339",
+    "title": "Mathématiques (BIOF)"
+  },
+  {
+    "id": "548067a6-8867-41e5-bbe0-58705c4b72b6",
+    "guidanceId": "f399b71b-3049-49b8-b882-78e1a4e0a339",
+    "title": "Physique et Chimie"
+  },
+  {
+    "id": "8ac64d88-1970-4caf-8739-ad622a3b3b8e",
+    "guidanceId": "f399b71b-3049-49b8-b882-78e1a4e0a339",
+    "title": "Physique et Chimie (BIOF)"
+  },
+  {
+    "id": "290f1bb6-f588-458d-b438-3dccd6470179",
+    "guidanceId": "f399b71b-3049-49b8-b882-78e1a4e0a339",
+    "title": "Sciences de l'ingénieur"
+  },
+  {
+    "id": "e15cfac4-2787-4b98-bc31-32294d75fd57",
+    "guidanceId": "f399b71b-3049-49b8-b882-78e1a4e0a339",
+    "title": "Arabe"
+  },
+  {
+    "id": "b9278e67-cee1-40df-af9b-8cea0eb4e7f3",
+    "guidanceId": "f399b71b-3049-49b8-b882-78e1a4e0a339",
+    "title": "Français"
+  },
+  {
+    "id": "22ebf041-3783-497e-bff3-69bf793a235a",
+    "guidanceId": "f399b71b-3049-49b8-b882-78e1a4e0a339",
+    "title": "Anglais"
+  },
+  {
+    "id": "5bf6f806-3814-41b3-a224-750852755dd7",
+    "guidanceId": "f399b71b-3049-49b8-b882-78e1a4e0a339",
+    "title": "Education Islamique"
+  },
+  {
+    "id": "bc612bce-a41a-4170-9d74-b0b034fc5b71",
+    "guidanceId": "f399b71b-3049-49b8-b882-78e1a4e0a339",
+    "title": "Philosophie"
+  },
+  {
+    "id": "e4e4b742-29a6-4a68-aa1c-43b3f321da47",
+    "guidanceId": "f399b71b-3049-49b8-b882-78e1a4e0a339",
+    "title": "Vocabulaire"
+  },
+  {
+    "id": "64df0e7a-6a3e-4fce-b1e4-422c7369f035",
+    "guidanceId": "369a2338-be50-420a-8f6e-2a308f5a9e3b",
+    "title": "Mathématiques"
+  },
+  {
+    "id": "7f9660eb-c1e0-4dd7-bcf7-6d0efa8fa341",
+    "guidanceId": "369a2338-be50-420a-8f6e-2a308f5a9e3b",
+    "title": "Mathématiques (BIOF)"
+  },
+  {
+    "id": "18a9f11d-b9fb-44e3-a4d4-0b457296d0cd",
+    "guidanceId": "369a2338-be50-420a-8f6e-2a308f5a9e3b",
+    "title": "Physique et Chimie"
+  },
+  {
+    "id": "e0190ef3-9ad9-4dda-9c75-855ff6f7fcd4",
+    "guidanceId": "369a2338-be50-420a-8f6e-2a308f5a9e3b",
+    "title": "Physique et Chimie (BIOF)"
+  },
+  {
+    "id": "b79147fc-a12c-4e0e-b146-b1f7bfe4ed9a",
+    "guidanceId": "369a2338-be50-420a-8f6e-2a308f5a9e3b",
+    "title": "Sciences de l'ingénieur"
+  },
+  {
+    "id": "55fb12e2-e3e8-4504-8599-ad32a0384727",
+    "guidanceId": "369a2338-be50-420a-8f6e-2a308f5a9e3b",
+    "title": "Arabe"
+  },
+  {
+    "id": "ef0d8b6b-584a-4408-9c99-5ca86c4e2afb",
+    "guidanceId": "369a2338-be50-420a-8f6e-2a308f5a9e3b",
+    "title": "Français"
+  },
+  {
+    "id": "a16856a4-475c-4071-a087-3b2e44811597",
+    "guidanceId": "369a2338-be50-420a-8f6e-2a308f5a9e3b",
+    "title": "Anglais"
+  },
+  {
+    "id": "3f842ed8-b93e-40ac-9002-e44e1ffde9a9",
+    "guidanceId": "369a2338-be50-420a-8f6e-2a308f5a9e3b",
+    "title": "Education Islamique"
+  },
+  {
+    "id": "d0b111dd-a285-49a2-95f0-d7a51c6dab65",
+    "guidanceId": "369a2338-be50-420a-8f6e-2a308f5a9e3b",
+    "title": "Philosophie"
+  },
+  {
+    "id": "e4693bdb-0588-474b-800b-74f4ba9ff18a",
+    "guidanceId": "369a2338-be50-420a-8f6e-2a308f5a9e3b",
+    "title": "Vocabulaire"
+  },
+  {
+    "id": "736bcf12-0efe-45bb-aa73-013a845bcd34",
+    "guidanceId": "936da674-94b5-4698-a46f-48688c61f91d",
+    "title": "Mathématiques"
+  },
+  {
+    "id": "f9064c1d-37f7-40b2-83c4-bc831c707c64",
+    "guidanceId": "936da674-94b5-4698-a46f-48688c61f91d",
+    "title": "Arabe"
+  },
+  {
+    "id": "4c97fcd9-15bd-44df-a0bb-259ed1eefff9",
+    "guidanceId": "936da674-94b5-4698-a46f-48688c61f91d",
+    "title": "Français"
+  },
+  {
+    "id": "89bb1c9c-2449-4c9e-82b7-df3348627a4d",
+    "guidanceId": "936da674-94b5-4698-a46f-48688c61f91d",
+    "title": "Anglais"
+  },
+  {
+    "id": "d63d6761-5367-4111-9d4d-ddb92e430926",
+    "guidanceId": "936da674-94b5-4698-a46f-48688c61f91d",
+    "title": "Histoire Géographie"
+  },
+  {
+    "id": "a26f7e69-467a-4908-9207-7a901402c03e",
+    "guidanceId": "936da674-94b5-4698-a46f-48688c61f91d",
+    "title": "Education Islamique"
+  },
+  {
+    "id": "5d0ccc57-35f8-4f8f-b162-eec99780ec60",
+    "guidanceId": "936da674-94b5-4698-a46f-48688c61f91d",
+    "title": "Philosophie"
+  },
+  {
+    "id": "2bc85741-7fc9-4a40-a37b-48757cc63c36",
+    "guidanceId": "936da674-94b5-4698-a46f-48688c61f91d",
+    "title": "Économie et Organisation Administrative des Entreprises"
+  },
+  {
+    "id": "b981a727-de3f-442f-b63c-6b38f626752b",
+    "guidanceId": "936da674-94b5-4698-a46f-48688c61f91d",
+    "title": "Comptabilité et Mathématiques financières"
+  },
+  {
+    "id": "9e2c9571-82e6-476a-a840-3285977e4dbc",
+    "guidanceId": "936da674-94b5-4698-a46f-48688c61f91d",
+    "title": "Économie générale et Statistiques"
+  },
+  {
+    "id": "86b47e1c-8f5b-43c5-8ccc-edb199cbca21",
+    "guidanceId": "936da674-94b5-4698-a46f-48688c61f91d",
+    "title": "Droit"
+  },
+  {
+    "id": "8e186352-bd0d-4cc7-bb6d-fb201e2891d6",
+    "guidanceId": "936da674-94b5-4698-a46f-48688c61f91d",
+    "title": "Informatique de gestion"
+  },
+  {
+    "id": "1da4389b-97bf-40f0-b9ec-4c5451ce32c4",
+    "guidanceId": "936da674-94b5-4698-a46f-48688c61f91d",
+    "title": "Vocabulaire"
+  },
+  {
+    "id": "e64d1204-aebd-4d4a-a9e4-1aced608148c",
+    "guidanceId": "1958aa41-8b77-44eb-9da9-fe787f47a28c",
+    "title": "Mathématiques"
+  },
+  {
+    "id": "77fbab1d-6a9e-4e1b-978a-8e74414e9b32",
+    "guidanceId": "1958aa41-8b77-44eb-9da9-fe787f47a28c",
+    "title": "Arabe"
+  },
+  {
+    "id": "3fa8f634-110d-49f3-817c-20639a8354a4",
+    "guidanceId": "1958aa41-8b77-44eb-9da9-fe787f47a28c",
+    "title": "Français"
+  },
+  {
+    "id": "76411d98-e91e-494e-969c-48ba8b2947cd",
+    "guidanceId": "1958aa41-8b77-44eb-9da9-fe787f47a28c",
+    "title": "Anglais"
+  },
+  {
+    "id": "3ccb8c66-bda9-4cca-aee3-894052667a77",
+    "guidanceId": "1958aa41-8b77-44eb-9da9-fe787f47a28c",
+    "title": "Histoire Géographie"
+  },
+  {
+    "id": "e22c98ef-e376-4f46-8943-2c1f25c3dcac",
+    "guidanceId": "1958aa41-8b77-44eb-9da9-fe787f47a28c",
+    "title": "Education Islamique"
+  },
+  {
+    "id": "6b81a46d-826e-4cf8-8d98-2bcc88496e0b",
+    "guidanceId": "1958aa41-8b77-44eb-9da9-fe787f47a28c",
+    "title": "Philosophie"
+  },
+  {
+    "id": "e56205ee-38f1-4bca-8fa3-5d29d72add0c",
+    "guidanceId": "1958aa41-8b77-44eb-9da9-fe787f47a28c",
+    "title": "Économie et Organisation Administrative des Entreprises"
+  },
+  {
+    "id": "0bffca55-aa34-4b9b-86ac-fdb164bfb088",
+    "guidanceId": "1958aa41-8b77-44eb-9da9-fe787f47a28c",
+    "title": "Comptabilité et Mathématiques financières"
+  },
+  {
+    "id": "57834c55-d4f9-4e46-b8c3-8aa460f3fb43",
+    "guidanceId": "1958aa41-8b77-44eb-9da9-fe787f47a28c",
+    "title": "Économie générale et Statistiques"
+  },
+  {
+    "id": "5420c08c-13fb-46a8-b3a5-2de6abd3d34c",
+    "guidanceId": "1958aa41-8b77-44eb-9da9-fe787f47a28c",
+    "title": "Droit"
+  },
+  {
+    "id": "4591e47b-3683-4224-a890-26f8a4667295",
+    "guidanceId": "1958aa41-8b77-44eb-9da9-fe787f47a28c",
+    "title": "Informatique de gestion"
+  },
+  {
+    "id": "d5494542-f325-4cd7-9644-d6292c6210cb",
+    "guidanceId": "1958aa41-8b77-44eb-9da9-fe787f47a28c",
+    "title": "Vocabulaire"
+  },
+  {
+    "id": "c8b2d8fe-3659-4de9-8621-4de47891e891",
+    "guidanceId": "ac6625e2-17ee-48ac-b59d-453221b4c4dd",
+    "title": "Mathématiques"
+  },
+  {
+    "id": "67c44e72-1bb2-4494-815d-1ef86d618dce",
+    "guidanceId": "ac6625e2-17ee-48ac-b59d-453221b4c4dd",
+    "title": "Arabe"
+  },
+  {
+    "id": "ab33eba7-f2f4-4e01-b2be-e649f3fbb7b8",
+    "guidanceId": "ac6625e2-17ee-48ac-b59d-453221b4c4dd",
+    "title": "Français"
+  },
+  {
+    "id": "499af039-2f0b-40e2-a13b-9381b62a0710",
+    "guidanceId": "ac6625e2-17ee-48ac-b59d-453221b4c4dd",
+    "title": "Anglais"
+  },
+  {
+    "id": "c58c68d1-6a35-4b4f-b2ff-71ec0d0476ea",
+    "guidanceId": "ac6625e2-17ee-48ac-b59d-453221b4c4dd",
+    "title": "Histoire Géographie"
+  },
+  {
+    "id": "49b70ca3-1f6e-4a6c-9d43-e6b4cbc22fa0",
+    "guidanceId": "ac6625e2-17ee-48ac-b59d-453221b4c4dd",
+    "title": "Education Islamique"
+  },
+  {
+    "id": "496ec8ca-2d79-4354-8e7a-4a4adfa41235",
+    "guidanceId": "ac6625e2-17ee-48ac-b59d-453221b4c4dd",
+    "title": "Philosophie"
+  },
+  {
+    "id": "50b5d066-c852-4987-aa7c-6a779297d249",
+    "guidanceId": "ac6625e2-17ee-48ac-b59d-453221b4c4dd",
+    "title": "Vocabulaire"
+  },
+  {
+    "id": "19990fa7-7d0d-4ef6-bbb0-d3b9a0cb0002",
+    "guidanceId": "5880728b-269f-4c84-8147-10399a707e7e",
+    "title": "Mathématiques"
+  },
+  {
+    "id": "c538cb96-196b-4aaa-b1bd-15201faf5a6d",
+    "guidanceId": "5880728b-269f-4c84-8147-10399a707e7e",
+    "title": "Arabe"
+  },
+  {
+    "id": "ffd2965f-9cef-4315-a283-5b2b6051e4ff",
+    "guidanceId": "5880728b-269f-4c84-8147-10399a707e7e",
+    "title": "Français"
+  },
+  {
+    "id": "5d41eaf7-3235-4e6c-b9d7-ce9b5dc1fc94",
+    "guidanceId": "5880728b-269f-4c84-8147-10399a707e7e",
+    "title": "Anglais"
+  },
+  {
+    "id": "2f12e287-2526-41bc-999f-9cad1348ac0d",
+    "guidanceId": "5880728b-269f-4c84-8147-10399a707e7e",
+    "title": "Histoire Géographie"
+  },
+  {
+    "id": "55068f14-1e1e-4f8d-8809-953a5024f0af",
+    "guidanceId": "5880728b-269f-4c84-8147-10399a707e7e",
+    "title": "Education Islamique"
+  },
+  {
+    "id": "467810e0-6234-4887-9c7e-17942c713f01",
+    "guidanceId": "5880728b-269f-4c84-8147-10399a707e7e",
+    "title": "Philosophie"
+  },
+  {
+    "id": "4d289ee8-84fc-4cac-874d-f7654a85fc61",
+    "guidanceId": "5880728b-269f-4c84-8147-10399a707e7e",
+    "title": "Vocabulaire"
+  },
+  {
+    "id": "a97f80ba-b469-46c2-b068-41f1ef4bff86",
+    "guidanceId": "99205962-1c63-4025-91f0-5c67cc3e0ce0",
+    "title": "Mathématiques"
+  },
+  {
+    "id": "d864b07f-074c-4ad1-9829-b54f43f301f9",
+    "guidanceId": "99205962-1c63-4025-91f0-5c67cc3e0ce0",
+    "title": "Mathématiques (BIOF)"
+  },
+  {
+    "id": "5f440236-8963-4e8d-8f0a-95da9a8f718b",
+    "guidanceId": "99205962-1c63-4025-91f0-5c67cc3e0ce0",
+    "title": "Physique et Chimie"
+  },
+  {
+    "id": "eb47b0a9-98e5-4618-9311-8a27cb243b8d",
+    "guidanceId": "99205962-1c63-4025-91f0-5c67cc3e0ce0",
+    "title": "Sciences de la vie et de la Terre (SVT BIOF)"
+  },
+  {
+    "id": "6639dcdc-3ff7-4108-8118-4a044adcb1c1",
+    "guidanceId": "99205962-1c63-4025-91f0-5c67cc3e0ce0",
+    "title": "Sciences de la Vie et de la Terre (SVT)"
+  },
+  {
+    "id": "10bc66a8-8177-478c-92ee-aaf7c8f62e92",
+    "guidanceId": "99205962-1c63-4025-91f0-5c67cc3e0ce0",
+    "title": "Arabe"
+  },
+  {
+    "id": "24cfb71e-862d-421b-9157-f05805084fed",
+    "guidanceId": "99205962-1c63-4025-91f0-5c67cc3e0ce0",
+    "title": "Français"
+  },
+  {
+    "id": "a3bc8c94-2755-49a5-9b95-495c9ca295f6",
+    "guidanceId": "99205962-1c63-4025-91f0-5c67cc3e0ce0",
+    "title": "Anglais"
+  },
+  {
+    "id": "8ab896f9-a789-49c4-a657-4459be03b9f2",
+    "guidanceId": "99205962-1c63-4025-91f0-5c67cc3e0ce0",
+    "title": "Physique et Chimie (BIOF)"
+  },
+  {
+    "id": "dd35ed1b-d14a-4578-8354-03f918b04c7a",
+    "guidanceId": "99205962-1c63-4025-91f0-5c67cc3e0ce0",
+    "title": "Histoire Géographie"
+  },
+  {
+    "id": "3062f22a-6ea4-400d-9b08-0b1fdef52102",
+    "guidanceId": "99205962-1c63-4025-91f0-5c67cc3e0ce0",
+    "title": "Philosophie"
+  },
+  {
+    "id": "58336fcb-09ca-42e8-a03a-7bb8af9b60f0",
+    "guidanceId": "99205962-1c63-4025-91f0-5c67cc3e0ce0",
+    "title": "Informatique"
+  },
+  {
+    "id": "66e60a8d-1b1e-4e23-abd1-3cd90ff83d1e",
+    "guidanceId": "99205962-1c63-4025-91f0-5c67cc3e0ce0",
+    "title": "Education Islamique"
+  },
+  {
+    "id": "4a977a18-15c9-48e9-ba9b-3fcafe7dbce2",
+    "guidanceId": "2b185be2-f4f0-41ed-8e0c-c46b44599b4d",
+    "title": "Mathématiques"
+  },
+  {
+    "id": "4fc9d99f-ad90-430f-9724-c9cd51434dde",
+    "guidanceId": "2b185be2-f4f0-41ed-8e0c-c46b44599b4d",
+    "title": "Mathématiques (BIOF)"
+  },
+  {
+    "id": "7fa5da03-f5fd-4757-a9f7-72d698d2fae3",
+    "guidanceId": "2b185be2-f4f0-41ed-8e0c-c46b44599b4d",
+    "title": "Physique et Chimie"
+  },
+  {
+    "id": "228556aa-a4ea-4476-abe4-e3496df26203",
+    "guidanceId": "2b185be2-f4f0-41ed-8e0c-c46b44599b4d",
+    "title": "Sciences de l'ingénieur"
+  },
+  {
+    "id": "a4e2e281-7f04-4af1-8a38-9e7e9426c695",
+    "guidanceId": "2b185be2-f4f0-41ed-8e0c-c46b44599b4d",
+    "title": "Arabe"
+  },
+  {
+    "id": "842da27d-f3a9-4fa8-915b-76cc48639bd5",
+    "guidanceId": "2b185be2-f4f0-41ed-8e0c-c46b44599b4d",
+    "title": "Français"
+  },
+  {
+    "id": "2d6adf8c-2834-4ce9-bfe3-0934ef2f210a",
+    "guidanceId": "2b185be2-f4f0-41ed-8e0c-c46b44599b4d",
+    "title": "Anglais"
+  },
+  {
+    "id": "63f990c4-19e3-4e89-b2bd-55c47c1b2b1b",
+    "guidanceId": "2b185be2-f4f0-41ed-8e0c-c46b44599b4d",
+    "title": "Histoire Géographie"
+  },
+  {
+    "id": "0278d4e4-f0a0-41fd-8e14-cba498149e18",
+    "guidanceId": "2b185be2-f4f0-41ed-8e0c-c46b44599b4d",
+    "title": "Education Islamique"
+  },
+  {
+    "id": "f8e11c21-17a2-4bea-9f45-c0bebe2c87e6",
+    "guidanceId": "2b185be2-f4f0-41ed-8e0c-c46b44599b4d",
+    "title": "Philosophie"
+  },
+  {
+    "id": "4489862b-170a-419d-9555-1d0e5a76c67c",
+    "guidanceId": "2b185be2-f4f0-41ed-8e0c-c46b44599b4d",
+    "title": "Informatique"
+  },
+  {
+    "id": "e69cf871-2a2a-49fe-acf0-a67c8caf903a",
+    "guidanceId": "2b185be2-f4f0-41ed-8e0c-c46b44599b4d",
+    "title": "Physique et Chimie (BIOF)"
+  },
+  {
+    "id": "db670811-4b43-40a4-9eec-30fcff781864",
+    "guidanceId": "77cd95ca-3690-4654-98c1-491598585cc9",
+    "title": "Mathématiques"
+  },
+  {
+    "id": "753bba95-3213-4637-a3c5-3e0fe40cb503",
+    "guidanceId": "77cd95ca-3690-4654-98c1-491598585cc9",
+    "title": "Sciences de la Vie et de la Terre (SVT)"
+  },
+  {
+    "id": "c191e0a9-4ec6-4c19-a217-f5859ba8fd3d",
+    "guidanceId": "77cd95ca-3690-4654-98c1-491598585cc9",
+    "title": "Arabe"
+  },
+  {
+    "id": "bc1c76cd-b38b-4792-8ced-9a658808a586",
+    "guidanceId": "77cd95ca-3690-4654-98c1-491598585cc9",
+    "title": "Français"
+  },
+  {
+    "id": "9d5c77af-d280-49fe-8d60-321c018fd979",
+    "guidanceId": "77cd95ca-3690-4654-98c1-491598585cc9",
+    "title": "Histoire Géographie"
+  },
+  {
+    "id": "282ec41a-28c2-4ae0-b1a4-dde2730890a8",
+    "guidanceId": "77cd95ca-3690-4654-98c1-491598585cc9",
+    "title": "Anglais"
+  },
+  {
+    "id": "00fbacb4-164a-4712-9060-085b5f26215e",
+    "guidanceId": "77cd95ca-3690-4654-98c1-491598585cc9",
+    "title": "Philosophie"
+  },
+  {
+    "id": "fac9950b-45ba-4379-a2a3-6881b8cb5024",
+    "guidanceId": "77cd95ca-3690-4654-98c1-491598585cc9",
+    "title": "Education Islamique"
+  },
+  {
+    "id": "1acbc958-f17e-4701-b604-718ebf6b22da",
+    "guidanceId": "d81d7599-5a8a-4970-a0ea-036202905294",
+    "title": "Mathématiques"
+  },
+  {
+    "id": "cf7c2a63-229e-4e97-938a-4a06fda0098d",
+    "guidanceId": "d81d7599-5a8a-4970-a0ea-036202905294",
+    "title": "Activité scientifique"
+  },
+  {
+    "id": "c4a2834e-b730-45d4-b1a2-453343ade341",
+    "guidanceId": "d81d7599-5a8a-4970-a0ea-036202905294",
+    "title": "Arabe"
+  },
+  {
+    "id": "6184cc0f-b2b4-4a4c-b236-753f905bf934",
+    "guidanceId": "d81d7599-5a8a-4970-a0ea-036202905294",
+    "title": "Français"
+  },
+  {
+    "id": "8681d7c0-a90f-43be-acef-8cd7599af5e9",
+    "guidanceId": "d81d7599-5a8a-4970-a0ea-036202905294",
+    "title": "Education Islamique"
+  },
+  {
+    "id": "b52107aa-0db2-4599-b5de-7a14cd050ed1",
+    "guidanceId": "d81d7599-5a8a-4970-a0ea-036202905294",
+    "title": "Education artistique"
+  },
+  {
+    "id": "6abe3f03-7e1d-493b-b8ae-ea294b0f2f48",
+    "guidanceId": "d81d7599-5a8a-4970-a0ea-036202905294",
+    "title": "Mathématiques"
+  },
+  {
+    "id": "f489dd78-d83c-403c-b874-403ad5ed5163",
+    "guidanceId": "d81d7599-5a8a-4970-a0ea-036202905294",
+    "title": "Activité scientifique"
+  },
+  {
+    "id": "1a228f50-a561-459e-8e50-eea4a55403a2",
+    "guidanceId": "d81d7599-5a8a-4970-a0ea-036202905294",
+    "title": "Arabe"
+  },
+  {
+    "id": "bc51b984-94d3-4958-ba6c-f2e64eabcbb0",
+    "guidanceId": "d81d7599-5a8a-4970-a0ea-036202905294",
+    "title": "Français"
+  },
+  {
+    "id": "644ee04c-7fa3-40ca-9756-276c3d6c320f",
+    "guidanceId": "d81d7599-5a8a-4970-a0ea-036202905294",
+    "title": "Education Islamique"
+  },
+  {
+    "id": "1491b15d-6444-4243-896b-6e3beb4d3bc3",
+    "guidanceId": "d81d7599-5a8a-4970-a0ea-036202905294",
+    "title": "Education artistique"
+  },
+  {
+    "id": "e2159f7d-b438-49a5-b7c8-dba41fa45bd9",
+    "guidanceId": "c1b67d06-7b96-4120-8f3a-6bd397309231",
+    "title": "Mathématiques"
+  },
+  {
+    "id": "28b609de-91bd-4f06-98fc-d669c937ebc5",
+    "guidanceId": "c1b67d06-7b96-4120-8f3a-6bd397309231",
+    "title": "Activité scientifique"
+  },
+  {
+    "id": "f220c6e8-7ad1-429e-bf62-e45e08a3d2cb",
+    "guidanceId": "c1b67d06-7b96-4120-8f3a-6bd397309231",
+    "title": "Arabe"
+  },
+  {
+    "id": "08162a6c-81f4-43c5-a919-c4345eb7fdae",
+    "guidanceId": "c1b67d06-7b96-4120-8f3a-6bd397309231",
+    "title": "Français"
+  },
+  {
+    "id": "65706041-cc19-404d-8656-9ba83a0f96f6",
+    "guidanceId": "c1b67d06-7b96-4120-8f3a-6bd397309231",
+    "title": "Education Islamique"
+  },
+  {
+    "id": "8f037415-16cf-4bbd-8776-2eff778b53d5",
+    "guidanceId": "c1b67d06-7b96-4120-8f3a-6bd397309231",
+    "title": "Education artistique"
+  },
+  {
+    "id": "24f61965-fccc-43ea-88b9-d6f7e25c9eba",
+    "guidanceId": "c1b67d06-7b96-4120-8f3a-6bd397309231",
+    "title": "Mathématiques"
+  },
+  {
+    "id": "2f0cf73c-2849-4458-a67e-af4bddde0a66",
+    "guidanceId": "c1b67d06-7b96-4120-8f3a-6bd397309231",
+    "title": "Activité scientifique"
+  },
+  {
+    "id": "97dfac5c-a3a3-428f-bfad-56a97d13e3a5",
+    "guidanceId": "c1b67d06-7b96-4120-8f3a-6bd397309231",
+    "title": "Arabe"
+  },
+  {
+    "id": "783bd705-225d-461f-8c50-f704f28a87a0",
+    "guidanceId": "c1b67d06-7b96-4120-8f3a-6bd397309231",
+    "title": "Français"
+  },
+  {
+    "id": "6fb24f25-379e-4f4e-9940-b6830593bd98",
+    "guidanceId": "c1b67d06-7b96-4120-8f3a-6bd397309231",
+    "title": "Education Islamique"
+  },
+  {
+    "id": "0bab8a45-8938-454d-8a72-846bb96a5dba",
+    "guidanceId": "c1b67d06-7b96-4120-8f3a-6bd397309231",
+    "title": "Education artistique"
+  },
+  {
+    "id": "ed6cc5e4-1152-4ffd-a0c4-d3abeebccae4",
+    "guidanceId": "8ea6b78e-f9c3-4649-85f8-0352b0100248",
+    "title": "Mathématiques"
+  },
+  {
+    "id": "7a6e864c-5c42-4973-bf26-56eb6bec46b4",
+    "guidanceId": "8ea6b78e-f9c3-4649-85f8-0352b0100248",
+    "title": "Activité scientifique"
+  },
+  {
+    "id": "16bb8826-1695-49f0-a959-4b8bce01000a",
+    "guidanceId": "8ea6b78e-f9c3-4649-85f8-0352b0100248",
+    "title": "Arabe"
+  },
+  {
+    "id": "7d50a48c-f8b9-4714-9dfb-734b7a1b628c",
+    "guidanceId": "8ea6b78e-f9c3-4649-85f8-0352b0100248",
+    "title": "Français"
+  },
+  {
+    "id": "588c50f1-95af-42de-b0ba-7604f6f62112",
+    "guidanceId": "8ea6b78e-f9c3-4649-85f8-0352b0100248",
+    "title": "Education Islamique"
+  },
+  {
+    "id": "a11bb4c5-350e-41ef-b6b1-5590dd35cc5b",
+    "guidanceId": "8ea6b78e-f9c3-4649-85f8-0352b0100248",
+    "title": "Education artistique"
+  },
+  {
+    "id": "5e8e86d4-9478-4f76-8cbe-77890e49ebf1",
+    "guidanceId": "8ea6b78e-f9c3-4649-85f8-0352b0100248",
+    "title": "Mathématiques"
+  },
+  {
+    "id": "a8e14956-a2f2-4663-bf1d-8a3ba0016b56",
+    "guidanceId": "8ea6b78e-f9c3-4649-85f8-0352b0100248",
+    "title": "Activité scientifique"
+  },
+  {
+    "id": "0458abd8-73d0-4111-a3a2-241d75f4d0fd",
+    "guidanceId": "8ea6b78e-f9c3-4649-85f8-0352b0100248",
+    "title": "Arabe"
+  },
+  {
+    "id": "f5bebee4-472e-4d66-8be7-ccf0e4fefd7b",
+    "guidanceId": "8ea6b78e-f9c3-4649-85f8-0352b0100248",
+    "title": "Français"
+  },
+  {
+    "id": "4a1143c6-0289-4c8f-8271-bc24a3f4068e",
+    "guidanceId": "8ea6b78e-f9c3-4649-85f8-0352b0100248",
+    "title": "Education Islamique"
+  },
+  {
+    "id": "07671277-24f6-4164-b03d-ed492ded6d38",
+    "guidanceId": "8ea6b78e-f9c3-4649-85f8-0352b0100248",
+    "title": "Education artistique"
+  },
+  {
+    "id": "80c72994-3f37-439d-b957-e270f1116166",
+    "guidanceId": "5393faf0-1b9f-4398-be6e-cb2130acd045",
+    "title": "Mathématiques"
+  },
+  {
+    "id": "1d1f6cd1-739a-4a6a-b8eb-79c60fa141d7",
+    "guidanceId": "5393faf0-1b9f-4398-be6e-cb2130acd045",
+    "title": "Activité scientifique"
+  },
+  {
+    "id": "7d10af16-9ce4-445b-9481-93ea2e9b56ec",
+    "guidanceId": "5393faf0-1b9f-4398-be6e-cb2130acd045",
+    "title": "Arabe"
+  },
+  {
+    "id": "3e459a43-0fc7-4b38-bac6-2ec83dd49a71",
+    "guidanceId": "5393faf0-1b9f-4398-be6e-cb2130acd045",
+    "title": "Français"
+  },
+  {
+    "id": "b16d2313-935a-4f65-9196-e0671749b94e",
+    "guidanceId": "5393faf0-1b9f-4398-be6e-cb2130acd045",
+    "title": "Histoire Géographie"
+  },
+  {
+    "id": "73c14ca0-1ed7-48dc-8eb4-71c7dc636bfc",
+    "guidanceId": "5393faf0-1b9f-4398-be6e-cb2130acd045",
+    "title": "Education Islamique"
+  },
+  {
+    "id": "ce88bc09-f08c-49ad-bce5-0e3e698ce3c6",
+    "guidanceId": "5393faf0-1b9f-4398-be6e-cb2130acd045",
+    "title": "Education artistique"
+  },
+  {
+    "id": "c7ea0ed9-eeba-4cbe-860d-f9ea2438a0fe",
+    "guidanceId": "5393faf0-1b9f-4398-be6e-cb2130acd045",
+    "title": "Mathématiques"
+  },
+  {
+    "id": "53a68105-f399-465f-a7eb-259a3a30835f",
+    "guidanceId": "5393faf0-1b9f-4398-be6e-cb2130acd045",
+    "title": "Activité scientifique"
+  },
+  {
+    "id": "586ffe3a-7e0a-4387-b74a-62dedb019cd9",
+    "guidanceId": "5393faf0-1b9f-4398-be6e-cb2130acd045",
+    "title": "Arabe"
+  },
+  {
+    "id": "607d1415-29e1-4a44-9e8b-4d511fa63220",
+    "guidanceId": "5393faf0-1b9f-4398-be6e-cb2130acd045",
+    "title": "Français"
+  },
+  {
+    "id": "5be0ef06-b152-4df2-9f5f-b60af7929c58",
+    "guidanceId": "5393faf0-1b9f-4398-be6e-cb2130acd045",
+    "title": "Histoire Géographie"
+  },
+  {
+    "id": "e40416c6-5db9-4266-9161-ada92e0633f8",
+    "guidanceId": "5393faf0-1b9f-4398-be6e-cb2130acd045",
+    "title": "Education Islamique"
+  },
+  {
+    "id": "0ee58ef8-d907-4c8b-8b69-4a79269d4f30",
+    "guidanceId": "5393faf0-1b9f-4398-be6e-cb2130acd045",
+    "title": "Education artistique"
+  },
+  {
+    "id": "709b30ad-f6cb-4c0b-bcad-fb99b2db714d",
+    "guidanceId": "bff5b9b9-462f-4041-9207-24249146b347",
+    "title": "Mathématiques"
+  },
+  {
+    "id": "a1cc3bb9-5736-4400-b6dd-cf43535be683",
+    "guidanceId": "bff5b9b9-462f-4041-9207-24249146b347",
+    "title": "Activité scientifique"
+  },
+  {
+    "id": "36632d13-d90e-457a-bf7c-2dd65957e73b",
+    "guidanceId": "bff5b9b9-462f-4041-9207-24249146b347",
+    "title": "Arabe"
+  },
+  {
+    "id": "91436612-7609-4ed8-abc6-ca790ad6d472",
+    "guidanceId": "bff5b9b9-462f-4041-9207-24249146b347",
+    "title": "Français"
+  },
+  {
+    "id": "1a439447-76fe-44ff-b6f7-3300c2c4beb9",
+    "guidanceId": "bff5b9b9-462f-4041-9207-24249146b347",
+    "title": "Histoire Géographie"
+  },
+  {
+    "id": "9bfdc5b7-2425-48b6-be3a-6bbee1cd5813",
+    "guidanceId": "bff5b9b9-462f-4041-9207-24249146b347",
+    "title": "Education Islamique"
+  },
+  {
+    "id": "6e852473-4c3a-4c41-b9cf-52f1eebfc81f",
+    "guidanceId": "bff5b9b9-462f-4041-9207-24249146b347",
+    "title": "Education artistique"
+  },
+  {
+    "id": "218c68a9-5a92-43ce-bee6-b9c0acd25a93",
+    "guidanceId": "bff5b9b9-462f-4041-9207-24249146b347",
+    "title": "Mathématiques"
+  },
+  {
+    "id": "cb41d440-7600-4328-b163-17ce097f47bc",
+    "guidanceId": "bff5b9b9-462f-4041-9207-24249146b347",
+    "title": "Activité scientifique"
+  },
+  {
+    "id": "271c5dfb-b154-42eb-9942-6c987df8a5e8",
+    "guidanceId": "bff5b9b9-462f-4041-9207-24249146b347",
+    "title": "Arabe"
+  },
+  {
+    "id": "0bb766e7-87a5-4799-bb86-aa41fab12cd2",
+    "guidanceId": "bff5b9b9-462f-4041-9207-24249146b347",
+    "title": "Français"
+  },
+  {
+    "id": "7182fcc9-6966-400e-8e3f-7c5c9a0582cc",
+    "guidanceId": "bff5b9b9-462f-4041-9207-24249146b347",
+    "title": "Histoire Géographie"
+  },
+  {
+    "id": "b91d772b-a451-41a1-a11a-95bba208edc1",
+    "guidanceId": "bff5b9b9-462f-4041-9207-24249146b347",
+    "title": "Education Islamique"
+  },
+  {
+    "id": "4506047a-f09e-41ad-85ac-1ee5b29d025c",
+    "guidanceId": "bff5b9b9-462f-4041-9207-24249146b347",
+    "title": "Education artistique"
+  },
+  {
+    "id": "2f192246-aa9d-492f-87b0-ba5ec03484e8",
+    "guidanceId": "eb8a35a1-3656-4e7b-8f85-326f1b60f601",
+    "title": "Mathématiques"
+  },
+  {
+    "id": "a8d18d02-cb20-4dde-a1a2-38a721146232",
+    "guidanceId": "eb8a35a1-3656-4e7b-8f85-326f1b60f601",
+    "title": "Activité scientifique"
+  },
+  {
+    "id": "a8ab049a-ca21-4937-b443-15c8db128f07",
+    "guidanceId": "eb8a35a1-3656-4e7b-8f85-326f1b60f601",
+    "title": "Arabe"
+  },
+  {
+    "id": "691e2f2a-6381-4683-ae88-a812701d73cc",
+    "guidanceId": "eb8a35a1-3656-4e7b-8f85-326f1b60f601",
+    "title": "Français"
+  },
+  {
+    "id": "f8b46832-7dc7-40e5-9628-fd7d80ff237d",
+    "guidanceId": "eb8a35a1-3656-4e7b-8f85-326f1b60f601",
+    "title": "Histoire Géographie"
+  },
+  {
+    "id": "791033bd-5373-4f9d-ac5b-b95b61541213",
+    "guidanceId": "eb8a35a1-3656-4e7b-8f85-326f1b60f601",
+    "title": "Education Islamique"
+  },
+  {
+    "id": "f23d7bf5-1c5d-4b34-afd6-fed4f25c1fbe",
+    "guidanceId": "eb8a35a1-3656-4e7b-8f85-326f1b60f601",
+    "title": "Education artistique"
+  },
+  {
+    "id": "5d4f4b77-3bd2-4e83-9c8f-f30997d89ff5",
+    "guidanceId": "eb8a35a1-3656-4e7b-8f85-326f1b60f601",
+    "title": "Mathématiques"
+  },
+  {
+    "id": "bc0ab283-fbca-40f3-9d83-f57cf3129c7e",
+    "guidanceId": "eb8a35a1-3656-4e7b-8f85-326f1b60f601",
+    "title": "Activité scientifique"
+  },
+  {
+    "id": "5597acf4-e642-4084-bbd9-938a08d5a4ae",
+    "guidanceId": "eb8a35a1-3656-4e7b-8f85-326f1b60f601",
+    "title": "Arabe"
+  },
+  {
+    "id": "cb2bf171-bb93-4988-ad1f-60c7a638f63f",
+    "guidanceId": "eb8a35a1-3656-4e7b-8f85-326f1b60f601",
+    "title": "Français"
+  },
+  {
+    "id": "c8d7399e-2b49-492a-92c6-a992d5a05189",
+    "guidanceId": "eb8a35a1-3656-4e7b-8f85-326f1b60f601",
+    "title": "Histoire Géographie"
+  },
+  {
+    "id": "5f0d41bd-c42e-4c71-b4be-811dd12f1492",
+    "guidanceId": "eb8a35a1-3656-4e7b-8f85-326f1b60f601",
+    "title": "Education Islamique"
+  },
+  {
+    "id": "440c6219-2e0c-4be1-95da-bf7d14cfa2d7",
+    "guidanceId": "eb8a35a1-3656-4e7b-8f85-326f1b60f601",
+    "title": "Education artistique"
+  }
+]
