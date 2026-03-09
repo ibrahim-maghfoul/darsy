@@ -5,6 +5,7 @@ const api = axios.create({
     withCredentials: true,
     headers: {
         'Content-Type': 'application/json',
+        'X-App-Key': process.env.NEXT_PUBLIC_APP_API_KEY || 'darsy-secret-2026-x9k2p',
     },
 });
 

@@ -37,7 +37,7 @@ export default function LessonPage() {
     const params = useParams();
     const lessonId = params.lessonId as string;
     const router = useRouter();
-    const { user, checkAuth } = useAuth();
+    const { user, checkAuth, getResourceURL } = useAuth();
     const [lesson, setLesson] = useState<any>(null);
     const [loading, setLoading] = useState(true);
 
@@ -160,7 +160,7 @@ export default function LessonPage() {
         setTimer(0);
         lastSavedTimerRef.current = 0;
         if (user) {
-            const safeResourceId = typeof btoa !== 'undefined' ? btoa(encodeURIComponent(resource.url)) : encodeURIComponent(resource.url);
+            const safeResourceId = resource.docId || (typeof btoa !== 'undefined' ? btoa(encodeURIComponent(resource.url)) : encodeURIComponent(resource.url));
             trackResourceView({
                 lessonId,
                 subjectId: currentLesson?.subjectId,
@@ -177,7 +177,7 @@ export default function LessonPage() {
             return;
         }
 
-        const safeResourceId = typeof btoa !== 'undefined' ? btoa(encodeURIComponent(activeResource.url)) : encodeURIComponent(activeResource.url);
+        const safeResourceId = activeResource.docId || (typeof btoa !== 'undefined' ? btoa(encodeURIComponent(activeResource.url)) : encodeURIComponent(activeResource.url));
 
         if (!localCompletedResources.includes(safeResourceId)) {
             setLocalCompletedResources(prev => [...prev, safeResourceId]);
@@ -308,19 +308,19 @@ export default function LessonPage() {
                     <div className="aspect-video bg-dark rounded-3xl overflow-hidden shadow-2xl relative group">
                         {activeResource?.type === 'video' ? (
                             <iframe
-                                src={getEmbedUrl(activeResource.url)}
+                                src={getEmbedUrl(getResourceURL(activeResource.url) || '')}
                                 className="w-full h-full"
                                 allowFullScreen
                                 allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
                             />
                         ) : activeResource?.type === 'pdf' || activeResource?.url?.endsWith('.pdf') ? (
                             <iframe
-                                src={getEmbedUrl(activeResource.url)}
+                                src={getEmbedUrl(getResourceURL(activeResource.url) || '')}
                                 className="w-full h-full border-none"
                             />
                         ) : activeResource ? (
                             <iframe
-                                src={getEmbedUrl(activeResource.url)}
+                                src={getEmbedUrl(getResourceURL(activeResource.url) || '')}
                                 className="w-full h-full border-none bg-white rounded-3xl"
                                 allow="fullscreen"
                                 sandbox="allow-same-origin allow-scripts allow-popups allow-forms"
@@ -415,7 +415,8 @@ export default function LessonPage() {
                                     <div className="space-y-2">
                                         <h4 className="text-xs font-bold text-muted-foreground uppercase tracking-wider">{t("courses_pdf")}</h4>
                                         {lesson.coursesPdf.map((res: any, idx: number) => {
-                                            const safeId = typeof btoa !== 'undefined' ? btoa(encodeURIComponent(res.url)) : encodeURIComponent(res.url);
+                                            const resourceUrl = getResourceURL(res.url) || res.url;
+                                            const safeId = res.docId || (typeof btoa !== 'undefined' ? btoa(encodeURIComponent(resourceUrl)) : encodeURIComponent(resourceUrl));
                                             const isCompleted = localCompletedResources.includes(safeId);
                                             return (
                                                 <button
@@ -437,7 +438,8 @@ export default function LessonPage() {
                                     <div className="space-y-2">
                                         <h4 className="text-xs font-bold text-muted-foreground uppercase tracking-wider">{t("videos")}</h4>
                                         {lesson.videos.map((res: any, idx: number) => {
-                                            const safeId = typeof btoa !== 'undefined' ? btoa(encodeURIComponent(res.url)) : encodeURIComponent(res.url);
+                                            const resourceUrl = getResourceURL(res.url) || res.url;
+                                            const safeId = res.docId || (typeof btoa !== 'undefined' ? btoa(encodeURIComponent(resourceUrl)) : encodeURIComponent(resourceUrl));
                                             const isCompleted = localCompletedResources.includes(safeId);
                                             return (
                                                 <button
@@ -459,7 +461,8 @@ export default function LessonPage() {
                                     <div className="space-y-2">
                                         <h4 className="text-xs font-bold text-muted-foreground uppercase tracking-wider">{t("exercises")}</h4>
                                         {lesson.exercices.map((res: any, idx: number) => {
-                                            const safeId = typeof btoa !== 'undefined' ? btoa(encodeURIComponent(res.url)) : encodeURIComponent(res.url);
+                                            const resourceUrl = getResourceURL(res.url) || res.url;
+                                            const safeId = res.docId || (typeof btoa !== 'undefined' ? btoa(encodeURIComponent(resourceUrl)) : encodeURIComponent(resourceUrl));
                                             const isCompleted = localCompletedResources.includes(safeId);
                                             return (
                                                 <button
@@ -481,7 +484,8 @@ export default function LessonPage() {
                                     <div className="space-y-2">
                                         <h4 className="text-xs font-bold text-muted-foreground uppercase tracking-wider">{t("exams")}</h4>
                                         {lesson.exams.map((res: any, idx: number) => {
-                                            const safeId = typeof btoa !== 'undefined' ? btoa(encodeURIComponent(res.url)) : encodeURIComponent(res.url);
+                                            const resourceUrl = getResourceURL(res.url) || res.url;
+                                            const safeId = res.docId || (typeof btoa !== 'undefined' ? btoa(encodeURIComponent(resourceUrl)) : encodeURIComponent(resourceUrl));
                                             const isCompleted = localCompletedResources.includes(safeId);
                                             return (
                                                 <button
@@ -503,7 +507,8 @@ export default function LessonPage() {
                                     <div className="space-y-2">
                                         <h4 className="text-xs font-bold text-muted-foreground uppercase tracking-wider">{t("resources")}</h4>
                                         {lesson.resourses.map((res: any, idx: number) => {
-                                            const safeId = typeof btoa !== 'undefined' ? btoa(encodeURIComponent(res.url)) : encodeURIComponent(res.url);
+                                            const resourceUrl = getResourceURL(res.url) || res.url;
+                                            const safeId = res.docId || (typeof btoa !== 'undefined' ? btoa(encodeURIComponent(resourceUrl)) : encodeURIComponent(resourceUrl));
                                             const isCompleted = localCompletedResources.includes(safeId);
                                             return (
                                                 <button

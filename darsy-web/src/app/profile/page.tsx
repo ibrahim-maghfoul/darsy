@@ -27,13 +27,21 @@ import {
     Upload,
     FileText,
     FileUp,
-    FolderPlus
+    FolderPlus,
+    LayoutGrid,
+    Briefcase,
+    Calendar,
+    HelpCircle,
+    Share2,
+    Database,
+    GraduationCap
 } from "lucide-react";
+import { getSchoolServices } from "@/services/services";
 import Link from "next/link";
 import { useAuth } from "@/contexts/AuthContext";
 import api from "@/lib/api";
 import { getUserFavorites } from "@/services/progress";
-import { getLessonById, getSubjects, getLessons } from "@/services/data";
+import { getLessonById, getSubjects, getLessons, getSchools, getLevels, getGuidances } from "@/services/data";
 import { Subject, Lesson } from "@/types";
 import { useRouter } from "next/navigation";
 import { useTranslations, useLocale } from "next-intl";
@@ -47,7 +55,7 @@ export default function ProfilePage() {
     const tc = useTranslations("Common");
     const locale = useLocale();
     const isAr = locale === 'ar';
-    const { user, logout, loading: authLoading, checkAuth, getPhotoURL } = useAuth();
+    const { user, logout, loading: authLoading, checkAuth, getPhotoURL, getResourceURL } = useAuth();
     const [favorites, setFavorites] = useState([]);
     const [lastLesson, setLastLesson] = useState<any>(null);
     const [savedNews, setSavedNews] = useState([]);
@@ -59,6 +67,7 @@ export default function ProfilePage() {
     const [photoPreview, setPhotoPreview] = useState<string | null>(null);
     const [isCropping, setIsCropping] = useState(false);
     const [cropImage, setCropImage] = useState<string | null>(null);
+    const [isChangingPath, setIsChangingPath] = useState(false);
 
     // Resource Contribution State
     const [subjects, setSubjects] = useState<Subject[]>([]);
@@ -279,6 +288,20 @@ export default function ProfilePage() {
             transition={{ duration: 0.4 }}
             className="min-h-screen bg-white pb-0"
         >
+            <AnimatePresence>
+                {isChangingPath && (
+                    <PathSelectionModal
+                        userId={user?.id}
+                        onClose={() => setIsChangingPath(false)}
+                        onSuccess={() => {
+                            setIsChangingPath(false);
+                            checkAuth();
+                            showSnackbar("Profile path updated successfully!", "success");
+                        }}
+                        t={t}
+                    />
+                )}
+            </AnimatePresence>
             {/* Hero Section */}
             <div className="h-56 bg-green/10 relative overflow-hidden">
                 <div className="absolute inset-0 bg-gradient-to-t from-white to-transparent" />
@@ -296,7 +319,7 @@ export default function ProfilePage() {
                                     onClick={handlePhotoClick}
                                 >
                                     {currentPhoto ? (
-                                        <img src={currentPhoto} alt={user?.displayName} className="w-full h-full object-cover" />
+                                        <img src={currentPhoto} alt={user?.displayName} className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500" />
                                     ) : (
                                         <div className="w-full h-full flex items-center justify-center bg-green/10 text-green">
                                             <User size={64} />
@@ -306,6 +329,13 @@ export default function ProfilePage() {
                                     <div className="absolute inset-0 bg-dark/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center rounded-[3rem]">
                                         <Camera size={32} className="text-white" />
                                     </div>
+
+                                    {/* Premium Badge */}
+                                    {(user?.subscription?.plan === 'premium' || user?.subscription?.plan === 'pro') && (
+                                        <div className="absolute -top-1 -right-1 w-10 h-10 rounded-full bg-amber-400 border-[3px] border-white flex items-center justify-center shadow-lg pointer-events-none z-10" title="Premium Member">
+                                            <Star size={20} className="text-white fill-current" />
+                                        </div>
+                                    )}
                                 </div>
 
                                 {/* Upload status badge */}
@@ -359,10 +389,19 @@ export default function ProfilePage() {
 
                             <div className="text-center md:text-left space-y-2">
                                 <h1 className="text-4xl font-bold text-dark">{user?.displayName}</h1>
-                                <p className="text-muted-foreground flex items-center justify-center md:justify-start gap-2">
-                                    <GraduationCap size={18} className="text-green" />
-                                    {user?.level?.guidance || t("new_student")} • {user?.level?.level || t("onboarding_status")}
-                                </p>
+                                <div className="flex flex-col md:flex-row items-center md:items-end gap-3">
+                                    <p className="text-muted-foreground flex items-center justify-center md:justify-start gap-2">
+                                        <GraduationCap size={18} className="text-green" />
+                                        {user?.level?.guidance || t("new_student")} • {user?.level?.level || t("onboarding_status")}
+                                    </p>
+                                    <button
+                                        onClick={() => setIsChangingPath(true)}
+                                        className="text-xs font-bold text-green hover:underline flex items-center gap-1"
+                                    >
+                                        <ChevronRight size={14} className={isAr ? 'rotate-180' : ''} />
+                                        {t("change_path") || "Change Path"}
+                                    </button>
+                                </div>
                             </div>
                         </div>
                         <div className="flex gap-3">
@@ -446,12 +485,19 @@ export default function ProfilePage() {
                         initial={{ opacity: 0, scale: 0.95 }}
                         animate={{ opacity: 1, scale: 1 }}
                         dir={isAr ? "rtl" : "ltr"}
-                        className={`bg-gradient-to-br rounded-[40px] p-10 space-y-8 border-2 shadow-xl relative overflow-hidden group transition-all duration-500 ${profileCompletion === 100
-                            ? "from-green/10 via-green/20 to-white border-green/30"
-                            : "from-green/5 via-green/10 to-white border-green/10"
+                        className={`bg-green/15 rounded-[40px] p-10 space-y-8 border-2 relative overflow-hidden group transition-all duration-500 ${profileCompletion === 100
+                            ? "border-green/30"
+                            : "border-green/10"
                             }`}
                     >
-                        <div className="absolute top-0 right-0 w-64 h-64 bg-green/5 rounded-full -mr-32 -mt-32 blur-3xl" />
+                        {/* Hexagon Hive Texture Overlay — perfect honeycomb hive */}
+                        <div className="absolute inset-0 opacity-[0.2] pointer-events-none z-0"
+                            style={{
+                                backgroundImage: `url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='56' height='97' viewBox='0 0 56 97'%3E%3Cpath d='M28 64.6L0 48.45L0 16.15L28 0L56 16.15L56 48.45L28 64.6L28 97' fill='none' stroke='%2322C55E' stroke-width='0.5'/%3E%3C/svg%3E")`,
+                                backgroundSize: '28px 48.5px',
+                                backgroundRepeat: 'repeat'
+                            }}
+                        />
 
                         <div className="flex flex-col md:flex-row items-center justify-between gap-8 relative z-10">
                             <div className={`space-y-4 text-center ${isAr ? "md:text-right" : "md:text-left"}`}>
@@ -537,6 +583,74 @@ export default function ProfilePage() {
                             </div>
                         )}
                     </motion.div>
+
+                    {/* Quick Actions Grid */}
+                    <div className="space-y-6 pt-8 border-t border-gray-100">
+                        <div className="flex items-center gap-3">
+                            <div className="w-10 h-10 rounded-2xl bg-green/10 text-green flex items-center justify-center flex-shrink-0">
+                                <LayoutGrid size={24} />
+                            </div>
+                            <div>
+                                <h2 className="text-2xl font-bold text-dark">{t("quick_actions") || "Quick Actions"}</h2>
+                                <p className="text-sm text-muted-foreground">{t("quick_actions_desc") || "Access useful tools and services quickly."}</p>
+                            </div>
+                        </div>
+
+                        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+                            <Link href="/services" className="group p-6 rounded-[32px] bg-white border border-green/10 hover:border-green hover:shadow-xl hover:shadow-green/5 transition-all flex flex-col gap-4">
+                                <div className="w-12 h-12 rounded-2xl bg-green/10 text-green flex items-center justify-center group-hover:scale-110 transition-transform">
+                                    <Database size={24} />
+                                </div>
+                                <div>
+                                    <h4 className="font-bold text-dark">{t("services_info") || "Services & Info"}</h4>
+                                    <p className="text-xs text-muted-foreground">{t("services_info_desc") || "Official info and resources"}</p>
+                                </div>
+                            </Link>
+
+                            <button
+                                onClick={() => {
+                                    if (navigator.share) {
+                                        navigator.share({
+                                            title: 'Darsy',
+                                            text: 'Check out Darsy - The ultimate education platform!',
+                                            url: window.location.origin,
+                                        });
+                                    } else {
+                                        showSnackbar("Sharing not supported on this browser", "info");
+                                    }
+                                }}
+                                className="group p-6 rounded-[32px] bg-white border border-green/10 hover:border-green hover:shadow-xl hover:shadow-green/5 transition-all flex flex-col text-left gap-4"
+                            >
+                                <div className="w-12 h-12 rounded-2xl bg-blue-50 text-blue-500 flex items-center justify-center group-hover:scale-110 transition-transform">
+                                    <Share2 size={24} />
+                                </div>
+                                <div>
+                                    <h4 className="font-bold text-dark">{t("share_app") || "Share Darsy"}</h4>
+                                    <p className="text-xs text-muted-foreground">{t("share_app_desc") || "Invite your friends"}</p>
+                                </div>
+                            </button>
+
+                            <Link href="/report" className="group p-6 rounded-[32px] bg-white border border-green/10 hover:border-green hover:shadow-xl hover:shadow-green/5 transition-all flex flex-col gap-4">
+                                <div className="w-12 h-12 rounded-2xl bg-red-50 text-red-500 flex items-center justify-center group-hover:scale-110 transition-transform">
+                                    <ShieldAlert size={24} />
+                                </div>
+                                <div>
+                                    <h4 className="font-bold text-dark">{t("report_issue") || "Report Issue"}</h4>
+                                    <p className="text-xs text-muted-foreground">{t("report_issue_desc") || "Help us improve"}</p>
+                                </div>
+                            </Link>
+
+                            <Link href="/about" className="group p-6 rounded-[32px] bg-white border border-green/10 hover:border-green hover:shadow-xl hover:shadow-green/5 transition-all flex flex-col gap-4">
+                                <div className="w-12 h-12 rounded-2xl bg-purple-50 text-purple-500 flex items-center justify-center group-hover:scale-110 transition-transform">
+                                    <HelpCircle size={24} />
+                                </div>
+                                <div>
+                                    <h4 className="font-bold text-dark">{t("about_us") || "About Us"}</h4>
+                                    <p className="text-xs text-muted-foreground">{t("about_us_desc") || "Learn more about Darsy"}</p>
+                                </div>
+                            </Link>
+                        </div>
+                    </div>
 
                     {/* Grades Calculator — shown above favorites */}
                     <div className="space-y-6 pt-8 border-t border-gray-100">
@@ -640,19 +754,19 @@ export default function ProfilePage() {
                                 </div>
 
                                 <div className="space-y-2">
-                                    <label className="text-sm font-bold text-dark/60 ml-2">{t("upload_pdf") || "Upload PDF"}</label>
+                                    <label className="text-sm font-bold text-dark/60 ml-2">{t("upload_file") || "Upload File (PDF/Image)"}</label>
                                     <div
                                         onClick={() => resourceInputRef.current?.click()}
                                         className="w-full h-[60px] cursor-pointer rounded-2xl bg-white border-2 border-dashed border-green/20 hover:border-green transition-all flex items-center justify-center gap-3 group px-4 overflow-hidden"
                                     >
                                         <Upload size={20} className="text-green group-hover:scale-110 transition-transform flex-shrink-0" />
                                         <span className="text-sm font-medium text-dark/60 truncate">
-                                            {uploadFile ? uploadFile.name : (t("click_to_upload_pdf") || "Click to select PDF file")}
+                                            {uploadFile ? uploadFile.name : (t("click_to_upload") || "Click to select PDF or Image")}
                                         </span>
                                         <input
                                             ref={resourceInputRef}
                                             type="file"
-                                            accept="application/pdf"
+                                            accept="application/pdf,image/*"
                                             onChange={(e) => setUploadFile(e.target.files?.[0] || null)}
                                             className="hidden"
                                         />
@@ -808,22 +922,156 @@ export default function ProfilePage() {
     );
 }
 
-function GraduationCap({ size, className }: { size: number, className: string }) {
+
+interface PathSelectionModalProps {
+    userId?: string;
+    onClose: () => void;
+    onSuccess: () => void;
+    t: any;
+}
+
+function PathSelectionModal({ userId, onClose, onSuccess, t }: PathSelectionModalProps) {
+    const [step, setStep] = useState(1);
+    const [options, setOptions] = useState<any[]>([]);
+    const [loading, setLoading] = useState(false);
+    const [selections, setSelections] = useState({
+        schoolId: "",
+        levelId: "",
+        guidanceId: "",
+    });
+
+    useEffect(() => {
+        fetchOptions();
+    }, [step, selections.schoolId, selections.levelId]);
+
+    const fetchOptions = async () => {
+        setLoading(true);
+        try {
+            let res: any[] = [];
+            if (step === 1) {
+                res = await getSchools();
+                // Priority Sort: Primaire -> Collège -> Lycée
+                res.sort((a, b) => {
+                    const priority = (t: string) => {
+                        const l = t.toLowerCase();
+                        if (l.includes('prim') || l.includes('ابتدا')) return 0;
+                        if (l.includes('coll') || l.includes('إعدا')) return 1;
+                        if (l.includes('lyc') || l.includes('ثانو')) return 2;
+                        return 3;
+                    };
+                    return priority(a.title) - priority(b.title);
+                });
+            } else if (step === 2) {
+                res = await getLevels(selections.schoolId);
+            } else if (step === 3) {
+                res = await getGuidances(selections.levelId);
+            }
+            setOptions(res);
+        } catch (error) {
+            console.error("Failed to fetch path options:", error);
+        } finally {
+            setLoading(false);
+        }
+    };
+
+    const handleSelect = async (id: string, title: string) => {
+        if (step === 1) {
+            setSelections(prev => ({ ...prev, schoolId: id, levelId: "", guidanceId: "" }));
+            setStep(2);
+        } else if (step === 2) {
+            setSelections(prev => ({ ...prev, levelId: id, guidanceId: "" }));
+            setStep(3);
+        } else {
+            setLoading(true);
+            try {
+                // Fetch full objects to get titles
+                const allSchools = await getSchools();
+                const school = allSchools.find((s: any) => s.id === selections.schoolId);
+                const levels = await getLevels(selections.schoolId);
+                const level = levels.find((l: any) => l.id === selections.levelId);
+                const guidances = await getGuidances(selections.levelId);
+                const guidance = guidances.find((g: any) => g.id === id);
+
+                await api.patch('/user/profile', {
+                    selectedPath: {
+                        schoolId: selections.schoolId,
+                        levelId: selections.levelId,
+                        guidanceId: id
+                    },
+                    level: {
+                        school: school?.title || "",
+                        level: level?.title || "",
+                        guidance: guidance?.title || ""
+                    }
+                });
+                onSuccess();
+            } catch (error) {
+                console.error("Failed to update path:", error);
+            } finally {
+                setLoading(false);
+            }
+        }
+    };
+
     return (
-        <svg
-            xmlns="http://www.w3.org/2000/svg"
-            width={size}
-            height={size}
-            viewBox="0 0 24 24"
-            fill="none"
-            stroke="currentColor"
-            strokeWidth="2"
-            strokeLinecap="round"
-            strokeLinejoin="round"
-            className={className}
-        >
-            <path d="M22 10v6M2 10l10-5 10 5-10 5z" />
-            <path d="M6 12v5c3 3 9 3 12 0v-5" />
-        </svg>
+        <div className="fixed inset-0 z-[100] flex items-center justify-center p-6">
+            <motion.div
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                exit={{ opacity: 0 }}
+                onClick={onClose}
+                className="absolute inset-0 bg-dark/60 backdrop-blur-sm"
+            />
+            <motion.div
+                initial={{ opacity: 0, scale: 0.9, y: 20 }}
+                animate={{ opacity: 1, scale: 1, y: 0 }}
+                exit={{ opacity: 0, scale: 0.9, y: 20 }}
+                className="relative w-full max-w-lg bg-white rounded-[40px] p-8 md:p-10 shadow-2xl space-y-6 overflow-hidden"
+            >
+                <div className="space-y-1">
+                    <h2 className="text-2xl font-black text-dark">
+                        {step === 1 ? "Select School" : step === 2 ? "Select Level" : "Select Guidance"}
+                    </h2>
+                    <p className="text-muted-foreground text-sm">
+                        {step === 1 ? "Start by choosing your education system" :
+                            step === 2 ? "Pick your current grade level" :
+                                "Finally, select your specific branch or path"}
+                    </p>
+                </div>
+
+                <div className="space-y-3 max-h-[400px] overflow-y-auto pr-2 custom-scrollbar">
+                    {loading ? (
+                        Array(3).fill(0).map((_, i) => (
+                            <div key={i} className="h-16 bg-green/5 animate-pulse rounded-2xl" />
+                        ))
+                    ) : (
+                        options.map((item: any) => (
+                            <button
+                                key={item.id}
+                                onClick={() => handleSelect(item.id, item.title)}
+                                className="w-full flex items-center justify-between p-5 rounded-2xl border border-green/10 hover:border-green hover:bg-green/5 transition-all text-left group"
+                            >
+                                <span className="font-bold text-dark/80 group-hover:text-green">{item.title}</span>
+                                <ChevronRight size={18} className="text-green/20 group-hover:text-green group-hover:translate-x-1 transition-all" />
+                            </button>
+                        ))
+                    )}
+                </div>
+
+                <div className="pt-4 flex items-center justify-between">
+                    <button
+                        onClick={step === 1 ? onClose : () => setStep(step - 1)}
+                        className="text-sm font-bold text-muted-foreground hover:text-dark transition-colors"
+                    >
+                        {step === 1 ? "Cancel" : "Back"}
+                    </button>
+                    <div className="flex gap-1.5">
+                        {[1, 2, 3].map(i => (
+                            <div key={i} className={`h-1.5 w-6 rounded-full transition-all ${step === i ? 'bg-green' : 'bg-green/10'}`} />
+                        ))}
+                    </div>
+                </div>
+            </motion.div>
+        </div>
     );
 }

@@ -91,11 +91,11 @@ export default function SignupPage() {
                             <Lock className="absolute left-4 top-1/2 -translate-y-1/2 text-green" size={20} />
                             <input
                                 type="password"
-                                placeholder={t('password')}
+                                placeholder={t('password') + ' (min. 8 chars, 1 uppercase, 1 number)'}
                                 value={password}
                                 onChange={(e) => setPassword(e.target.value)}
                                 className="w-full pl-12 pr-4 py-4 rounded-2xl bg-green/5 border border-transparent focus:border-green focus:bg-white focus:ring-4 focus:ring-green/5 outline-none transition-all font-medium"
-                                minLength={6}
+                                minLength={8}
                                 required
                             />
                         </div>

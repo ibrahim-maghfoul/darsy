@@ -43,19 +43,21 @@ const stats = [
 ];
 
 const team = [
-    { name: "Ahmed Karimi", role: "CEO & Co-founder", initials: "AK", color: "bg-green" },
-    { name: "Sara Benali", role: "Head of Education", initials: "SB", color: "bg-blue-500" },
-    { name: "Omar Talib", role: "Lead Engineer", initials: "OT", color: "bg-amber-500" },
-    { name: "Lina Mourad", role: "Product Designer", initials: "LM", color: "bg-purple-500" },
-    { name: "Karim Djebbar", role: "Content Director", initials: "KD", color: "bg-red-500" },
-    { name: "Yasmine Cherif", role: "Community Lead", initials: "YC", color: "bg-cyan-500" },
+    { name: "Ahmed Karimi", role: "CEO & Co-founder", initials: "AK", color: "bg-green", img: "/brain/f744a6c8-7f9c-4548-bd68-147839b3d846/team_ahmed_karimi_1773003182114.png" },
+    { name: "Sara Benali", role: "Head of Education", initials: "SB", color: "bg-blue-500", img: "/brain/f744a6c8-7f9c-4548-bd68-147839b3d846/team_sara_benali_1773003197115.png" },
+    { name: "Omar Talib", role: "Lead Engineer", initials: "OT", color: "bg-amber-500", img: "/brain/f744a6c8-7f9c-4548-bd68-147839b3d846/team_omar_talib_1773003211609.png" },
+    { name: "Lina Mourad", role: "Product Designer", initials: "LM", color: "bg-purple-500", img: "/brain/f744a6c8-7f9c-4548-bd68-147839b3d846/team_lina_mourad_1773003233165.png" },
+    { name: "Karim Djebbar", role: "Content Director", initials: "KD", color: "bg-red-500", img: "/brain/f744a6c8-7f9c-4548-bd68-147839b3d846/team_karim_djebbar_1773003267993.png" },
+    { name: "Yasmine Cherif", role: "Community Lead", initials: "YC", color: "bg-cyan-500", img: "/brain/f744a6c8-7f9c-4548-bd68-147839b3d846/team_yasmine_cherif_1773003283625.png" },
 ];
 
 const milestones = [
     { year: "2021", title: "Founded in Algiers", desc: "Darsy was born out of a shared frustration — quality education felt out of reach for many students." },
     { year: "2022", title: "First 1,000 Students", desc: "Word spread quickly. Within months, students across Algeria were using Darsy to prepare for exams." },
     { year: "2023", title: "National Expansion", desc: "We partnered with 20 schools and launched our mobile apps, reaching 10,000 active users." },
-    { year: "2024", title: "Going Global", desc: "Available in Arabic, French & English, Darsy now serves students across the MENA region and beyond." },
+    { year: "2024", title: "Kingdom Success", desc: "Darsy expanded into Morocco, serving students across the kingdom and beyond." },
+    { year: "2025", title: "AI Learning", desc: "Launched personalized AI modules that adapt to every student's pace and style." },
+    { year: "2026", title: "Vision 2026", desc: "Aiming to become the leading digital education hub in Africa, reaching 1 million learners." },
 ];
 
 const fadeUp = {
@@ -109,12 +111,12 @@ export default function AboutPage() {
     ];
 
     const team = [
-        { name: "Ahmed Karimi", role: "CEO & Co-founder", initials: "AK", color: "bg-green" },
-        { name: "Sara Benali", role: "Head of Education", initials: "SB", color: "bg-blue-500" },
-        { name: "Omar Talib", role: "Lead Engineer", initials: "OT", color: "bg-amber-500" },
-        { name: "Lina Mourad", role: "Product Designer", initials: "LM", color: "bg-purple-500" },
-        { name: "Karim Djebbar", role: "Content Director", initials: "KD", color: "bg-red-500" },
-        { name: "Yasmine Cherif", role: "Community Lead", initials: "YC", color: "bg-cyan-500" },
+        { name: "Ahmed Karimi", role: "CEO & Co-founder", initials: "AK", color: "bg-green", img: "/brain/f744a6c8-7f9c-4548-bd68-147839b3d846/team_ahmed_karimi_1773003182114.png" },
+        { name: "Sara Benali", role: "Head of Education", initials: "SB", color: "bg-blue-500", img: "/brain/f744a6c8-7f9c-4548-bd68-147839b3d846/team_sara_benali_1773003197115.png" },
+        { name: "Omar Talib", role: "Lead Engineer", initials: "OT", color: "bg-amber-500", img: "/brain/f744a6c8-7f9c-4548-bd68-147839b3d846/team_omar_talib_1773003211609.png" },
+        { name: "Lina Mourad", role: "Product Designer", initials: "LM", color: "bg-purple-500", img: "/brain/f744a6c8-7f9c-4548-bd68-147839b3d846/team_lina_mourad_1773003233165.png" },
+        { name: "Karim Djebbar", role: "Content Director", initials: "KD", color: "bg-red-500", img: "/brain/f744a6c8-7f9c-4548-bd68-147839b3d846/team_karim_djebbar_1773003267993.png" },
+        { name: "Yasmine Cherif", role: "Community Lead", initials: "YC", color: "bg-cyan-500", img: "/brain/f744a6c8-7f9c-4548-bd68-147839b3d846/team_yasmine_cherif_1773003283625.png" },
     ];
 
     const milestones = [
@@ -122,6 +124,8 @@ export default function AboutPage() {
         { year: "2022", title: t('m2_title'), desc: t('m2_desc') },
         { year: "2023", title: t('m3_title'), desc: t('m3_desc') },
         { year: "2024", title: t('m4_title'), desc: t('m4_desc') },
+        { year: "2025", title: t('m5_title'), desc: t('m5_desc') },
+        { year: "2026", title: t('m6_title'), desc: t('m6_desc') },
     ];
 
     return (
@@ -216,8 +220,8 @@ export default function AboutPage() {
                                 <div className="w-10 h-10 rounded-2xl bg-green/10 flex items-center justify-center text-green">
                                     <item.icon size={20} />
                                 </div>
-                                <div className="text-2xl font-black text-dark">{item.value}</div>
-                                <div className="text-sm text-muted-foreground font-medium">{item.label}</div>
+                                <div className="text-2xl font-black text-dark" dir="auto">{item.value}</div>
+                                <div className="text-sm text-muted-foreground font-medium" dir="auto">{item.label}</div>
                             </div>
                         ))}
                     </motion.div>
@@ -248,8 +252,8 @@ export default function AboutPage() {
                                     <v.icon size={22} />
                                 </div>
                                 <div className="space-y-2">
-                                    <h3 className="text-lg font-bold text-white">{v.title}</h3>
-                                    <p className="text-white/55 leading-relaxed">{v.description}</p>
+                                    <h3 className="text-lg font-bold text-white" dir="auto">{v.title}</h3>
+                                    <p className="text-white/55 leading-relaxed" dir="auto">{v.description}</p>
                                 </div>
                             </motion.div>
                         ))}
@@ -287,8 +291,8 @@ export default function AboutPage() {
                                         </div>
                                     </div>
                                     <div className="pt-4 space-y-2">
-                                        <h3 className="text-xl font-bold text-dark">{m.title}</h3>
-                                        <p className="text-muted-foreground leading-relaxed">{m.desc}</p>
+                                        <h3 className="text-xl font-bold text-dark text-left rtl:text-right" dir="auto">{m.title}</h3>
+                                        <p className="text-muted-foreground leading-relaxed text-left rtl:text-right" dir="auto">{m.desc}</p>
                                     </div>
                                 </motion.div>
                             ))}
@@ -306,21 +310,30 @@ export default function AboutPage() {
                         </div>
                         <h2 className="text-4xl md:text-5xl font-bold text-dark">{t('team_title')}</h2>
                     </motion.div>
-                    <div className="grid grid-cols-2 md:grid-cols-3 gap-6">
+                    <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4">
                         {team.map((member, i) => (
                             <motion.div
                                 key={i}
                                 initial={{ opacity: 0, scale: 0.9 }}
                                 whileInView={{ opacity: 1, scale: 1 }}
                                 viewport={{ once: true }}
-                                transition={{ delay: i * 0.08 }}
-                                className="group text-center p-8 bg-white rounded-[28px] border border-green/10 hover:border-green hover:shadow-xl hover:shadow-green/5 hover:-translate-y-1 transition-all"
+                                transition={{ delay: i * 0.05 }}
+                                className="group relative"
                             >
-                                <div className={`w-16 h-16 ${member.color} rounded-2xl flex items-center justify-center text-white font-black text-lg mx-auto mb-4 group-hover:scale-110 transition-transform`}>
-                                    {member.initials}
+                                <div className="relative aspect-square rounded-[24px] overflow-hidden bg-white border border-green/10 shadow-sm group-hover:shadow-xl group-hover:shadow-green/10 group-hover:-translate-y-1 transition-all duration-300">
+                                    <img
+                                        src={member.img}
+                                        alt={member.name}
+                                        className="w-full h-full object-cover grayscale group-hover:grayscale-0 transition-all duration-500"
+                                    />
+                                    <div className="absolute inset-0 bg-gradient-to-t from-dark/80 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex flex-col justify-end p-4 text-left">
+                                        <p className="text-[10px] text-white/70 font-bold uppercase tracking-wider">{member.role}</p>
+                                    </div>
                                 </div>
-                                <h3 className="font-bold text-dark">{member.name}</h3>
-                                <p className="text-sm text-muted-foreground mt-1">{member.role}</p>
+                                <div className="mt-3">
+                                    <h3 className="text-sm font-bold text-dark group-hover:text-green transition-colors" dir="auto">{member.name}</h3>
+                                    <p className="text-[11px] text-muted-foreground font-medium" dir="auto">{member.role}</p>
+                                </div>
                             </motion.div>
                         ))}
                     </div>
@@ -328,22 +341,29 @@ export default function AboutPage() {
             </section>
 
             {/* ─── CTA ─── */}
-            <section className="pt-24 pb-0 px-[clamp(20px,6vw,80px)]">
+            <section className="py-24 px-[clamp(20px,6vw,80px)]">
                 <motion.div
                     {...fadeUp}
-                    className="max-w-4xl mx-auto text-center bg-green rounded-[48px] p-16 md:p-24 relative overflow-hidden"
+                    className="max-w-3xl mx-auto text-center bg-green rounded-[40px] p-10 md:p-14 relative overflow-hidden shadow-2xl shadow-green/20"
                 >
-                    <div className="absolute inset-0 opacity-10 pointer-events-none">
-                        <div className="absolute top-0 left-0 w-64 h-64 bg-white rounded-full blur-[100px]" />
-                        <div className="absolute bottom-0 right-0 w-96 h-96 bg-dark rounded-full blur-[120px]" />
-                    </div>
-                    <div className="relative z-10 space-y-6">
-                        <h2 className="text-4xl md:text-5xl font-bold text-white">{t('cta_title')}</h2>
+                    {/* Background Gradient Layer */}
+                    <div className="absolute inset-0 bg-gradient-to-br from-green via-green to-dark/30 pointer-events-none" />
+
+                    {/* Lines Transparent Gradient Texture - Higher Layer */}
+                    <div className="absolute inset-0 opacity-[0.15] pointer-events-none"
+                        style={{
+                            backgroundImage: `repeating-linear-gradient(45deg, rgba(255,255,255,1) 0px, rgba(255,255,255,1) 1px, transparent 1px, transparent 10px)`,
+                            backgroundSize: '20px 20px'
+                        }}
+                    />
+
+                    <div className="relative z-10 space-y-8">
+                        <h2 className="text-3xl md:text-5xl font-extrabold text-white tracking-tight leading-tight">{t('cta_title')}</h2>
                         <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
-                            <Link href="/explore" className="px-10 py-4 bg-white text-green font-bold rounded-2xl hover:scale-105 transition-all shadow-xl flex items-center gap-2">
+                            <Link href="/explore" className="w-full sm:w-auto px-10 py-4 bg-white text-green font-bold rounded-2xl hover:scale-105 transition-all shadow-xl flex items-center justify-center gap-2">
                                 {t('start_btn')} <ArrowRight size={20} />
                             </Link>
-                            <Link href="/explore" className="px-10 py-4 bg-white/15 text-white font-bold rounded-2xl hover:bg-white/25 transition-all flex items-center gap-2">
+                            <Link href="/explore" className="w-full sm:w-auto px-10 py-4 bg-white/10 text-white font-bold rounded-2xl hover:bg-white/20 transition-all border border-white/20 flex items-center justify-center gap-2 backdrop-blur-sm">
                                 {t('explore_courses')} <ChevronRight size={20} />
                             </Link>
                         </div>

@@ -12,15 +12,34 @@ import {
 } from "lucide-react";
 import Link from "next/link";
 import { motion } from "framer-motion";
+import api from "@/lib/api";
 
 export default function ReportPage() {
     const [type, setType] = useState("");
+    const [title, setTitle] = useState("");
+    const [description, setDescription] = useState("");
+    const [loading, setLoading] = useState(false);
+    const [error, setError] = useState("");
     const [submitted, setSubmitted] = useState(false);
 
-    const handleSubmit = (e: React.FormEvent) => {
+    const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
-        setSubmitted(true);
-        // In real app, send to API
+        setLoading(true);
+        setError("");
+
+        try {
+            await api.post("/user/report", {
+                type,
+                title,
+                description
+            });
+            setSubmitted(true);
+        } catch (err: any) {
+            console.error("Report submission error:", err);
+            setError(err.response?.data?.error || "Failed to submit report. Please try again.");
+        } finally {
+            setLoading(false);
+        }
     };
 
     const types = [
@@ -108,6 +127,8 @@ export default function ReportPage() {
                                     <input
                                         required={!!type}
                                         type="text"
+                                        value={title}
+                                        onChange={(e) => setTitle(e.target.value)}
                                         placeholder="Short summary of the issue or suggestion"
                                         className="w-full px-6 py-4 rounded-2xl bg-green/5 border border-transparent focus:bg-white focus:border-green outline-none font-medium transition-all"
                                     />
@@ -117,6 +138,8 @@ export default function ReportPage() {
                                     <textarea
                                         required={!!type}
                                         rows={5}
+                                        value={description}
+                                        onChange={(e) => setDescription(e.target.value)}
                                         placeholder="Please provide as much detail as possible..."
                                         className="w-full px-6 py-4 rounded-2xl bg-green/5 border border-transparent focus:bg-white focus:border-green outline-none font-medium transition-all resize-none"
                                     />
@@ -124,12 +147,19 @@ export default function ReportPage() {
                             </div>
                         </div>
 
+                        {error && (
+                            <div className="p-4 rounded-2xl bg-red-50 border border-red-100 text-red-600 text-sm font-medium">
+                                {error}
+                            </div>
+                        )}
+
                         <button
                             type="submit"
-                            className="w-full py-5 rounded-[24px] bg-green text-white text-lg font-bold hover:scale-[1.02] active:scale-95 transition-all shadow-xl shadow-green/20 flex items-center justify-center gap-3"
+                            disabled={loading || !type}
+                            className={`w-full py-5 rounded-[24px] bg-green text-white text-lg font-bold hover:scale-[1.02] active:scale-95 transition-all shadow-xl shadow-green/20 flex items-center justify-center gap-3 ${loading ? "opacity-70 cursor-not-allowed" : ""}`}
                         >
-                            Submit Report
-                            <Send size={20} />
+                            {loading ? "Submitting..." : "Submit Report"}
+                            {!loading && <Send size={20} />}
                         </button>
                     </form>
                 </div>

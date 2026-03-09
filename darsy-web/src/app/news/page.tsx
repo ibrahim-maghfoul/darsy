@@ -3,6 +3,7 @@
 import { Tag } from 'lucide-react';
 import { getTranslations } from 'next-intl/server';
 import NewsGrid from '@/components/NewsGrid';
+import NewsletterCTA from '@/components/NewsletterCTA';
 
 const BACKEND = process.env.NEXT_PUBLIC_BACKEND_URL || 'http://localhost:5000';
 const FALLBACK_IMAGE = 'https://images.unsplash.com/photo-1524178232363-1fb2b075b655?w=800&auto=format&fit=crop&q=60';
@@ -72,26 +73,12 @@ export default async function NewsPage() {
                 )}
 
                 {/* Newsletter CTA */}
-                <div className="bg-green p-12 md:p-20 rounded-[48px] text-center space-y-8 relative overflow-hidden">
-                    <div className="absolute inset-0 opacity-10 pointer-events-none">
-                        <div className="absolute top-0 left-0 w-64 h-64 bg-white rounded-full blur-[100px]" />
-                        <div className="absolute bottom-0 right-0 w-96 h-96 bg-dark rounded-full blur-[120px]" />
-                    </div>
-                    <div className="relative z-10 space-y-4">
-                        <h2 className="text-4xl font-bold text-white">{ft('loop')}</h2>
-                        <p className="text-white/80 text-lg max-w-xl mx-auto">{ft('loop_desc')}</p>
-                    </div>
-                    <div className="relative z-10 flex flex-col sm:flex-row gap-4 max-w-lg mx-auto">
-                        <input
-                            type="email"
-                            placeholder={ft('subscribe_placeholder')}
-                            className="flex-1 px-8 py-4 rounded-2xl bg-white/10 text-white placeholder:text-white/50 border border-white/20 focus:outline-none focus:bg-white focus:text-dark transition-all"
-                        />
-                        <button className="px-10 py-4 rounded-2xl bg-white text-green font-bold hover:scale-105 transition-all shadow-xl">
-                            {ft('newsletter')}
-                        </button>
-                    </div>
-                </div>
+                <NewsletterCTA ft={{
+                    loop: ft('loop'),
+                    loop_desc: ft('loop_desc'),
+                    subscribe_placeholder: ft('subscribe_placeholder'),
+                    newsletter: ft('newsletter')
+                }} />
 
             </div>
         </div>

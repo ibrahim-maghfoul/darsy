@@ -37,9 +37,16 @@ export function Footer() {
     };
 
     return (
-        <footer className="bg-dark text-white/70 py-16 px-[clamp(24px,6vw,80px)] font-roboto">
-            <div className="max-w-[1200px] mx-auto">
-                <div className="grid grid-cols-1 md:grid-cols-[1.4fr_2fr_1.4fr] gap-12 pb-12 border-b border-white/10">
+        <footer className="bg-dark text-white/70 py-16 px-[clamp(24px,6vw,80px)] font-roboto relative overflow-hidden">
+            {/* Lines Texture Overlay */}
+            <div className="absolute inset-0 opacity-[0.03] pointer-events-none"
+                style={{
+                    backgroundImage: `repeating-linear-gradient(45deg, rgba(255,255,255,1) 0px, rgba(255,255,255,1) 1px, transparent 1px, transparent 12px)`,
+                    backgroundSize: '24px 24px'
+                }}
+            />
+            <div className="max-w-[1200px] mx-auto relative z-10">
+                <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 lg:grid-cols-[1.5fr_1fr_1fr_1.5fr] gap-12 pb-12 border-b border-white/10">
                     {/* Brand Column */}
                     <div className="flex flex-col gap-4">
                         <div className="flex items-center gap-2.5">
@@ -91,29 +98,22 @@ export function Footer() {
                         </div>
                     </div>
 
-                    {/* Links Group */}
-                    <div className="flex gap-14 sm:gap-20">
-                        <div className="flex flex-col gap-3">
-                            <h4 className="text-[11px] font-bold tracking-widest uppercase text-white mb-1">{t('product')}</h4>
-                            <Link href="/explore" className="text-sm text-white/50 hover:text-white transition-colors">{t('explore')}</Link>
-                            <Link href="/pricing" className="text-sm text-white/50 hover:text-white transition-colors">{t('pricing')}</Link>
-                            <Link href="/news" className="text-sm text-white/50 hover:text-white transition-colors">{t('news')}</Link>
-                            <a href="#" className="text-sm text-white/50 hover:text-white transition-colors">{t('changelog')}</a>
-                        </div>
-                        <div className="flex flex-col gap-3">
-                            <h4 className="text-[11px] font-bold tracking-widest uppercase text-white mb-1">{t('community')}</h4>
-                            <a href="#" className="text-sm text-white/50 hover:text-white transition-colors">{t('forum')}</a>
-                            <a href="#" className="text-sm text-white/50 hover:text-white transition-colors">{t('events')}</a>
-                            <a href="#" className="text-sm text-white/50 hover:text-white transition-colors">{t('mentorship')}</a>
-                            <a href="#" className="text-sm text-white/50 hover:text-white transition-colors">{t('newsletter')}</a>
-                        </div>
-                        <div className="flex flex-col gap-3">
-                            <h4 className="text-[11px] font-bold tracking-widest uppercase text-white mb-1">{t('company')}</h4>
-                            <Link href="/about" className="text-sm text-white/50 hover:text-white transition-colors">{t('about')}</Link>
-                            <Link href="/news" className="text-sm text-white/50 hover:text-white transition-colors">{t('blog')}</Link>
-                            <a href="#" className="text-sm text-white/50 hover:text-white transition-colors">{t('careers')}</a>
-                            <Link href="/contact" className="text-sm text-white/50 hover:text-white transition-colors">{t('contact')}</Link>
-                        </div>
+                    {/* Product Column */}
+                    <div className="flex flex-col gap-3">
+                        <h4 className="text-[11px] font-bold tracking-widest uppercase text-white mb-1">{t('product')}</h4>
+                        <Link href="/explore" className="text-sm text-white/50 hover:text-white transition-colors">{t('explore')}</Link>
+                        <Link href="/pricing" className="text-sm text-white/50 hover:text-white transition-colors">{t('pricing')}</Link>
+                        <Link href="/services" className="text-sm text-white/50 hover:text-white transition-colors">{t('services')}</Link>
+                        <Link href="/news" className="text-sm text-white/50 hover:text-white transition-colors">{t('news')}</Link>
+                        <Link href="/download" className="text-sm text-white/50 hover:text-white transition-colors">{t('download')}</Link>
+                    </div>
+
+                    {/* Company Column */}
+                    <div className="flex flex-col gap-3">
+                        <h4 className="text-[11px] font-bold tracking-widest uppercase text-white mb-1">{t('company')}</h4>
+                        <Link href="/about" className="text-sm text-white/50 hover:text-white transition-colors">{t('about')}</Link>
+                        <Link href="/contact" className="text-sm text-white/50 hover:text-white transition-colors">{t('contact')}</Link>
+                        <Link href="/report" className="text-sm text-white/50 hover:text-white transition-colors">{t('report')}</Link>
                     </div>
 
                     {/* Newsletter */}

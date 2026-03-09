@@ -17,6 +17,8 @@
 
 # Uploads and Data
 **/data/
+**/darsy-data/
+**/darsy-assets/
 **/uploads/
 !**/uploads/.gitkeep
 

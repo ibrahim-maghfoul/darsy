@@ -14,6 +14,7 @@ interface AuthContextType {
     isAuthenticated: boolean;
     checkAuth: () => Promise<void>;
     getPhotoURL: (url: string | undefined | null) => string | null;
+    getResourceURL: (url: string | undefined | null) => string | null;
 }
 
 const AuthContext = createContext<AuthContextType | null>(null);
@@ -78,7 +79,15 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
             setUser(userData);
             router.push('/onboarding');
         } catch (error: any) {
-            const errorMsg = error.response?.data?.error || 'Registration failed';
+            // Backend returns { errors: [{msg: '...'}] } on validation failure
+            // or { error: '...' } on other errors
+            const data = error.response?.data;
+            let errorMsg = 'Registration failed';
+            if (data?.errors && Array.isArray(data.errors) && data.errors.length > 0) {
+                errorMsg = data.errors[0].msg;
+            } else if (data?.error) {
+                errorMsg = data.error;
+            }
             console.error("Registration attempt failed:", errorMsg);
             throw new Error(errorMsg);
         }
@@ -100,9 +109,28 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
     const getPhotoURL = useCallback((url: string | undefined | null) => {
         if (!url) return null;
-        if (url.startsWith('http') || url.startsWith('/data/images')) return url;
-        const backendUrl = process.env.NEXT_PUBLIC_BACKEND_URL || (process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000/api').replace(/\/api$/, '');
-        return `${backendUrl}${url}`;
+        if (url.startsWith('http')) return url;
+
+        // If it's just a filename (no slashes), prepend the profile picture path
+        if (!url.includes('/')) {
+            return `/data/images/profile-picture/${url}`;
+        }
+
+        // For legacy paths that already start with /data, return as-is (they are relative)
+        // If they don't start with / but have slashes, prepend /
+        return url.startsWith('/') ? url : `/${url}`;
+    }, []);
+
+    const getResourceURL = useCallback((url: string | undefined | null) => {
+        if (!url) return null;
+        if (url.startsWith('http')) return url;
+
+        // If it's just a filename, prepend the resources path
+        if (!url.includes('/')) {
+            return `/data/resources/${url}`;
+        }
+
+        return url.startsWith('/') ? url : `/${url}`;
     }, []);
 
     const contextValue = useMemo(() => ({
@@ -114,7 +142,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         isAuthenticated: !!user,
         checkAuth,
         getPhotoURL,
-    }), [user, loading, login, register, logout, checkAuth, getPhotoURL]);
+        getResourceURL,
+    }), [user, loading, login, register, logout, checkAuth, getPhotoURL, getResourceURL]);
 
     return (
         <AuthContext.Provider value={contextValue}>

@@ -20,7 +20,8 @@ import {
     MessageCircle,
     Reply,
     X,
-    Bell
+    Bell,
+    Star
 } from "lucide-react";
 import { useSnackbar } from "@/contexts/SnackbarContext";
 import Link from "next/link";
@@ -32,10 +33,10 @@ interface Reaction {
 
 interface Message {
     _id: string;
-    sender: { _id: string; displayName: string; photoURL?: string };
+    sender: { _id: string; displayName: string; photoURL?: string; subscription?: { plan: string } };
     text: string;
     reactions: Reaction[];
-    replyTo?: { _id: string; text: string; sender: { _id: string; displayName: string } };
+    replyTo?: { _id: string; text: string; sender: { _id: string; displayName: string; subscription?: { plan: string } } };
     createdAt: string;
 }
 
@@ -43,13 +44,14 @@ interface Participant {
     _id: string;
     displayName: string;
     photoURL?: string;
+    subscription?: { plan: string };
 }
 
 const EMOJIS = ["👍", "❤️", "😂", "👏", "💡", "❓"];
 
 export default function ChatPage() {
     const t = useTranslations("Profile");
-    const { user, loading } = useAuth();
+    const { user, loading, getPhotoURL } = useAuth();
     const router = useRouter();
 
     const [messages, setMessages] = useState<Message[]>([]);
@@ -59,7 +61,7 @@ export default function ChatPage() {
     const [activeReply, setActiveReply] = useState<{ _id: string; text: string; senderName: string } | null>(null);
     const [typingUsers, setTypingUsers] = useState<{ userId: string; displayName: string }[]>([]);
     const [isNearBottom, setIsNearBottom] = useState(true);
-    const [onlineUsers, setOnlineUsers] = useState<{ userId: string; displayName: string; photoURL?: string }[]>([]);
+    const [onlineUsers, setOnlineUsers] = useState<{ userId: string; displayName: string; photoURL?: string; subscriptionPlan?: string }[]>([]);
     const [allParticipants, setAllParticipants] = useState<Participant[]>([]);
     const [reportingMsg, setReportingMsg] = useState<Message | null>(null);
     const [reportReason, setReportReason] = useState("");
@@ -105,8 +107,8 @@ export default function ChatPage() {
         setIsSubmittingReport(true);
         try {
             await api.post('/chat/report', {
-                reportedUserId: reportingMsg.sender._id,
-                messageId: reportingMsg._id,
+                reportedUserId: reportingMsg?.sender?._id,
+                messageId: reportingMsg?._id,
                 reason: reportReason,
                 details: reportDetails
             });
@@ -134,7 +136,7 @@ export default function ChatPage() {
 
         const lastMessage = messages[messages.length - 1];
         const currentUserId = user?.id || (user as { _id?: string })?._id;
-        const isMe = lastMessage.sender._id === currentUserId;
+        const isMe = lastMessage?.sender?._id === currentUserId;
 
         if (isMe || isNearBottom) {
             scrollToBottom("smooth");
@@ -186,11 +188,12 @@ export default function ChatPage() {
                 level,
                 userId: user.id || (user as { _id?: string })._id,
                 displayName: user.displayName,
-                photoURL: user.photoURL
+                photoURL: user.photoURL,
+                subscriptionPlan: user.subscription?.plan
             });
         });
 
-        socket.on("room_users", (users: { userId: string; displayName: string; photoURL?: string }[]) => {
+        socket.on("room_users", (users: { userId: string; displayName: string; photoURL?: string; subscriptionPlan?: string }[]) => {
             setOnlineUsers(users);
         });
 
@@ -438,8 +441,8 @@ export default function ChatPage() {
                         ) : (
                             messages.map((msg, index) => {
                                 const currentUserId = user.id || (user as { _id?: string })._id;
-                                const isMe = msg.sender._id === currentUserId;
-                                const showAvatar = !isMe && (index === 0 || messages[index - 1].sender._id !== msg.sender._id);
+                                const isMe = msg.sender?._id === currentUserId;
+                                const showAvatar = !isMe && (index === 0 || messages[index - 1]?.sender?._id !== msg.sender?._id);
 
                                 // Group reactions by emoji
                                 const reactionCounts = msg.reactions.reduce((acc, r) => {
@@ -463,20 +466,27 @@ export default function ChatPage() {
                                         className={`flex gap-3 max-w-[85%] ${isMe ? "ml-auto flex-row-reverse" : "mr-auto"}`}
                                     >
                                         {/* Avatar */}
-                                        <motion.div
-                                            whileHover={{ scale: 1.1 }}
-                                            className={`w-9 h-9 rounded-2xl flex-shrink-0 ${showAvatar ? 'bg-green/10 ring-4 ring-green/5' : 'bg-transparent'} flex items-center justify-center overflow-hidden relative shadow-sm transition-all`}
-                                        >
-                                            {showAvatar && msg.sender.photoURL ? (
-                                                <Image src={msg.sender.photoURL} alt={msg.sender.displayName} fill sizes="36px" className="object-cover" />
-                                            ) : showAvatar ? (
-                                                <User size={18} className="text-green" />
-                                            ) : null}
-                                        </motion.div>
+                                        <div className="relative">
+                                            <motion.div
+                                                whileHover={{ scale: 1.1 }}
+                                                className={`w-9 h-9 rounded-2xl flex-shrink-0 ${showAvatar ? 'bg-green/10 ring-4 ring-green/5' : 'bg-transparent'} flex items-center justify-center overflow-hidden relative shadow-sm transition-all`}
+                                            >
+                                                {showAvatar && (msg.sender?.photoURL || (msg.sender as any)?.avatar) ? (
+                                                    <Image src={getPhotoURL(msg.sender?.photoURL || (msg.sender as any)?.avatar) || ''} alt={msg.sender?.displayName || 'User'} fill sizes="36px" className="object-cover" />
+                                                ) : showAvatar ? (
+                                                    <User size={18} className="text-green" />
+                                                ) : null}
+                                            </motion.div>
+                                            {showAvatar && (msg.sender?.subscription?.plan === 'premium' || msg.sender?.subscription?.plan === 'pro') && (
+                                                <div className={`absolute -top-1 ${isMe ? '-left-1' : '-right-1'} w-4 h-4 rounded-full bg-amber-400 border-[1.5px] border-white flex items-center justify-center shadow-sm z-10`} title="Premium">
+                                                    <Star size={8} className="text-white fill-current" />
+                                                </div>
+                                            )}
+                                        </div>
 
                                         {/* Message Bubble */}
                                         <div className={`flex flex-col ${isMe ? "items-end" : "items-start"} min-w-0`}>
-                                            {showAvatar && (
+                                            {msg.sender && (
                                                 <span className="text-[11px] font-black text-dark/40 mb-1 ml-1 uppercase tracking-tight">
                                                     {msg.sender.displayName}
                                                 </span>
@@ -522,7 +532,7 @@ export default function ChatPage() {
                                                     {msg.replyTo && isMe && (
                                                         <div className="flex items-center gap-1.5 mt-2 pt-2 border-t border-white/10 text-[10px] font-black text-white/70 uppercase tracking-tighter">
                                                             <AtSign size={10} strokeWidth={3} />
-                                                            Mentioned {msg.replyTo.sender.displayName}
+                                                            Mentioned {msg.replyTo.sender?.displayName || "User"}
                                                         </div>
                                                     )}
                                                 </div>
@@ -532,7 +542,7 @@ export default function ChatPage() {
                                                     <motion.button
                                                         whileHover={{ scale: 1.1, rotate: -5 }}
                                                         whileTap={{ scale: 0.9 }}
-                                                        onClick={() => setActiveReply({ _id: msg._id, text: msg.text, senderName: msg.sender.displayName })}
+                                                        onClick={() => setActiveReply({ _id: msg._id, text: msg.text, senderName: msg.sender?.displayName || "Unknown" })}
                                                         className="w-9 h-9 rounded-xl bg-white/90 backdrop-blur shadow-xl shadow-black/5 flex items-center justify-center text-gray-500 hover:text-green hover:bg-white transition-all border border-gray-100"
                                                     >
                                                         <Reply size={16} />
@@ -716,14 +726,22 @@ export default function ChatPage() {
                                         whileHover={{ x: 5 }}
                                         className="flex items-center gap-4 group cursor-pointer"
                                     >
-                                        <div className="w-12 h-12 rounded-[18px] bg-white flex-shrink-0 flex items-center justify-center relative border border-gray-100 overflow-hidden shadow-sm group-hover:shadow-md transition-all">
-                                            {ou.photoURL ? (
-                                                <Image src={ou.photoURL} alt={ou.displayName} fill sizes="48px" className="object-cover" />
-                                            ) : (
-                                                <User size={20} className="text-gray-400" />
+                                        <div className="relative">
+                                            <div className="w-12 h-12 rounded-[18px] bg-white flex-shrink-0 flex items-center justify-center relative border border-gray-100 overflow-hidden shadow-sm group-hover:shadow-md transition-all">
+                                                {ou.photoURL ? (
+                                                    <Image src={getPhotoURL(ou.photoURL) || ''} alt={ou.displayName} fill sizes="48px" className="object-cover" />
+                                                ) : (
+                                                    <User size={20} className="text-gray-400" />
+                                                )}
+                                                {/* Online Indicator Badge */}
+                                                <div className="absolute bottom-1 right-1 w-3.5 h-3.5 bg-green rounded-full border-[3px] border-white shadow-sm"></div>
+                                            </div>
+                                            {/* Premium Badge */}
+                                            {(ou.subscriptionPlan === 'premium' || ou.subscriptionPlan === 'pro') && (
+                                                <div className="absolute -top-1 -right-1 w-5 h-5 rounded-full bg-amber-400 border-2 border-white flex items-center justify-center shadow-sm z-10" title="Premium">
+                                                    <Star size={10} className="text-white fill-current" />
+                                                </div>
                                             )}
-                                            {/* Online Indicator Badge */}
-                                            <div className="absolute bottom-1 right-1 w-3.5 h-3.5 bg-green rounded-full border-[3px] border-white shadow-sm"></div>
                                         </div>
                                         <div className="flex-1 min-w-0">
                                             <div className="truncate text-[14px] font-black text-dark group-hover:text-green transition-colors">
@@ -742,7 +760,7 @@ export default function ChatPage() {
                                 <h4 className="text-[10px] font-black uppercase tracking-[0.2em] text-dark/30 pl-1">Offline</h4>
                                 <AnimatePresence>
                                     {allParticipants
-                                        .filter(p => !onlineUsers.some(ou => ou.userId === p._id))
+                                        .filter(p => p && !onlineUsers.some(ou => ou.userId === p._id))
                                         .map((p) => (
                                             <motion.div
                                                 key={p._id}
@@ -751,11 +769,19 @@ export default function ChatPage() {
                                                 whileHover={{ x: 5 }}
                                                 className="flex items-center gap-4 group cursor-pointer grayscale-[0.25] hover:grayscale-0 transition-all bg-white/10 hover:bg-white/30 rounded-2xl p-2 -m-2"
                                             >
-                                                <div className="w-10 h-10 rounded-[14px] bg-gray-100 flex-shrink-0 flex items-center justify-center relative border border-gray-200 overflow-hidden shadow-none group-hover:shadow-sm transition-all text-dark">
-                                                    {p.photoURL ? (
-                                                        <Image src={p.photoURL} alt={p.displayName} fill sizes="40px" className="object-cover opacity-80 group-hover:opacity-100" />
-                                                    ) : (
-                                                        <User size={16} className="text-gray-400" />
+                                                <div className="relative">
+                                                    <div className="w-10 h-10 rounded-[14px] bg-gray-100 flex-shrink-0 flex items-center justify-center relative border border-gray-200 overflow-hidden shadow-none group-hover:shadow-sm transition-all text-dark">
+                                                        {p.photoURL ? (
+                                                            <Image src={getPhotoURL(p.photoURL) || ''} alt={p.displayName} fill sizes="40px" className="object-cover opacity-80 group-hover:opacity-100" />
+                                                        ) : (
+                                                            <User size={16} className="text-gray-400" />
+                                                        )}
+                                                    </div>
+                                                    {/* Premium Badge */}
+                                                    {(p.subscription?.plan === 'premium' || p.subscription?.plan === 'pro') && (
+                                                        <div className="absolute -top-1 -right-1 w-4 h-4 rounded-full bg-amber-400 border-[1.5px] border-white flex items-center justify-center shadow-sm z-10" title="Premium">
+                                                            <Star size={8} className="text-white fill-current" />
+                                                        </div>
                                                     )}
                                                 </div>
                                                 <div className="flex-1 min-w-0">
@@ -798,7 +824,7 @@ export default function ChatPage() {
                                         </div>
                                         <div>
                                             <h3 className="text-xl font-black text-dark">{t("report_msg")}</h3>
-                                            <p className="text-xs font-bold text-muted-foreground uppercase tracking-widest">{t("report")}: {reportingMsg.sender.displayName}</p>
+                                            <p className="text-xs font-bold text-muted-foreground uppercase tracking-widest">{t("report")}: {reportingMsg.sender?.displayName || "Unknown"}</p>
                                         </div>
                                     </div>
                                     <button

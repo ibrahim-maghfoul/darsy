@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "650738111418",
+    "project_id": "darsy-3f275",
+    "storage_bucket": "darsy-3f275.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:650738111418:android:89f4cd4be6502a273a4383",
+        "android_client_info": {
+          "package_name": "com.ariss.darsy"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyAEK4iKL_2Hum90gAMzPvtNdhpmIWPGNhw"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

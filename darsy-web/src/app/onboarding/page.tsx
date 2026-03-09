@@ -73,10 +73,23 @@ export default function OnboardingPage() {
             let res: any[] = [];
             if (currentStep === 1) {
                 res = await getSchools();
+                // Priority Sort: Primaire -> Collège -> Lycée
+                res.sort((a, b) => {
+                    const priority = (t: string) => {
+                        const l = t.toLowerCase();
+                        if (l.includes('prim') || l.includes('ابتدا')) return 0;
+                        if (l.includes('coll') || l.includes('إعدا')) return 1;
+                        if (l.includes('lyc') || l.includes('ثانو')) return 2;
+                        return 3;
+                    };
+                    return priority(a.title) - priority(b.title);
+                });
             } else if (currentStep === 2) {
                 res = await getLevels(selections.schoolId);
+                res.sort((a, b) => a.title.localeCompare(b.title));
             } else if (currentStep === 3) {
                 res = await getGuidances(selections.levelId);
+                res.sort((a, b) => a.title.localeCompare(b.title));
             }
             setOptions(res);
         } catch (error) {

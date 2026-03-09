@@ -4,7 +4,7 @@
 import React from "react";
 import { useParams, useRouter } from "next/navigation";
 import { motion } from "framer-motion";
-import { ArrowLeft, Calendar, ExternalLink, Download, FileText, Share2, Heart, MessageCircle, Send } from "lucide-react";
+import { ArrowLeft, Calendar, ExternalLink, Download, FileText, Share2, Heart, MessageCircle, Send, Star } from "lucide-react";
 import { DownloadButton } from "@/components/DownloadButton";
 import { ResourceButton } from "@/components/ResourceButton";
 import { CookiesWindow } from "@/components/CookiesWindow";
@@ -160,10 +160,11 @@ export default function NewsDetailPage() {
     const [article, setArticle] = useState<any>(null);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState(false);
-    const { user, checkAuth } = useAuth();
+    const { user, checkAuth, getPhotoURL, getResourceURL } = useAuth();
     const { showSnackbar } = useSnackbar();
     const [isSaved, setIsSaved] = useState(false);
     const [isSaving, setIsSaving] = useState(false);
+    const [userRating, setUserRating] = useState(0);
 
     // Q&A State
     const [questions, setQuestions] = useState<any[]>([]);
@@ -181,9 +182,24 @@ export default function NewsDetailPage() {
             .then(([articleData, qData]) => {
                 setArticle(articleData);
                 setQuestions(qData || []);
+                setUserRating(articleData.userRating || 0);
                 setLoading(false);
             })
             .catch(() => { setError(true); setLoading(false); });
+    }, [id]);
+
+    useEffect(() => {
+        // Track view
+        const trackView = async () => {
+            try {
+                await api.post(`/news/${id}/view`);
+                // Increment locally for immediate feedback if needed, 
+                // but article object will have the server value on load
+            } catch (err) {
+                console.error('Failed to track view:', err);
+            }
+        };
+        trackView();
     }, [id]);
 
     useEffect(() => {
@@ -191,6 +207,26 @@ export default function NewsDetailPage() {
             setIsSaved(user.progress.savedNews.includes(id));
         }
     }, [user, id]);
+
+    const handleRate = async (rating: number) => {
+        if (!user) {
+            showSnackbar('Please log in to rate articles.', 'info');
+            return;
+        }
+        if (userRating > 0) return; // Already rated
+
+        try {
+            const res = await api.post(`/news/${id}/rate`, { rating });
+            setUserRating(rating);
+            if (res.data.rating) {
+                setArticle({ ...article, rating: res.data.rating });
+            }
+            showSnackbar('Thank you for your rating!', 'success');
+        } catch (err) {
+            console.error('Rating error:', err);
+            showSnackbar('Failed to submit rating.', 'error');
+        }
+    };
 
     const handleSave = async () => {
         if (!user) {
@@ -274,7 +310,7 @@ export default function NewsDetailPage() {
                 {/* Nav */}
                 <div className="flex items-center justify-between mb-16">
                     <button onClick={() => router.push("/news")}
-                        className="group flex items-center gap-4 text-dark font-black tracking-widest text-[10px] uppercase">
+                        className="group flex items-center gap-4 text-black font-black tracking-widest text-[10px] uppercase">
                         <div className="w-12 h-12 rounded-[20px] bg-white border border-gray-100 shadow-sm flex items-center justify-center group-hover:border-green/30 group-hover:bg-green group-hover:text-white transition-all duration-500">
                             <ArrowLeft size={20} strokeWidth={3} />
                         </div>
@@ -296,15 +332,27 @@ export default function NewsDetailPage() {
 
                 {/* Header */}
                 <header className="space-y-10 mb-20">
-                    <div className="flex flex-wrap gap-4">
-                        <div className="px-6 py-2.5 rounded-2xl bg-green text-white text-[10px] font-black uppercase tracking-[0.2em] shadow-lg shadow-green/20">
-                            {article.type || article.category}
-                        </div>
-                        {article.card_date && (
-                            <div className="px-6 py-2.5 rounded-2xl bg-white border border-gray-100 text-dark/40 text-[10px] font-black uppercase tracking-[0.2em]">
-                                <Calendar size={12} className="inline mr-2" />{article.card_date}
+                    <div className="flex flex-wrap items-center justify-between gap-6">
+                        <div className="flex flex-wrap gap-4">
+                            <div className="px-6 py-2.5 rounded-2xl bg-green text-white text-[10px] font-black uppercase tracking-[0.2em] shadow-lg shadow-green/20">
+                                {article.type || article.category}
                             </div>
-                        )}
+                            {article.card_date && (
+                                <div className="px-6 py-2.5 rounded-2xl bg-white border border-gray-100 text-dark/40 text-[10px] font-black uppercase tracking-[0.2em]">
+                                    <Calendar size={12} className="inline mr-2" />{article.card_date}
+                                </div>
+                            )}
+                            <div className="px-6 py-2.5 rounded-2xl bg-white border border-gray-100 text-dark/40 text-[10px] font-black uppercase tracking-[0.2em]">
+                                <Heart size={12} className="inline mr-2" />{article.viewCount || 0} views
+                            </div>
+                        </div>
+
+                        {/* Rating Display */}
+                        <div className="flex items-center gap-1">
+                            <Star size={18} className="text-amber-400 fill-amber-400" />
+                            <span className="font-black text-dark text-lg">{(article.rating?.average || article.rating || 0).toFixed(1)}</span>
+                            <span className="text-dark/40 text-sm font-bold">({article.rating?.count || article.ratingCount || 0})</span>
+                        </div>
                     </div>
                     <h1 className="text-5xl md:text-7xl font-black text-dark leading-[1.05] tracking-tight">{article.title}</h1>
                 </header>
@@ -320,6 +368,40 @@ export default function NewsDetailPage() {
                         }
                     </article>
                 </div>
+
+                {/* Star Rating Interaction */}
+                <section className="mt-20 p-10 rounded-[40px] bg-gradient-to-br from-white to-gray-50/50 border border-gray-100/50 shadow-xl shadow-black/[0.02] flex flex-col items-center gap-6 text-center">
+                    <div className="space-y-2">
+                        <h3 className="text-2xl font-black text-dark tracking-tight">Did you find this helpful?</h3>
+                        <p className="text-dark/40 font-medium">Your feedback helps us provide better content</p>
+                    </div>
+
+                    <div className="flex gap-2">
+                        {[1, 2, 3, 4, 5].map((star) => (
+                            <button
+                                key={star}
+                                onClick={() => handleRate(star)}
+                                disabled={userRating > 0}
+                                className={`transition-all duration-300 ${userRating > 0 ? 'cursor-default' : 'hover:scale-125 active:scale-95'}`}
+                            >
+                                <Star
+                                    size={42}
+                                    strokeWidth={2.5}
+                                    className={`${star <= (userRating || (article.rating?.average || article.rating || 0))
+                                        ? 'text-amber-400 fill-amber-400'
+                                        : 'text-gray-200 hover:text-amber-200'
+                                        } transition-colors`}
+                                />
+                            </button>
+                        ))}
+                    </div>
+
+                    {userRating > 0 && (
+                        <motion.p initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} className="text-green font-bold text-sm tracking-wide">
+                            Thank you for rating! ⭐
+                        </motion.p>
+                    )}
+                </section>
 
                 {/* Attachments */}
                 {article.attachments && article.attachments.length > 0 && (
@@ -358,7 +440,7 @@ export default function NewsDetailPage() {
                             <form onSubmit={handleAskQuestion} className="space-y-4">
                                 <div className="flex gap-4 items-start">
                                     <img
-                                        src={user.photoURL || `https://ui-avatars.com/api/?name=${user.displayName}&background=f3f4f6&color=111`}
+                                        src={getPhotoURL(user.photoURL) || `https://ui-avatars.com/api/?name=${user.displayName}&background=f3f4f6&color=111`}
                                         alt={user.displayName}
                                         className="w-10 h-10 rounded-full border border-gray-100 object-cover shrink-0"
                                     />
@@ -403,7 +485,7 @@ export default function NewsDetailPage() {
                                     {/* Question */}
                                     <div className="flex gap-4">
                                         <img
-                                            src={q.userId?.photoURL || `https://ui-avatars.com/api/?name=${q.userId?.displayName}&background=fff&color=111`}
+                                            src={getPhotoURL(q.userId?.photoURL) || `https://ui-avatars.com/api/?name=${q.userId?.displayName}&background=fff&color=111`}
                                             alt={q.userId?.displayName || "User"}
                                             className="w-10 h-10 rounded-full border border-gray-200 object-cover shrink-0 bg-white"
                                         />

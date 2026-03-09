@@ -46,10 +46,10 @@ export function LanguageSwitcher() {
     return (
         <div
             ref={containerRef}
-            className="fixed bottom-8 left-8 z-[100]"
+            className="fixed bottom-8 right-8 z-[100]"
             dir="ltr"
         >
-            <div className="relative flex flex-col items-center gap-2">
+            <div className="relative flex flex-col items-end gap-2">
                 <AnimatePresence>
                     {isOpen && (
                         <motion.div

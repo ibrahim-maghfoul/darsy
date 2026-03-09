@@ -10,6 +10,7 @@ import React, { useState, useEffect } from 'react';
 import api from '@/lib/api';
 import { useAuth } from '@/contexts/AuthContext';
 import { useSnackbar } from '@/contexts/SnackbarContext';
+import { useTranslations } from 'next-intl';
 import styles from './NewsCard.module.css';
 
 // ─── Constants (matches the reference design exactly) ─────────────────────────
@@ -107,6 +108,7 @@ export default function NewsCard({
     icon,
     children,
 }: NewsCardProps) {
+    const t = useTranslations('News');
     const uid = useId().replace(/:/g, '');
     const path = buildCardPath();
     const gid = `nc-grad-${uid}`;
@@ -284,7 +286,7 @@ export default function NewsCard({
                     </span>
                 </span>
                 <span className={styles.blobBtnLabel}>
-                    READ
+                    {t('read')}
                     <ArrowRight />
                 </span>
             </button>
