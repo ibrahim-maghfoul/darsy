@@ -1,0 +1,78 @@
+﻿src/controllers/progressController.ts(21,34): error TS2532: Object is possibly 'undefined'.
+src/controllers/progressController.ts(22,57): error TS2339: Property 'toJSON' does not exist on type 'ILessonProgress'.
+src/controllers/progressController.ts(23,49): error TS2339: Property 'toJSON' does not exist on type 'ILessonProgress'.
+src/controllers/progressController.ts(33,21): error TS2740: Type '{}' is missing the following properties from type 'Map<string, IResourceProgress>': clear, delete, forEach, get, and 8 more.
+src/controllers/progressController.ts(39,18): error TS18048: 'lessonProgress' is possibly 'undefined'.
+src/controllers/progressController.ts(39,44): error TS18048: 'lessonProgress' is possibly 'undefined'.
+src/controllers/progressController.ts(39,44): error TS2740: Type '{}' is missing the following properties from type 'Map<string, IResourceProgress>': clear, delete, forEach, get, and 8 more.
+src/controllers/progressController.ts(41,70): error TS18048: 'lessonProgress' is possibly 'undefined'.
+src/controllers/progressController.ts(42,21): error TS18048: 'lessonProgress' is possibly 'undefined'.
+src/controllers/progressController.ts(42,64): error TS18048: 'lessonProgress' is possibly 'undefined'.
+src/controllers/progressController.ts(43,28): error TS18048: 'lessonProgress' is possibly 'undefined'.
+src/controllers/progressController.ts(43,75): error TS18048: 'lessonProgress' is possibly 'undefined'.
+src/controllers/progressController.ts(46,17): error TS18048: 'lessonProgress' is possibly 'undefined'.
+src/controllers/progressController.ts(46,67): error TS18048: 'lessonProgress' is possibly 'undefined'.
+src/controllers/progressController.ts(46,92): error TS2339: Property 'get' does not exist on type 'never'.
+src/controllers/progressController.ts(47,36): error TS18048: 'lessonProgress' is possibly 'undefined'.
+src/controllers/progressController.ts(49,36): error TS18048: 'lessonProgress' is possibly 'undefined'.
+src/controllers/progressController.ts(74,17): error TS18048: 'lessonProgress' is possibly 'undefined'.
+src/controllers/progressController.ts(74,67): error TS18048: 'lessonProgress' is possibly 'undefined'.
+src/controllers/progressController.ts(74,92): error TS2339: Property 'set' does not exist on type 'never'.
+src/controllers/progressController.ts(75,17): error TS18048: 'lessonProgress' is possibly 'undefined'.
+src/controllers/progressController.ts(77,17): error TS18048: 'lessonProgress' is possibly 'undefined'.
+src/controllers/progressController.ts(77,17): error TS2322: Type '{ resourceId: any; resourceType: any; timeSpent: number; lastAccessed: Date; isCompleted: boolean; completionPercentage: number; }' is not assignable to type 'never'.
+src/controllers/progressController.ts(80,13): error TS18048: 'lessonProgress' is possibly 'undefined'.
+src/controllers/progressController.ts(81,13): error TS2532: Object is possibly 'undefined'.
+src/controllers/progressController.ts(81,54): error TS2345: Argument of type 'ILessonProgress | undefined' is not assignable to parameter of type 'ILessonProgress'.
+  Type 'undefined' is not assignable to type 'ILessonProgress'.
+src/controllers/progressController.ts(103,34): error TS2532: Object is possibly 'undefined'.
+src/controllers/progressController.ts(104,57): error TS2339: Property 'toJSON' does not exist on type 'ILessonProgress'.
+src/controllers/progressController.ts(105,49): error TS2339: Property 'toJSON' does not exist on type 'ILessonProgress'.
+src/controllers/progressController.ts(114,92): error TS2339: Property 'get' does not exist on type 'never'.
+src/controllers/progressController.ts(132,92): error TS2339: Property 'set' does not exist on type 'never'.
+src/controllers/progressController.ts(135,17): error TS2322: Type 'IResourceProgress' is not assignable to type 'never'.
+src/controllers/progressController.ts(138,13): error TS2532: Object is possibly 'undefined'.
+src/controllers/progressController.ts(141,13): error TS2532: Object is possibly 'undefined'.
+src/controllers/progressController.ts(174,34): error TS2532: Object is possibly 'undefined'.
+src/controllers/progressController.ts(175,57): error TS2339: Property 'toJSON' does not exist on type 'ILessonProgress'.
+src/controllers/progressController.ts(176,49): error TS2339: Property 'toJSON' does not exist on type 'ILessonProgress'.
+src/controllers/progressController.ts(186,21): error TS2740: Type '{}' is missing the following properties from type 'Map<string, IResourceProgress>': clear, delete, forEach, get, and 8 more.
+src/controllers/progressController.ts(192,18): error TS18048: 'lessonProgress' is possibly 'undefined'.
+src/controllers/progressController.ts(192,44): error TS18048: 'lessonProgress' is possibly 'undefined'.
+src/controllers/progressController.ts(192,44): error TS2740: Type '{}' is missing the following properties from type 'Map<string, IResourceProgress>': clear, delete, forEach, get, and 8 more.
+src/controllers/progressController.ts(195,17): error TS18048: 'lessonProgress' is possibly 'undefined'.
+src/controllers/progressController.ts(195,67): error TS18048: 'lessonProgress' is possibly 'undefined'.
+src/controllers/progressController.ts(195,92): error TS2339: Property 'get' does not exist on type 'never'.
+src/controllers/progressController.ts(196,36): error TS18048: 'lessonProgress' is possibly 'undefined'.
+src/controllers/progressController.ts(198,36): error TS18048: 'lessonProgress' is possibly 'undefined'.
+src/controllers/progressController.ts(224,17): error TS18048: 'lessonProgress' is possibly 'undefined'.
+src/controllers/progressController.ts(224,67): error TS18048: 'lessonProgress' is possibly 'undefined'.
+src/controllers/progressController.ts(224,92): error TS2339: Property 'set' does not exist on type 'never'.
+src/controllers/progressController.ts(225,17): error TS18048: 'lessonProgress' is possibly 'undefined'.
+src/controllers/progressController.ts(227,17): error TS18048: 'lessonProgress' is possibly 'undefined'.
+src/controllers/progressController.ts(227,17): error TS2322: Type '{ resourceId: any; resourceType: any; timeSpent: number; lastAccessed: Date; isCompleted: boolean; completionPercentage: number; }' is not assignable to type 'never'.
+src/controllers/progressController.ts(231,17): error TS18048: 'lessonProgress' is possibly 'undefined'.
+src/controllers/progressController.ts(233,17): error TS18048: 'lessonProgress' is possibly 'undefined'.
+src/controllers/progressController.ts(236,13): error TS18048: 'lessonProgress' is possibly 'undefined'.
+src/controllers/progressController.ts(237,13): error TS2532: Object is possibly 'undefined'.
+src/controllers/progressController.ts(237,54): error TS2345: Argument of type 'ILessonProgress | undefined' is not assignable to parameter of type 'ILessonProgress'.
+  Type 'undefined' is not assignable to type 'ILessonProgress'.
+src/controllers/progressController.ts(240,13): error TS2532: Object is possibly 'undefined'.
+src/controllers/progressController.ts(271,34): error TS2532: Object is possibly 'undefined'.
+src/controllers/progressController.ts(272,57): error TS2339: Property 'toJSON' does not exist on type 'ILessonProgress'.
+src/controllers/progressController.ts(273,49): error TS2339: Property 'toJSON' does not exist on type 'ILessonProgress'.
+src/controllers/progressController.ts(283,21): error TS2740: Type '{}' is missing the following properties from type 'Map<string, IResourceProgress>': clear, delete, forEach, get, and 8 more.
+src/controllers/progressController.ts(289,13): error TS18048: 'lessonProgress' is possibly 'undefined'.
+src/controllers/progressController.ts(289,42): error TS18048: 'lessonProgress' is possibly 'undefined'.
+src/controllers/progressController.ts(290,13): error TS2532: Object is possibly 'undefined'.
+src/controllers/progressController.ts(290,54): error TS2345: Argument of type 'ILessonProgress | undefined' is not assignable to parameter of type 'ILessonProgress'.
+  Type 'undefined' is not assignable to type 'ILessonProgress'.
+src/controllers/progressController.ts(294,36): error TS18048: 'lessonProgress' is possibly 'undefined'.
+src/controllers/progressController.ts(366,34): error TS2532: Object is possibly 'undefined'.
+src/controllers/progressController.ts(367,57): error TS2339: Property 'toJSON' does not exist on type 'ILessonProgress'.
+src/controllers/progressController.ts(368,49): error TS2339: Property 'toJSON' does not exist on type 'ILessonProgress'.
+src/controllers/progressController.ts(378,21): error TS2740: Type '{}' is missing the following properties from type 'Map<string, IResourceProgress>': clear, delete, forEach, get, and 8 more.
+src/controllers/progressController.ts(384,13): error TS18048: 'lessonProgress' is possibly 'undefined'.
+src/controllers/progressController.ts(385,13): error TS2532: Object is possibly 'undefined'.
+src/controllers/progressController.ts(385,54): error TS2345: Argument of type 'ILessonProgress | undefined' is not assignable to parameter of type 'ILessonProgress'.
+  Type 'undefined' is not assignable to type 'ILessonProgress'.
