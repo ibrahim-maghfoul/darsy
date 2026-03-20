@@ -62,7 +62,7 @@ const NewsSchema = new Schema<INews>({
         total: { type: Number, default: 0 },
     },
     userRatings: [{
-        userId: { type: Schema.Types.ObjectId, ref: 'User' },
+        userId: { type: String },
         rating: { type: Number, required: true }
     }],
 }, {

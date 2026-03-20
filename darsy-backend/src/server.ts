@@ -22,6 +22,9 @@ import newsRoutes from './routes/news';
 import newsletterRoutes from './routes/newsletter';
 import contactRoutes from './routes/contact';
 import chatRoutes from './routes/chat';
+import calendarRoutes from './routes/calendar';
+import teacherRoutes from './routes/teacher';
+import instructorRoutes from './routes/instructor';
 import { handleChatConnection } from './sockets/chat';
 
 const app: Application = express();
@@ -88,6 +91,9 @@ if (config.nodeEnv === 'development') {
 // Static files
 app.use('/data/images', express.static(path.join(process.cwd(), 'data/images')));
 app.use('/data/resources', express.static(path.join(process.cwd(), 'data/resources')));
+app.use('/data/videos', express.static(path.join(process.cwd(), 'data/videos')));
+app.use('/data/documents', express.static(path.join(process.cwd(), 'data/documents')));
+app.use('/data/verifications', express.static(path.join(process.cwd(), 'data/verifications')));
 
 // Health check endpoint
 app.get('/health', (_req: Request, res: Response) => {
@@ -103,6 +109,9 @@ app.use('/api/news', newsRoutes);
 app.use('/api/newsletter', newsletterRoutes);
 app.use('/api/contact', contactRoutes);
 app.use('/api/chat', chatRoutes);
+app.use('/api/calendar', calendarRoutes);
+app.use('/api/teacher', teacherRoutes);
+app.use('/api/instructor', instructorRoutes);
 
 // 404 handler
 app.use((_req: Request, res: Response) => {
@@ -119,6 +128,22 @@ server.listen(PORT, () => {
     console.log(`📍 Health check: http://localhost:${PORT}/health`);
     console.log(`🔒 Security middleware: NoSQL sanitizer, rate limiter, helmet enabled`);
     console.log(`💬 Socket.io real-time chat enabled`);
+}).on('error', (err: NodeJS.ErrnoException) => {
+    if (err.code === 'EADDRINUSE') {
+        console.error(`❌ Port ${PORT} is already in use. Exiting...`);
+        process.exit(1);
+    } else {
+        throw err;
+    }
+});
+
+// Prevent server from crashing on unhandled errors
+process.on('uncaughtException', (error) => {
+    console.error('🔥 UNCAUGHT EXCEPTION! Server kept alive. Error:', error);
+});
+
+process.on('unhandledRejection', (reason, _promise) => {
+    console.error('🔥 UNHANDLED REJECTION! Server kept alive. Reason:', reason);
 });
 
 export default app;

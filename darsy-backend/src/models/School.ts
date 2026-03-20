@@ -13,7 +13,6 @@ const SchoolSchema = new Schema<ISchool>({
     category: { type: String, required: true },
 }, {
     timestamps: true,
-    _id: false // We provide our own _id
 });
 
 export const School = mongoose.model<ISchool>('School', SchoolSchema);

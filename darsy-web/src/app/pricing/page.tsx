@@ -83,6 +83,7 @@ export default function PricingPage() {
                 t('f15'),
                 t('f17'),
                 t('f18'),
+                'Unlimited resource contributions',
             ],
             notIncluded: [],
         },
@@ -96,7 +97,7 @@ export default function PricingPage() {
     ];
 
     return (
-        <div className="min-h-screen bg-white pt-32 pb-20 overflow-hidden">
+        <div className="min-h-screen bg-white pt-4 md:pt-32 pb-20 overflow-hidden">
 
             {/* Hero */}
             <section className="relative px-[clamp(20px,6vw,80px)] pb-16 text-center">

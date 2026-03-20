@@ -157,7 +157,7 @@ export default function ServiceDetailPage() {
                 <div className="max-w-4xl mx-auto px-6 relative z-10">
                     <button
                         onClick={() => router.back()}
-                        className="mb-8 flex items-center gap-2 text-dark/60 font-bold hover:text-green transition-colors"
+                        className="mb-8 hidden md:flex items-center gap-2 text-dark/60 font-bold hover:text-green transition-colors"
                     >
                         <ArrowLeft size={20} className={isAr ? "rotate-180" : ""} />
                         Back

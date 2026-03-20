@@ -62,7 +62,7 @@ export default function ContactPage() {
     }
 
     return (
-        <div className="min-h-screen bg-white pt-32 pb-20 px-[clamp(20px,6vw,80px)]">
+        <div className="min-h-screen bg-white pt-6 md:pt-32 pb-20 px-[clamp(20px,6vw,80px)]">
             <div className="max-w-6xl mx-auto">
 
                 {/* Header */}

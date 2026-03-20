@@ -55,20 +55,20 @@ export function WorksSection() {
     ];
 
     return (
-        <section className="bg-[#f4f6f3] min-h-screen relative overflow-hidden flex items-center justify-center p-[100px_clamp(24px,8vw,120px)]">
+        <section className="bg-[#f4f6f3] min-h-screen relative overflow-hidden flex items-center justify-center p-[80px_clamp(20px,8vw,120px)_120px] md:p-[100px_clamp(24px,8vw,120px)]">
             {floatingIcons.map((icon) => (
                 <div
                     key={icon.id}
-                    className={`absolute pointer-events-none animate-[wFloat_6s_ease-in-out_infinite] ${icon.className}`}
+                    className={`absolute pointer-events-none animate-[wFloat_6s_ease-in-out_infinite] will-change-transform ${icon.className}`}
                     style={{ animationDelay: `${icon.delay}s` } as any}
                 >
-                    <div className="rounded-[22px] bg-white/72 backdrop-blur-[16px] border border-white/90 shadow-[0_8px_32px_rgba(58,170,106,0.15),0_2px_8px_rgba(0,0,0,0.06)] flex items-center justify-center w-full h-full">
+                    <div className="rounded-[22px] bg-white/90 border border-white/90 shadow-[0_8px_32px_rgba(58,170,106,0.15),0_2px_8px_rgba(0,0,0,0.06)] flex items-center justify-center w-full h-full">
                         {icon.content}
                     </div>
                 </div>
             ))}
 
-            <div className="absolute top-[32%] right-[4%] w-[150px] h-[150px] rounded-[50%_50%_50%_44%_/_50%_50%_44%_50%] overflow-hidden shadow-[0_12px_40px_rgba(0,0,0,0.2)] border-4 border-white/90 animate-[wFloat_6s_ease-in-out_infinite] delay-[0.5s] [--wdy:-10px] [--wr:0deg]">
+            <div className="absolute top-[32%] right-[4%] w-[150px] h-[150px] rounded-[50%_50%_50%_44%_/_50%_50%_44%_50%] overflow-hidden shadow-[0_12px_40px_rgba(0,0,0,0.2)] border-4 border-white/90 animate-[wFloat_6s_ease-in-out_infinite] delay-[0.5s] [--wdy:-10px] [--wr:0deg] hidden md:block will-change-transform">
                 <img src="https://i.pravatar.cc/260?img=44" alt="person" className="w-full h-full object-cover block" />
             </div>
 
@@ -85,7 +85,7 @@ export function WorksSection() {
                                 {`{ ${item.num} }`}
                             </span>
                             <div className="relative">
-                                <span className={`text-[clamp(42px,7vw,96px)] font-bold text-dark tracking-[-0.04em] leading-[1.05] transition-colors relative inline-block`}>
+                                <span className={`text-[clamp(28px,8vw,96px)] md:text-[clamp(42px,7vw,96px)] font-bold text-dark tracking-[-0.04em] leading-[1.05] transition-colors relative inline-block`}>
                                     {item.label}
                                     {hoveredIdx === i && (
                                         <motion.span

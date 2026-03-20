@@ -25,17 +25,20 @@ export function BelieveSection() {
     return (
         <section
             ref={sectionRef}
-            className={`relative min-h-screen flex flex-col items-center justify-center overflow-hidden p-[clamp(140px,18vh,200px)_clamp(24px,6vw,80px)] transition-all duration-700
+            className={`relative flex flex-col items-center justify-center overflow-hidden transition-all duration-700 pb-24 md:pb-0
+      min-h-[80vh] md:min-h-screen
+      p-[clamp(80px,10vh,200px)_clamp(20px,6vw,80px)]
       bg-[radial-gradient(ellipse_70%_60%_at_50%_50%,#3aaa6a_0%,#5dc88a_18%,#a8ecc4_42%,#d8f5e8_62%,#f2fbf5_80%,#ffffff_100%)]
       before:content-[''] before:absolute before:inset-0 before:pointer-events-none before:bg-[radial-gradient(ellipse_55%_40%_at_50%_50%,rgba(255,255,255,0.1),transparent_70%)]`}
         >
+            {/* Floating avatars — hidden on mobile to prevent overflow */}
             {avatars.map((av, i) => (
                 <motion.div
                     key={av.id}
                     initial={{ opacity: 0, scale: 0.8 }}
                     animate={isInView ? { opacity: 1, scale: 1 } : {}}
                     transition={{ delay: i * 0.05, duration: 0.6 }}
-                    className={`absolute overflow-hidden shadow-[0_8px_32px_rgba(0,0,0,0.28)] animate-[chipFloat_5s_ease-in-out_infinite] ${av.shape === 'hex' ? 'clip-hex' : av.shape === 'blob' ? 'rounded-[60%_40%_55%_45%_/_45%_55%_40%_60%]' : av.shape} ${av.className}`}
+                    className={`hidden md:absolute md:block overflow-hidden shadow-[0_8px_32px_rgba(0,0,0,0.28)] animate-[chipFloat_5s_ease-in-out_infinite] will-change-transform ${av.shape === 'hex' ? 'clip-hex' : av.shape === 'blob' ? 'rounded-[60%_40%_55%_45%_/_45%_55%_40%_60%]' : av.shape} ${av.className}`}
                     style={{ animationDelay: `${i * 0.2}s` } as any}
                 >
                     <img src={av.img} alt="person" className="w-full h-full object-cover block" />
@@ -46,9 +49,9 @@ export function BelieveSection() {
                 initial={{ opacity: 0, y: 28 }}
                 animate={isInView ? { opacity: 0.92, y: 0 } : {}}
                 transition={{ duration: 0.8 }}
-                className="relative z-2 mb-[-120px] -mt-12"
+                className="relative z-2 mb-[-80px] md:mb-[-120px] -mt-6 md:-mt-12"
             >
-                <img src="/door.png" alt="Door" className="block w-[clamp(60px,24vw,280px)] h-auto mx-auto object-contain drop-shadow-2xl" />
+                <img src="/door.png" alt="Door" className="block w-[clamp(80px,35vw,280px)] h-auto mx-auto object-contain drop-shadow-2xl" />
             </motion.div>
 
             <motion.div
@@ -57,14 +60,14 @@ export function BelieveSection() {
                 transition={{ duration: 0.8, delay: 0.15 }}
                 className="relative z-2 text-center px-5"
             >
-                <h2 className="text-[clamp(32px,5.5vw,68px)] font-bold text-dark leading-[1.05] tracking-[-0.04em] shadow-white/40 mb-[14px]">
+                <h2 className="text-[clamp(28px,6vw,68px)] font-bold text-dark leading-[1.05] tracking-[-0.04em] shadow-white/40 mb-[14px]">
                     {t('title1')}
-                    <span className="block text-[clamp(36px,6vw,76px)] text-white">{t('title2')}</span>
+                    <span className="block text-[clamp(30px,7vw,76px)] text-white">{t('title2')}</span>
                 </h2>
-                <p className="text-[clamp(13px,1.4vw,16px)] text-white/92 max-w-[340px] mx-auto mb-7 leading-[1.65]">
+                <p className="text-[clamp(13px,1.8vw,16px)] text-white/92 max-w-[320px] mx-auto mb-6 leading-[1.65]">
                     {t('desc')}
                 </p>
-                <div className="flex justify-center mt-8">
+                <div className="flex justify-center mt-8 mb-8">
                     <Link
                         href="/download"
                         className={`${styles.blobBtn} !relative !inline-flex !items-center !justify-center gap-3 !bg-[#111] !text-white font-semibold text-sm !px-10 !py-4 !rounded-full shadow-[0_4px_20px_rgba(0,0,0,0.25)] hover:!text-[#3aaa6a] hover:-translate-y-[2px] hover:shadow-[0_8px_28px_rgba(0,0,0,0.3)] transition-all overflow-hidden border-none outline-none cursor-pointer !h-auto !w-auto !bottom-auto !right-auto group mx-0 no-underline`}

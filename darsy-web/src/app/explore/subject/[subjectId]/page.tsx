@@ -33,17 +33,17 @@ export default function SubjectLessonsPage() {
 
     return (
         <div className="min-h-screen bg-white">
-            {/* Header */}
-            <header className="bg-green/5 border-b border-green/10 pt-32 pb-8 px-6">
+            {/* Header — desktop only (back link only visible on md+) */}
+            <header className="hidden md:block bg-green/5 border-b border-green/10 pt-32 pb-8 px-6">
                 <div className="max-w-7xl mx-auto">
-                    <Link href="/explore" className={`text-sm font-medium text-green flex items-center gap-2 hover:-translate-x-1 transition-transform w-fit hover:underline ${isAr ? 'flex-row-reverse' : ''}`}>
+                    <Link href="/explore" className={`flex text-sm font-medium text-green items-center gap-2 hover:-translate-x-1 transition-transform w-fit hover:underline ${isAr ? 'flex-row-reverse' : ''}`}>
                         <ArrowLeft size={16} className={isAr ? 'rotate-180' : ''} />
                         {t("back_subjects")}
                     </Link>
                 </div>
             </header>
 
-            <main className="max-w-7xl mx-auto py-16 px-6">
+            <main className="max-w-7xl mx-auto pt-4 md:pt-16 pb-[120px] md:pb-32 px-6">
                 {loading ? (
                     <div className="space-y-4">
                         {Array(5).fill(0).map((_, i) => (
@@ -51,98 +51,73 @@ export default function SubjectLessonsPage() {
                         ))}
                     </div>
                 ) : lessons.length > 0 ? (
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <div className="grid grid-cols-2 md:grid-cols-2 gap-4 md:gap-6 mb-8">
                         {lessons.map((lesson: any) => {
-                            const progress = user?.progress?.lessons?.find((l: any) => l.lessonId === (lesson._id || lesson.id));
+                            const progress = user ? user.progress?.lessons?.find((l: any) => l.lessonId === (lesson._id || lesson.id)) : null;
                             const completedCount = progress?.completedResources?.length ?? 0;
                             const totalResources = (lesson.coursesPdf?.length ?? 0) + (lesson.videos?.length ?? 0) + (lesson.exercices?.length ?? 0) + (lesson.exams?.length ?? 0) + (lesson.resourses?.length ?? 0);
                             const progressPct = totalResources > 0 ? Math.min(100, Math.round((completedCount / totalResources) * 100)) : 0;
-                            const isStarted = completedCount > 0;
-                            const isFullyCompleted = totalResources > 0 && progressPct === 100;
+                            const isStarted = user && completedCount > 0;
+                            const isFullyCompleted = user && totalResources > 0 && progressPct === 100;
 
                             return (
                                 <Link
                                     href={`/lesson/${lesson.id || lesson._id}`}
                                     key={lesson.id || lesson._id}
-                                    className={`group flex flex-col gap-4 p-6 rounded-[32px] border-2 transition-all text-left ${isFullyCompleted
+                                    className={`group flex flex-col gap-4 p-4 md:p-6 rounded-2xl md:rounded-[32px] border-2 transition-all text-left ${isFullyCompleted
                                         ? 'bg-green/10 border-green hover:bg-green/20 hover:shadow-xl hover:shadow-green/10'
                                         : isStarted
                                             ? 'bg-white border-green hover:shadow-xl hover:shadow-green/10'
                                             : 'bg-white border-green/40 hover:border-green hover:shadow-xl hover:shadow-green/5'
                                         }`}
                                 >
-                                    <div className="flex items-center justify-between gap-4">
-                                        <div className="flex flex-col md:flex-row items-start md:items-center gap-6 flex-1 min-w-0">
-                                            <div className={`w-14 h-14 rounded-2xl flex items-center justify-center group-hover:scale-110 transition-transform flex-shrink-0 ${isFullyCompleted ? 'bg-green text-white shadow-lg shadow-green/30' : isStarted ? 'bg-green/20 text-green' : 'bg-green/5 text-green'
+                                    <div className="flex flex-col gap-4">
+                                        <div className="flex flex-col items-start gap-4 flex-1 min-w-0">
+                                            <div className={`w-10 h-10 md:w-14 md:h-14 rounded-xl md:rounded-2xl flex items-center justify-center group-hover:scale-110 transition-transform flex-shrink-0 ${isFullyCompleted ? 'bg-green text-white shadow-lg shadow-green/30' : isStarted ? 'bg-green/20 text-green' : 'bg-green/5 text-green'
                                                 }`}>
-                                                {isFullyCompleted ? <CheckCircle2 size={28} /> : <BookOpen size={28} />}
+                                                {isFullyCompleted ? <CheckCircle2 size={isFullyCompleted ? 20 : 28} className="md:w-7 md:h-7" /> : <BookOpen size={20} className="md:w-7 md:h-7" />}
                                             </div>
-                                            <div className="space-y-3 min-w-0">
-                                                <div className="inline-flex">
-                                                    <h3 className={`inline-flex items-center gap-2 text-sm md:text-base font-bold px-4 py-2 rounded-2xl transition-colors whitespace-nowrap truncate max-w-full ${isFullyCompleted
-                                                        ? 'bg-green text-white shadow-md shadow-green/20'
-                                                        : isStarted
-                                                            ? 'bg-green/20 text-green'
-                                                            : 'bg-green/10 text-green group-hover:bg-green group-hover:text-white'
-                                                        }`}>
-                                                        <span className="truncate">{lesson.title}</span>
-                                                        {isFullyCompleted && (
-                                                            <span className="text-[10px] font-black bg-white/30 text-white px-1.5 py-0.5 rounded-full flex-shrink-0">✓ Done</span>
-                                                        )}
+                                            <div className="space-y-2 min-w-0 w-full">
+                                                <div className="flex flex-col gap-1">
+                                                    <h3 className={`text-xs md:text-base font-bold transition-colors truncate ${isFullyCompleted ? 'text-green' : 'text-dark group-hover:text-green'}`}>
+                                                        {lesson.title}
                                                     </h3>
+                                                    {isFullyCompleted && (
+                                                        <span className="text-[9px] w-fit font-black bg-green text-white px-2 py-0.5 rounded-full uppercase tracking-tighter">Completed</span>
+                                                    )}
                                                 </div>
-                                                <div className="flex flex-wrap items-center gap-4 text-sm font-medium">
+                                                <div className="flex flex-wrap items-center gap-2 md:gap-4 text-[10px] md:text-sm font-medium">
                                                     {lesson.coursesPdf?.length > 0 && (
-                                                        <div className={`flex items-center gap-1.5 px-2 py-1 rounded-lg ${isFullyCompleted ? 'bg-white/50 text-blue-600' : 'text-blue-500 bg-blue-50'}`}>
-                                                            <FileText size={14} />
-                                                            <span>{lesson.coursesPdf.length} PDFs</span>
+                                                        <div className={`flex items-center gap-1 px-1.5 py-0.5 rounded-md ${isFullyCompleted ? 'bg-white/50 text-blue-600' : 'text-blue-500 bg-blue-50'}`} title={`${lesson.coursesPdf.length} PDFs`}>
+                                                            <FileText size={12} className="md:w-[14px] md:h-[14px]" />
+                                                            <span className="hidden md:inline">{lesson.coursesPdf.length} PDFs</span>
                                                         </div>
                                                     )}
                                                     {lesson.videos?.length > 0 && (
-                                                        <div className={`flex items-center gap-1.5 px-2 py-1 rounded-lg ${isFullyCompleted ? 'bg-white/50 text-purple-600' : 'text-purple-500 bg-purple-50'}`}>
-                                                            <Play size={14} />
-                                                            <span>{lesson.videos.length} Videos</span>
+                                                        <div className={`flex items-center gap-1 px-1.5 py-0.5 rounded-md ${isFullyCompleted ? 'bg-white/50 text-purple-600' : 'text-purple-500 bg-purple-50'}`} title={`${lesson.videos.length} Videos`}>
+                                                            <Play size={12} className="md:w-[14px] md:h-[14px]" />
+                                                            <span className="hidden md:inline">{lesson.videos.length} Videos</span>
                                                         </div>
                                                     )}
                                                     {lesson.exercices?.length > 0 && (
-                                                        <div className={`flex items-center gap-1.5 px-2 py-1 rounded-lg ${isFullyCompleted ? 'bg-white/50 text-orange-600' : 'text-orange-500 bg-orange-50'}`}>
-                                                            <ClipboardList size={14} />
-                                                            <span>{lesson.exercices.length} Exercises</span>
-                                                        </div>
-                                                    )}
-                                                    {lesson.exams?.length > 0 && (
-                                                        <div className={`flex items-center gap-1.5 px-2 py-1 rounded-lg ${isFullyCompleted ? 'bg-white/50 text-red-600' : 'text-red-500 bg-red-50'}`}>
-                                                            <FileText size={14} />
-                                                            <span>{lesson.exams.length} Exams</span>
+                                                        <div className={`flex items-center gap-1 px-1.5 py-0.5 rounded-md ${isFullyCompleted ? 'bg-white/50 text-orange-600' : 'text-orange-500 bg-orange-50'}`} title={`${lesson.exercices.length} Exercises`}>
+                                                            <ClipboardList size={12} className="md:w-[14px] md:h-[14px]" />
+                                                            <span className="hidden md:inline">{lesson.exercices.length} Exercises</span>
                                                         </div>
                                                     )}
                                                     {lesson.resourses?.length > 0 && (
-                                                        <div className={`flex items-center gap-1.5 px-2 py-1 rounded-lg ${isFullyCompleted ? 'bg-white/50 text-teal-600' : 'text-teal-500 bg-teal-50'}`}>
-                                                            <Search size={14} />
-                                                            <span>{lesson.resourses.length} Resources</span>
-                                                        </div>
-                                                    )}
-                                                    {totalResources === 0 && (
-                                                        <div className="text-muted-foreground flex items-center gap-1.5">
-                                                            <Clock size={14} />
-                                                            <span>No resources yet</span>
+                                                        <div className={`flex items-center gap-1 px-1.5 py-0.5 rounded-md ${isFullyCompleted ? 'bg-white/50 text-teal-600' : 'text-teal-500 bg-teal-50'}`} title={`${lesson.resourses.length} Resources`}>
+                                                            <Search size={12} className="md:w-[14px] md:h-[14px]" />
+                                                            <span className="hidden md:inline">{lesson.resourses.length} Resources</span>
                                                         </div>
                                                     )}
                                                 </div>
                                             </div>
                                         </div>
-                                        <div className="flex items-center gap-4 flex-shrink-0">
-                                            <div className={`hidden md:flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-bold opacity-0 group-hover:opacity-100 transition-opacity ${isFullyCompleted ? 'bg-green text-white shadow-md shadow-green/20' : 'bg-green/10 text-green'
-                                                }`}>
-                                                {isFullyCompleted ? 'Review' : isStarted ? 'Continue' : 'Start Learning'}
-                                                <ChevronRight size={16} />
-                                            </div>
-                                            <ChevronRight className={`${isFullyCompleted ? 'text-green' : 'text-green/20 group-hover:text-green'} md:hidden`} size={24} />
-                                        </div>
                                     </div>
 
-                                    {/* Progress Bar */}
-                                    {totalResources > 0 && (
+                                    {/* Progress Bar - Only for logged in users */}
+                                    {user && totalResources > 0 && (
                                         <div className="space-y-1.5">
                                             <div className="flex items-center justify-between text-xs font-semibold">
                                                 <span className={isStarted ? 'text-green' : 'text-muted-foreground'}>

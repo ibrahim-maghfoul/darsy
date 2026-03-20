@@ -8,6 +8,7 @@ import { Lesson } from '../models/Lesson';
 import { Contribution } from '../models/Contribution';
 import { Report } from '../models/Report';
 import { SchoolService } from '../models/SchoolService';
+import { User } from '../models/User';
 
 export class DataController {
     // Get all schools
@@ -427,6 +428,116 @@ export class DataController {
         }
     }
 
+    // Get Contributions Summary for CircleRing
+    static async getContributionsSummary(req: AuthRequest, res: Response): Promise<void> {
+        try {
+            const { guidanceId } = req.query as { guidanceId?: string };
+
+            // If guidanceId provided, restrict to subjects in that guidance
+            let matchStage: Record<string, unknown> = {};
+            if (guidanceId) {
+                const guidanceSubjects = await Subject.find({ guidanceId }, '_id');
+                const subjectIds = guidanceSubjects.map(s => s._id.toString());
+                matchStage = { subjectId: { $in: subjectIds } };
+            }
+
+            const summaryData = await Contribution.aggregate([
+                ...(Object.keys(matchStage).length ? [{ $match: matchStage }] : []),
+                { $group: { _id: '$userId', count: { $sum: 1 } } },
+                { $sort: { count: -1 } }
+            ]);
+
+            const userIds = summaryData.map(d => d._id);
+            const users = await User.find({ _id: { $in: userIds } }, 'displayName photoURL subscription');
+            
+            const result = summaryData.map(d => {
+                const user = users.find(u => u._id.toString() === d._id.toString());
+                return {
+                    userId: d._id,
+                    contributions: d.count,
+                    displayName: user?.displayName || 'Unknown Member',
+                    photoURL: user?.photoURL || null,
+                    isPremium: user?.isPremium || false
+                };
+            }).filter(u => u.displayName !== 'Unknown Member');
+
+            // Pad with other users (top by points) to populate the CircleRing
+            if (result.length < 60) {
+                const padLimit = 60 - result.length;
+                const otherUsers = await User.find({ _id: { $nin: userIds } }, 'displayName photoURL isPremium points')
+                    .sort({ points: -1 })
+                    .limit(padLimit);
+
+                for (const u of otherUsers) {
+                    if (u.displayName) {
+                        result.push({
+                            userId: u._id,
+                            contributions: 0,
+                            displayName: u.displayName,
+                            photoURL: u.photoURL || null,
+                            isPremium: u.isPremium || false
+                        });
+                    }
+                }
+            }
+
+            res.json(result);
+        } catch (error) {
+            console.error('Get contributions summary error:', error);
+            res.status(500).json({ error: 'Failed to get contributions summary' });
+        }
+    }
+
+    // Get Recent Contributions for Feed
+    static async getRecentContributions(req: AuthRequest, res: Response): Promise<void> {
+        try {
+            const { guidanceId } = req.query as { guidanceId?: string };
+
+            // Filter to subjects in the user's guidance path if provided
+            let filter: Record<string, unknown> = {};
+            if (guidanceId) {
+                const guidanceSubjects = await Subject.find({ guidanceId }, '_id');
+                const subjectIds = guidanceSubjects.map(s => s._id.toString());
+                filter = { subjectId: { $in: subjectIds } };
+            }
+
+            const recent = await Contribution.find(filter)
+                .sort({ createdAt: -1 })
+                .limit(20);
+
+            const userIds = [...new Set(recent.map(c => c.userId))];
+            const users = await User.find({ _id: { $in: userIds } }, 'displayName photoURL subscription');
+
+            const subjectIds = [...new Set(recent.map(c => c.subjectId).filter(id => id))];
+            const lessonIds = [...new Set(recent.map(c => c.lessonId).filter(id => id && id !== 'contribution'))];
+            
+            const subjects = await Subject.find({ _id: { $in: subjectIds } }, 'title');
+            const lessons = await Lesson.find({ _id: { $in: lessonIds } }, 'title');
+
+            const result = recent.map(c => {
+                const user = users.find(u => u._id.toString() === c.userId.toString());
+                const subject = subjects.find(s => s._id.toString() === c.subjectId?.toString());
+                const lesson = lessons.find(l => l._id.toString() === c.lessonId?.toString());
+                
+                return {
+                    ...c.toObject(),
+                    subjectTitle: subject?.title || 'General',
+                    lessonTitle: lesson?.title || 'General',
+                    user: {
+                        displayName: user?.displayName || 'Unknown Member',
+                        photoURL: user?.photoURL || null,
+                        isPremium: user?.isPremium || false
+                    }
+                };
+            });
+
+            res.json(result);
+        } catch (error) {
+            console.error('Get recent contributions error:', error);
+            res.status(500).json({ error: 'Failed to get recent contributions' });
+        }
+    }
+
     // Get all school services
     static async getSchoolServices(_req: AuthRequest, res: Response): Promise<void> {
         try {
@@ -446,6 +557,75 @@ export class DataController {
         } catch (error) {
             console.error('Create school service error:', error);
             res.status(500).json({ error: 'Failed to create school service' });
+        }
+    }
+
+    // Update a school service
+    static async updateSchoolService(req: AuthRequest, res: Response): Promise<void> {
+        try {
+            const service = await SchoolService.findByIdAndUpdate(req.params.id, req.body, { new: true });
+            if (!service) { res.status(404).json({ error: 'Service not found' }); return; }
+            res.json(service);
+        } catch (error) {
+            res.status(500).json({ error: 'Failed to update service' });
+        }
+    }
+
+    // Delete a school service
+    static async deleteSchoolService(req: AuthRequest, res: Response): Promise<void> {
+        try {
+            await SchoolService.findByIdAndDelete(req.params.id);
+            res.json({ message: 'Service deleted' });
+        } catch (error) {
+            res.status(500).json({ error: 'Failed to delete service' });
+        }
+    }
+
+    // Admin: Get all contributions
+    static async getAllContributions(req: AuthRequest, res: Response): Promise<void> {
+        try {
+            const limit = parseInt((req.query as any).limit) || 200;
+            const contributions = await Contribution.find({}).sort({ createdAt: -1 }).limit(limit).lean();
+            const userIds = [...new Set(contributions.map(c => c.userId))];
+            const subjectIds = [...new Set(contributions.map(c => c.subjectId).filter(Boolean))];
+            const lessonIds = [...new Set(contributions.map(c => c.lessonId).filter(id => id && id !== 'general'))];
+            const [users, subjects, lessons] = await Promise.all([
+                User.find({ _id: { $in: userIds } }, 'displayName email photoURL').lean(),
+                Subject.find({ _id: { $in: subjectIds } }, 'title').lean(),
+                Lesson.find({ _id: { $in: lessonIds } }, 'title').lean(),
+            ]);
+            const result = contributions.map(c => ({
+                ...c,
+                user: users.find(u => u._id.toString() === c.userId.toString()) || null,
+                subjectTitle: subjects.find(s => s._id.toString() === c.subjectId?.toString())?.title || '—',
+                lessonTitle: lessons.find(l => l._id.toString() === c.lessonId?.toString())?.title || '—',
+            }));
+            res.json(result);
+        } catch (error) {
+            res.status(500).json({ error: 'Failed to get contributions' });
+        }
+    }
+
+    // Admin: Update contribution status
+    static async updateContributionStatus(req: AuthRequest, res: Response): Promise<void> {
+        try {
+            const { status } = req.body;
+            if (!['pending', 'approved', 'rejected'].includes(status)) { res.status(400).json({ error: 'Invalid status' }); return; }
+            const c = await Contribution.findByIdAndUpdate(req.params.id, { status }, { new: true });
+            if (!c) { res.status(404).json({ error: 'Not found' }); return; }
+            res.json(c);
+        } catch (error) {
+            res.status(500).json({ error: 'Failed to update status' });
+        }
+    }
+
+    // Admin: Delete contribution
+    static async deleteContribution(req: AuthRequest, res: Response): Promise<void> {
+        try {
+            await Contribution.findByIdAndDelete(req.params.id);
+            res.json({ message: 'Contribution deleted' });
+        } catch (error) {
+            res.status(500).json({ error: 'Failed to delete contribution' });
         }
     }
 }

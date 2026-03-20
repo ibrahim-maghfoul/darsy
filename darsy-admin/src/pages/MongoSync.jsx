@@ -1,30 +1,30 @@
 import React, { useState } from 'react';
 import { useAuth } from '../context/AuthContext';
-import { db } from '../services/firebase';
-import { collection, getDocs } from 'firebase/firestore';
 import axios from 'axios';
 import './MongoSync.css';
 
-// Configure axios base URL - update this to your actual backend URL
-const API_URL = 'http://localhost:5000/api/data';
+const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000/api';
 
 const COLLECTIONS = [
-    { id: 'schools', name: 'Schools', endpoint: 'schools' },
-    { id: 'levels', name: 'Levels', endpoint: 'levels' },
-    { id: 'guidances', name: 'Guidances', endpoint: 'guidances' },
-    { id: 'subjects', name: 'Subjects', endpoint: 'subjects' },
-    { id: 'lessons', name: 'Lessons', endpoint: 'lessons' },
-    { id: 'guidance_stats', name: 'Guidance Stats', endpoint: 'guidance-stats' },
+    { id: 'schools', name: 'Schools', endpoint: 'data/schools', file: 'school.json' },
+    { id: 'levels', name: 'Levels', endpoint: 'data/levels', file: 'levels.json' },
+    { id: 'guidances', name: 'Guidances', endpoint: 'data/guidances', file: 'guidances.json' },
+    { id: 'subjects', name: 'Subjects', endpoint: 'data/subjects', file: 'subjects.json' },
+    { id: 'lessons', name: 'Lessons', endpoint: 'data/lessons', file: 'lessons.json' },
+    { id: 'guidance_stats', name: 'Guidance Stats', endpoint: 'data/guidance-stats', file: null },
 ];
 
 const MongoSync = () => {
-    const { isAuthenticated } = useAuth();
+    const { token, isAuthenticated } = useAuth();
     const [syncing, setSyncing] = useState(false);
     const [selectedCollections, setSelectedCollections] = useState(
         COLLECTIONS.reduce((acc, c) => ({ ...acc, [c.id]: true }), {})
     );
     const [logs, setLogs] = useState([]);
     const [progress, setProgress] = useState({});
+    const [jsonFile, setJsonFile] = useState(null);
+
+    const headers = { Authorization: `Bearer ${token}` };
 
     const addLog = (message, type = 'info') => {
         setLogs(prev => [...prev, { message, type, time: new Date().toLocaleTimeString() }]);
@@ -35,163 +35,101 @@ const MongoSync = () => {
     };
 
     const selectAll = (val) => {
-        setSelectedCollections(
-            COLLECTIONS.reduce((acc, c) => ({ ...acc, [c.id]: val }), {})
-        );
+        setSelectedCollections(COLLECTIONS.reduce((acc, c) => ({ ...acc, [c.id]: val }), {}));
     };
 
-    const fetchFirebaseCollection = async (collectionName) => {
-        try {
-            const querySnapshot = await getDocs(collection(db, collectionName));
-            return querySnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
-        } catch (error) {
-            addLog(`Error fetching ${collectionName} from Firebase: ${error.message}`, 'error');
-            return [];
-        }
+    const loadJsonFile = async (filename) => {
+        const response = await fetch(`/firebase_data/metadata/${filename}`);
+        if (!response.ok) throw new Error(`Failed to load ${filename}`);
+        return response.json();
     };
 
-    const syncCollection = async (collectionName, endpoint, transformFn = null) => {
-        addLog(`Starting sync for ${collectionName}...`);
-
-        // Debug: Check if Firebase has data
-        const data = await fetchFirebaseCollection(collectionName);
-        console.log(`[Sync Debug] Fetched ${data.length} items from Firebase collection: ${collectionName}`);
-
-        if (data.length === 0) {
-            addLog(`⚠️ No data found in Firebase collection: ${collectionName}. Skipping.`, 'warning');
+    const pushCollection = async (collectionId, endpoint, transformFn) => {
+        const col = COLLECTIONS.find(c => c.id === collectionId);
+        if (!col?.file) {
+            addLog(`Skipping ${collectionId} (no JSON file).`, 'warning');
             return;
         }
 
-        addLog(`Found ${data.length} items in ${collectionName}. Pushing to MongoDB...`);
-        let successCount = 0;
-        let failCount = 0;
+        addLog(`Loading ${col.name} from JSON...`);
+        let data;
+        try {
+            data = await loadJsonFile(col.file);
+        } catch (err) {
+            addLog(`Could not load ${col.file}: ${err.message}`, 'error');
+            return;
+        }
 
-        setProgress(prev => ({ ...prev, [collectionName]: { total: data.length, current: 0 } }));
+        if (!data || data.length === 0) {
+            addLog(`No data in ${col.file}. Skipping.`, 'warning');
+            return;
+        }
+
+        addLog(`Found ${data.length} items. Pushing to MongoDB...`);
+        let ok = 0, fail = 0;
+        setProgress(prev => ({ ...prev, [collectionId]: { total: data.length, current: 0 } }));
 
         for (const item of data) {
             try {
-                // Transform data if needed for MongoDB schema
                 const payload = transformFn ? transformFn(item) : item;
-
-                // Debug: Log payload for first item
-                if (successCount === 0 && failCount === 0) {
-                    console.log(`[Sync Debug] Sending payload to ${endpoint}:`, payload);
-                }
-
-                await axios.post(`${API_URL}/${endpoint}`, payload);
-                successCount++;
+                await axios.post(`${API_URL}/${endpoint}`, payload, { headers });
+                ok++;
             } catch (error) {
-                console.error(`Failed to push item ${item.id || 'unknown'} to ${endpoint}:`, error.response?.data || error.message);
-                addLog(`Error pushing item: ${error.response?.data?.error || error.message}`, 'error');
-                failCount++;
+                fail++;
+                if (ok + fail <= 3) addLog(`Error: ${error.response?.data?.error || error.message}`, 'error');
             }
-
-            setProgress(prev => ({
-                ...prev,
-                [collectionName]: { total: data.length, current: successCount + failCount }
-            }));
+            setProgress(prev => ({ ...prev, [collectionId]: { total: data.length, current: ok + fail } }));
         }
 
-        addLog(`Completed ${collectionName}: ${successCount} succeeded, ${failCount} failed.`, successCount > 0 ? 'success' : 'error');
+        addLog(`${col.name}: ${ok} succeeded, ${fail} failed.`, ok > 0 ? 'success' : 'error');
     };
 
     const handleSync = async () => {
-        if (!isAuthenticated) {
-            addLog("Error: You must be logged in as admin to sync data.", "error");
-            return;
-        }
-
-        const collectionsToSync = COLLECTIONS.filter(c => selectedCollections[c.id]);
-        if (collectionsToSync.length === 0) {
-            addLog("Error: Please select at least one collection to sync.", "warning");
-            return;
-        }
-
+        if (!isAuthenticated) { addLog('Please log in first.', 'error'); return; }
         setSyncing(true);
         setLogs([]);
         setProgress({});
 
         try {
-            // 1. Sync Schools
             if (selectedCollections.schools) {
-                await syncCollection('schools', 'schools', (data) => ({
-                    _id: data.id, // Use Firestore ID as MongoDB _id
-                    title: data.name || data.title,
-                    image: data.image,
-                    category: data.category || 'Secondary' // Changed from level to category to match schema
+                await pushCollection('schools', 'data/schools', d => ({
+                    _id: d.id, title: d.name || d.title, image: d.image, category: d.category || 'Secondary'
                 }));
             }
-
-            // 2. Sync Levels
             if (selectedCollections.levels) {
-                await syncCollection('levels', 'levels', (data) => ({
-                    _id: data.id,
-                    title: data.name || data.title,
-                    schoolId: data.schoolId,
-                    image: data.image
+                await pushCollection('levels', 'data/levels', d => ({
+                    _id: d.id, title: d.name || d.title, schoolId: d.schoolId, image: d.image
                 }));
             }
-
-            // 3. Sync Guidances
             if (selectedCollections.guidances) {
-                await syncCollection('guidances', 'guidances', (data) => ({
-                    _id: data.id,
-                    title: data.title,
-                    levelId: data.levelId,
-                    image: data.image
+                await pushCollection('guidances', 'data/guidances', d => ({
+                    _id: d.id, title: d.title, levelId: d.levelId, image: d.image
                 }));
             }
-
-            // 4. Sync Subjects
             if (selectedCollections.subjects) {
-                await syncCollection('subjects', 'subjects', (data) => ({
-                    _id: data.id,
-                    title: data.title,
-                    guidanceId: data.guidanceId,
-                    imageUrl: data.image
+                await pushCollection('subjects', 'data/subjects', d => ({
+                    _id: d.id, title: d.title, guidanceId: d.guidanceId, imageUrl: d.image
                 }));
             }
-
-            // 5. Sync Lessons
             if (selectedCollections.lessons) {
-                await syncCollection('lessons', 'lessons', (data) => ({
-                    _id: data.id,
-                    title: data.title,
-                    subjectId: data.subjectId,
-                    type: data.type || 'lesson',
-                    order: data.order || 0,
-                    coursesPdf: data.coursesPdf || [],
-                    videos: data.videos || [],
-                    exercices: data.exercices || [],
-                    exams: data.exams || [],
-                    resourses: data.resourses || []
+                await pushCollection('lessons', 'data/lessons', d => ({
+                    _id: d.id, title: d.title, subjectId: d.subjectId, type: d.type || 'lesson',
+                    order: d.order || 0, coursesPdf: d.coursesPdf || [], videos: d.videos || [],
+                    exercices: d.exercices || [], exams: d.exams || [], resourses: d.resourses || []
                 }));
             }
-
-            // 6. Sync Guidance Stats
             if (selectedCollections.guidance_stats) {
-                addLog("Checking for guidance stats to sync...");
+                addLog('Triggering stats recalculation...');
                 try {
-                    await syncCollection('guidance_stats', 'guidance-stats', (data) => ({
-                        guidanceId: data.guidanceId || data.id,
-                        totalPdfs: data.totalPdfs || 0,
-                        totalVideos: data.totalVideos || 0,
-                        totalExercises: data.totalExercises || 0,
-                        totalExams: data.totalExams || 0,
-                        totalLessons: data.totalLessons || 0,
-                        totalSubjects: data.totalSubjects || 0,
-                        totalResources: data.totalResources || 0,
-                        totalItems: data.totalItems || 0
-                    }));
+                    await axios.post(`${API_URL}/data/stats/recalculate`, {}, { headers });
+                    addLog('Stats recalculated successfully!', 'success');
                 } catch (err) {
-                    addLog("Note: guidance_stats collection might be missing or empty.", "warning");
+                    addLog(`Stats recalc failed: ${err.message}`, 'error');
                 }
             }
-
-            addLog("🎉 Selective synchronization complete!", "success");
-
+            addLog('Synchronization complete!', 'success');
         } catch (error) {
-            addLog(`Critical Sync Error: ${error.message}`, 'error');
+            addLog(`Critical Error: ${error.message}`, 'error');
         } finally {
             setSyncing(false);
         }
@@ -200,21 +138,16 @@ const MongoSync = () => {
     return (
         <div className="mongo-sync-container">
             <div className="sync-header">
-                <h2>MongoDB Synchronization</h2>
-                <p>Push educational content from Firebase/JSON to the new MongoDB backend.</p>
+                <h2>MongoDB Import</h2>
+                <p>Push educational content from JSON files to MongoDB.</p>
             </div>
 
             <div className="selection-container">
-                <h3>Select Collections to Sync</h3>
+                <h3>Select Collections to Import</h3>
                 <div className="collection-grid">
                     {COLLECTIONS.map(c => (
                         <label key={c.id} className="collection-item">
-                            <input
-                                type="checkbox"
-                                checked={selectedCollections[c.id]}
-                                onChange={() => toggleCollection(c.id)}
-                                disabled={syncing}
-                            />
+                            <input type="checkbox" checked={selectedCollections[c.id]} onChange={() => toggleCollection(c.id)} disabled={syncing} />
                             <span>{c.name}</span>
                         </label>
                     ))}
@@ -231,10 +164,9 @@ const MongoSync = () => {
                     onClick={handleSync}
                     disabled={syncing || Object.values(selectedCollections).every(v => !v)}
                 >
-                    {syncing ? 'Syncing Selected...' : 'Push Selected to MongoDB'}
+                    {syncing ? 'Importing...' : 'Push to MongoDB'}
                 </button>
-
-                {!isAuthenticated && <p className="auth-warning">⚠️ Authentication required. Please log in.</p>}
+                {!isAuthenticated && <p className="auth-warning">Authentication required. Please log in.</p>}
             </div>
 
             <div className="sync-progress-grid">
@@ -242,10 +174,7 @@ const MongoSync = () => {
                     <div key={name} className="progress-card">
                         <h4>{name.charAt(0).toUpperCase() + name.slice(1).replace('_', ' ')}</h4>
                         <div className="progress-bar-container">
-                            <div
-                                className="progress-fill"
-                                style={{ width: `${(stats.current / stats.total) * 100}%` }}
-                            ></div>
+                            <div className="progress-fill" style={{ width: `${(stats.current / stats.total) * 100}%` }} />
                         </div>
                         <span>{stats.current} / {stats.total}</span>
                     </div>
@@ -253,7 +182,7 @@ const MongoSync = () => {
             </div>
 
             <div className="logs-console">
-                <h3>Sync Logs</h3>
+                <h3>Import Logs</h3>
                 <div className="logs-output">
                     {logs.length === 0 ? <span className="empty-logs">Logs will appear here...</span> :
                         logs.map((log, idx) => (

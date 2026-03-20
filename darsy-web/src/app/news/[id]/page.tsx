@@ -305,12 +305,12 @@ export default function NewsDetailPage() {
     }
 
     return (
-        <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="min-h-screen pt-32 pb-32 px-[clamp(16px,5vw,48px)] bg-[#FAFBFD]">
+        <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="min-h-screen lg:pt-32 pb-32 px-[clamp(16px,5vw,48px)] bg-[#FAFBFD]">
             <div className="max-w-4xl mx-auto">
                 {/* Nav */}
                 <div className="flex items-center justify-between mb-16">
                     <button onClick={() => router.push("/news")}
-                        className="group flex items-center gap-4 text-black font-black tracking-widest text-[10px] uppercase">
+                        className="hidden md:flex group items-center gap-4 text-black font-black tracking-widest text-[10px] uppercase">
                         <div className="w-12 h-12 rounded-[20px] bg-white border border-gray-100 shadow-sm flex items-center justify-center group-hover:border-green/30 group-hover:bg-green group-hover:text-white transition-all duration-500">
                             <ArrowLeft size={20} strokeWidth={3} />
                         </div>
@@ -412,7 +412,7 @@ export default function NewsDetailPage() {
                             </div>
                             <h3 className="text-2xl font-black text-dark tracking-tight">{t('official_resources')}</h3>
                         </div>
-                        <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
+                        <div className="grid gap-6 grid-cols-1 sm:grid-cols-2 lg:grid-cols-3">
                             {article.attachments.map((att: any, idx: number) => (
                                 <div key={idx} className="group p-6 rounded-[32px] bg-white border-2 border-green/60 shadow-lg shadow-green/5 hover:border-green hover:shadow-xl hover:shadow-green/10 transition-all duration-300 flex flex-col items-center gap-5 text-center justify-between">
                                     <div className="flex-1 flex flex-col justify-center w-full">

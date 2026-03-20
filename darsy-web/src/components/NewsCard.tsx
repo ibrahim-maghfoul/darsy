@@ -14,7 +14,7 @@ import { useTranslations } from 'next-intl';
 import styles from './NewsCard.module.css';
 
 // ─── Constants (matches the reference design exactly) ─────────────────────────
-const W = 340;
+const W = 290;
 const H = 320;
 const CR = 28;
 const G = 8;

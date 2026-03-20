@@ -46,13 +46,103 @@ export interface Lesson {
     updatedAt: string;
 }
 
+// ─── Teacher System ───
+export interface TeacherApplication {
+    _id: string;
+    userId: string;
+    fullName: string;
+    email: string;
+    age: number;
+    studyBranch: string;
+    studyLevel: string;
+    specialist: string;
+    currentStand: string;
+    targetLevelId: string;
+    targetGuidanceId: string;
+    targetSubjectId: string;
+    videoUrl: string;
+    status: 'pending' | 'approved' | 'rejected';
+    reviewNote?: string;
+    createdAt: string;
+}
+
+export interface TeacherRating {
+    _id: string;
+    userId: { _id: string; displayName: string; photoURL?: string };
+    rating: number;
+    comment?: string;
+    createdAt: string;
+}
+
+export interface TeacherProfile {
+    _id: string;
+    userId: { _id: string; displayName: string; photoURL?: string };
+    fullName: string;
+    bio?: string;
+    photoURL?: string;
+    specialist: string;
+    schoolName: string;
+    guidanceId: string;
+    subjectId: string;
+    ratings: TeacherRating[];
+    averageRating: number;
+    totalRatings: number;
+    totalStudents: number;
+    isVerified: boolean;
+    isActive: boolean;
+    createdAt: string;
+}
+
+export interface TeacherRoom {
+    _id: string;
+    teacherId: { _id: string; displayName: string; photoURL?: string };
+    teacherProfileId: { fullName: string; specialist: string; averageRating: number };
+    name: string;
+    description?: string;
+    guidanceId: string;
+    subjectId: string;
+    inviteCode: string;
+    members: { _id: string; displayName: string; photoURL?: string }[];
+    maxMembers: number;
+    isActive: boolean;
+    lastMessagePreview?: string;
+    lastMessageAt?: string;
+    createdAt: string;
+}
+
+export interface InstructorCourse {
+    _id: string;
+    instructorId: string;
+    title: string;
+    description?: string;
+    videoUrl?: string;
+    pdfUrl?: string;
+    guidanceId: string;
+    subjectId: string;
+    viewCount: number;
+    downloadCount: number;
+    createdAt: string;
+    updatedAt: string;
+}
+
+export interface InstructorRating {
+    _id: string;
+    userId: { _id: string; displayName: string; photoURL?: string };
+    instructorId: string;
+    rating: number;
+    feedback?: string;
+    createdAt: string;
+}
+
 export interface User {
     id: string;
     displayName: string;
     email: string;
-    role: 'user' | 'admin';
+    role: 'user' | 'admin' | 'instructor' | 'teacher';
     photoURL?: string;
+    coverPhotoURL?: string;
     points?: number;
+    totalGuidanceResources?: number;
     subscription: {
         plan: 'free' | 'premium' | 'pro';
         billingCycle: 'monthly' | 'yearly' | 'none';
@@ -67,6 +157,7 @@ export interface User {
     nickname?: string;
     city?: string;
     age?: number;
+    gender?: string;
     schoolName?: string;
     studyLocation?: string;
     progress: {
@@ -78,6 +169,7 @@ export interface User {
         usageTime: number;
         savedNews: string[];
         lessons?: any[];
+        timeSpentHistory?: { date: string; minutes: number }[];
     };
     selectedPath?: {
         schoolId: string;

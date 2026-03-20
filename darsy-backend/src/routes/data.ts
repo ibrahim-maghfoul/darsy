@@ -19,6 +19,16 @@ router.get('/guidance-stats/:guidanceId', DataController.getGuidanceStats);
 // --- Protected: user resource contribution ---
 router.post('/contribute', authMiddleware, resourceUpload.single('file'), verifyUploadedFile, DataController.contribute);
 
+// --- Public/Protected: Contributions Hub ---
+// These endpoints feed the CircleRing visualization and recent feed.
+router.get('/contributions/summary', DataController.getContributionsSummary);
+router.get('/contributions/recent', DataController.getRecentContributions);
+
+// --- Admin: Contributions CRUD ---
+router.get('/contributions', authMiddleware, adminMiddleware, DataController.getAllContributions);
+router.patch('/contributions/:id/status', authMiddleware, adminMiddleware, DataController.updateContributionStatus);
+router.delete('/contributions/:id', authMiddleware, adminMiddleware, DataController.deleteContribution);
+
 // --- Admin-only: write/update/delete endpoints ---
 router.post('/schools', authMiddleware, adminMiddleware, DataController.createSchool);
 router.post('/levels', authMiddleware, adminMiddleware, DataController.createLevel);
@@ -26,6 +36,8 @@ router.post('/guidances', authMiddleware, adminMiddleware, DataController.create
 router.post('/subjects', authMiddleware, adminMiddleware, DataController.createSubject);
 router.post('/lessons', authMiddleware, adminMiddleware, DataController.createLesson);
 router.post('/school-services', authMiddleware, adminMiddleware, DataController.createSchoolService);
+router.put('/school-services/:id', authMiddleware, adminMiddleware, DataController.updateSchoolService);
+router.delete('/school-services/:id', authMiddleware, adminMiddleware, DataController.deleteSchoolService);
 
 router.put('/schools/:id', authMiddleware, adminMiddleware, DataController.updateSchool);
 router.put('/levels/:id', authMiddleware, adminMiddleware, DataController.updateLevel);

@@ -98,7 +98,7 @@ export default function PrivacyPage() {
     });
 
     return (
-        <div className="min-h-screen bg-white pt-32 pb-20 px-[clamp(20px,6vw,80px)]">
+        <div className="min-h-screen bg-white md:pt-32 pb-20 px-[clamp(20px,6vw,80px)]">
             <div className="max-w-4xl mx-auto">
 
                 {/* Header */}

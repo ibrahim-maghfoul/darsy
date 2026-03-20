@@ -132,7 +132,7 @@ export default function AboutPage() {
         <div className="min-h-screen bg-white overflow-hidden">
 
             {/* ─── HERO ─── */}
-            <section className="relative pt-40 pb-28 px-[clamp(20px,6vw,80px)] text-center overflow-hidden">
+            <section className="relative pt-12 md:pt-40 pb-28 px-[clamp(20px,6vw,80px)] text-center overflow-hidden">
                 {/* Background blobs */}
                 <div className="absolute inset-0 pointer-events-none">
                     <div className="absolute top-0 left-1/2 -translate-x-1/2 w-[900px] h-[500px] bg-green/5 rounded-full blur-[120px]" />

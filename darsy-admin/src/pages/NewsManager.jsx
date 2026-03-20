@@ -3,9 +3,10 @@ import {
     Plus, Trash2, Link as LinkIcon, AlertCircle, Loader2,
     Upload, Edit2, X, CheckCircle2, Database, RefreshCw, Eye
 } from 'lucide-react';
+import { useAuth } from '../context/AuthContext';
 import './NewsManager.css';
 
-const API = 'http://localhost:5000/api/news';
+const API = (import.meta.env.VITE_API_URL || 'http://localhost:5000/api') + '/news';
 
 const EMPTY_FORM = {
     title: '',
@@ -17,6 +18,8 @@ const EMPTY_FORM = {
 };
 
 const NewsManager = () => {
+    const { token } = useAuth();
+    const authHeaders = { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' };
     const [tab, setTab] = useState('browse'); // 'browse' | 'create'
     const [news, setNews] = useState([]);
     const [total, setTotal] = useState(0);
@@ -105,7 +108,7 @@ const NewsManager = () => {
 
             const res = await fetch(url, {
                 method,
-                headers: { 'Content-Type': 'application/json' },
+                headers: authHeaders,
                 body: JSON.stringify(processedData)
             });
 
@@ -124,7 +127,7 @@ const NewsManager = () => {
     const handleDelete = async (id) => {
         if (!window.confirm('Delete this article permanently?')) return;
         try {
-            await fetch(`${API}/${id}`, { method: 'DELETE' });
+            await fetch(`${API}/${id}`, { method: 'DELETE', headers: authHeaders });
             await loadNews();
         } catch (e) {
             alert('Delete failed.');
@@ -135,7 +138,7 @@ const NewsManager = () => {
         if (!window.confirm('🚨 WARNING: Are you sure you want to delete ALL news articles? This cannot be undone!')) return;
         try {
             setLoading(true);
-            await fetch(`${API}/all`, { method: 'DELETE' });
+            await fetch(`${API}/all`, { method: 'DELETE', headers: authHeaders });
             setPage(1);
             await loadNews();
             alert('All articles deleted successfully.');
@@ -175,7 +178,7 @@ const NewsManager = () => {
 
                 const res = await fetch(`${API}/bulk-upsert`, {
                     method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
+                    headers: authHeaders,
                     body: JSON.stringify({ articles: batch }),
                 });
 

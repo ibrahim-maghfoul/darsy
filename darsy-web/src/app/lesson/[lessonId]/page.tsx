@@ -131,17 +131,15 @@ export default function LessonPage() {
         const res = await getLessonById(lessonId);
         setLesson(res);
         if (res) {
-            const firstPdf = res.coursesPdf?.[0];
-            const firstVideo = res.videos?.[0];
-            const firstExercise = res.exercices?.[0];
-            const firstExam = res.exams?.[0];
-            const firstResource = res.resourses?.[0];
-
-            if (firstPdf) handleSelectResource(firstPdf, 'pdf', res);
-            else if (firstVideo) handleSelectResource(firstVideo, 'video', res);
-            else if (firstExercise) handleSelectResource(firstExercise, 'exercise', res);
-            else if (firstExam) handleSelectResource(firstExam, 'exam', res);
-            else if (firstResource) handleSelectResource(firstResource, 'resource', res);
+            // Auto-select first doc on desktop
+            const isDesktop = typeof window !== 'undefined' && window.innerWidth >= 1024;
+            if (isDesktop && !activeResource) {
+                const firstType = res.coursesPdf?.length ? 'coursesPdf' : res.resourses?.length ? 'resourses' : res.exercices?.length ? 'exercices' : res.exams?.length ? 'exams' : res.videos?.length ? 'videos' : null;
+                const firstDoc = firstType ? res[firstType as keyof typeof res]?.[0] : null;
+                if (firstDoc && typeof firstDoc === 'object') {
+                    setActiveResource({ ...(firstDoc as any), type: firstType });
+                }
+            }
 
             // Fetch siblings to find the next lesson
             if (res.subjectId) {
@@ -155,18 +153,32 @@ export default function LessonPage() {
         setLoading(false);
     };
 
-    const handleSelectResource = (resource: any, type: string, currentLesson: any = lesson) => {
-        setActiveResource({ ...resource, type });
-        setTimer(0);
-        lastSavedTimerRef.current = 0;
+    const handleSelectResource = async (resource: any, type: string, currentLesson: any = lesson) => {
+        // Only open in a new tab if we are on a mobile device (width < 1024px)
+        const isMobile = typeof window !== 'undefined' && window.innerWidth < 1024;
+        
+        if (isMobile && resource.url) {
+            window.open(resource.url, '_blank', 'noopener,noreferrer');
+        } else {
+            setActiveResource({ ...resource, type }); // Set for desktop viewer
+        }
+
+        // Track the view in the background
         if (user) {
             const safeResourceId = resource.docId || (typeof btoa !== 'undefined' ? btoa(encodeURIComponent(resource.url)) : encodeURIComponent(resource.url));
-            trackResourceView({
-                lessonId,
-                subjectId: currentLesson?.subjectId,
-                resourceId: safeResourceId,
-                resourceType: type
-            });
+            try {
+                await trackResourceView({
+                    lessonId,
+                    subjectId: currentLesson?.subjectId,
+                    resourceId: safeResourceId,
+                    resourceType: type
+                });
+                if (checkAuth) {
+                    checkAuth();
+                }
+            } catch (error) {
+                console.error("Failed to track resource view:", error);
+            }
         }
     };
 
@@ -215,7 +227,7 @@ export default function LessonPage() {
     };
 
     if (loading) return (
-        <div className="min-h-screen pt-32 px-6 flex items-center justify-center">
+        <div className="min-h-screen px-6 flex items-center justify-center">
             <div className="flex flex-col items-center gap-4">
                 <div className="w-12 h-12 border-4 border-green/20 border-t-green rounded-full animate-spin" />
                 <p className="text-muted-foreground font-medium">{t("loading")}</p>
@@ -224,7 +236,7 @@ export default function LessonPage() {
     );
 
     if (!lesson) return (
-        <div className="min-h-screen pt-32 px-6 text-center">
+        <div className="min-h-screen px-6 text-center">
             <h1 className="text-2xl font-bold">{t("not_found")}</h1>
             <Link href="/explore" className="text-green hover:underline">{t("return_explore")}</Link>
         </div>
@@ -235,40 +247,42 @@ export default function LessonPage() {
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             transition={{ duration: 0.5 }}
-            className="min-h-screen bg-white"
+            className="min-h-screen bg-white pb-20 md:pb-0"
         >
-            {/* Draggable Timer Overlay (Global/Fixed) */}
-            <motion.div
-                drag
-                dragMomentum={false}
-                dragElastic={0}
-                whileDrag={{ scale: 1.1, cursor: 'grabbing' }}
-                initial={{ x: 0, y: 0 }}
-                className="fixed top-24 left-8 z-[200] cursor-grab active:cursor-grabbing"
-            >
-                <div className="bg-dark/80 backdrop-blur-xl px-4 py-2.5 rounded-full text-white text-sm font-bold flex items-center gap-3 border border-white/10 shadow-2xl">
-                    <div className="flex items-center gap-2 pr-2 border-r border-white/10">
-                        <Clock size={18} className={`text-green ${isTimerRunning ? 'animate-pulse' : ''}`} />
-                        {Math.floor(timer / 60)}:{(timer % 60).toString().padStart(2, '0')}
+            {/* Draggable Timer Overlay (Global/Fixed) - Hidden on mobile if viewing preview. Only for logged in users. */}
+            {user && (
+                <motion.div
+                    drag
+                    dragMomentum={false}
+                    dragElastic={0}
+                    whileDrag={{ scale: 1.1, cursor: 'grabbing' }}
+                    initial={{ x: 0, y: 0 }}
+                    className="fixed top-24 left-8 z-[200] cursor-grab active:cursor-grabbing hidden lg:block"
+                >
+                    <div className="bg-dark/80 backdrop-blur-xl px-4 py-2.5 rounded-full text-white text-sm font-bold flex items-center gap-3 border border-white/10 shadow-2xl">
+                        <div className="flex items-center gap-2 pr-2 border-r border-white/10">
+                            <Clock size={18} className={`text-green ${isTimerRunning ? 'animate-pulse' : ''}`} />
+                            {Math.floor(timer / 60)}:{(timer % 60).toString().padStart(2, '0')}
+                        </div>
+                        <button
+                            onPointerDown={(e) => e.stopPropagation()}
+                            onClick={(e) => {
+                                e.stopPropagation();
+                                setIsTimerRunning(!isTimerRunning);
+                            }}
+                            className={`p-1.5 rounded-lg transition-colors ${isTimerRunning ? 'hover:bg-red-500/20 text-white' : 'bg-green text-white shadow-lg shadow-green/20'}`}
+                            title={isTimerRunning ? "Pause Timer" : "Start Timer"}
+                        >
+                            {isTimerRunning ? <Pause size={14} fill="currentColor" /> : <Play size={14} fill="currentColor" />}
+                        </button>
                     </div>
-                    <button
-                        onPointerDown={(e) => e.stopPropagation()}
-                        onClick={(e) => {
-                            e.stopPropagation();
-                            setIsTimerRunning(!isTimerRunning);
-                        }}
-                        className={`p-1.5 rounded-lg transition-colors ${isTimerRunning ? 'hover:bg-red-500/20 text-white' : 'bg-green text-white shadow-lg shadow-green/20'}`}
-                        title={isTimerRunning ? "Pause Timer" : "Start Timer"}
-                    >
-                        {isTimerRunning ? <Pause size={14} fill="currentColor" /> : <Play size={14} fill="currentColor" />}
-                    </button>
-                </div>
-            </motion.div>
+                </motion.div>
+            )}
             {/* Header */}
-            <header className="bg-white border-b border-green/10 pt-32 pb-8 px-6 relative z-10">
+            <header className="bg-white border-b border-green/10 md:pt-32 pt-4 pb-4 md:pb-8 px-6 relative z-10">
                 <div className={`max-w-7xl mx-auto flex flex-col ${isRTL ? 'md:flex-row-reverse' : 'md:flex-row'} md:items-center justify-between gap-4`}>
                     <div className="space-y-2">
-                        <Link href="/explore" className={`text-sm font-medium text-green flex items-center gap-2 hover:${isRTL ? 'translate-x-1' : '-translate-x-1'} transition-transform ${isRTL ? 'flex-row-reverse' : ''}`}>
+                        <Link href="/explore" className={`hidden md:flex text-sm font-medium text-green items-center gap-2 hover:${isRTL ? 'translate-x-1' : '-translate-x-1'} transition-transform ${isRTL ? 'flex-row-reverse' : ''}`}>
                             {isRTL ? <ChevronRight size={16} /> : <ArrowLeft size={16} />}
                             {t("back_subjects")}
                         </Link>
@@ -303,8 +317,8 @@ export default function LessonPage() {
                     {isSidebarOpen ? <PanelRightClose size={24} /> : <PanelRightOpen size={24} />}
                 </button>
 
-                {/* Content Side */}
-                <div className="flex-1 p-6 lg:p-12 transition-all duration-300">
+                {/* Content Side - Hidden on Mobile per request */}
+                <div className="flex-1 p-6 lg:p-12 transition-all duration-300 hidden lg:block">
                     <div className="aspect-video bg-dark rounded-3xl overflow-hidden shadow-2xl relative group">
                         {activeResource?.type === 'video' ? (
                             <iframe
@@ -335,14 +349,16 @@ export default function LessonPage() {
                     </div>
 
                     <div className="mt-12 space-y-8">
-                        <div className="flex items-center justify-between">
-                            <h2 className="text-2xl font-bold text-dark">{t("resources_notes")}</h2>
+                        <div className="flex items-center justify-end">
                             <button
+                                disabled={!!activeResource && localCompletedResources.includes(activeResource.docId || (typeof btoa !== 'undefined' ? btoa(encodeURIComponent(activeResource.url)) : encodeURIComponent(activeResource.url)))}
                                 onClick={handleMarkComplete}
-                                className="flex items-center gap-2 px-6 py-2.5 bg-green text-white font-bold rounded-xl hover:shadow-lg hover:shadow-green/20 transition-all active:scale-95"
+                                className={`flex items-center gap-2 px-6 py-2.5 font-bold rounded-xl transition-all ${(activeResource && localCompletedResources.includes(activeResource.docId || (typeof btoa !== 'undefined' ? btoa(encodeURIComponent(activeResource.url)) : encodeURIComponent(activeResource.url))))
+                                    ? 'bg-green text-white cursor-default'
+                                    : 'bg-gray-200 text-gray-500 hover:bg-green hover:text-white hover:shadow-lg hover:shadow-green/20 active:scale-95'}`}
                             >
                                 <CheckCircle2 size={20} />
-                                {tc("mark_completed")}
+                                {(activeResource && localCompletedResources.includes(activeResource.docId || (typeof btoa !== 'undefined' ? btoa(encodeURIComponent(activeResource.url)) : encodeURIComponent(activeResource.url)))) ? "Completed" : tc("mark_completed")}
                             </button>
                         </div>
                     </div>
@@ -379,8 +395,8 @@ export default function LessonPage() {
                                 {t("syllabus")}
                             </h3>
 
-                            {/* Progress Summary */}
-                            {(() => {
+                            {/* Progress Summary - Only for logged in users */}
+                            {user && (() => {
                                 const totalResources = (lesson.coursesPdf?.length ?? 0) + (lesson.videos?.length ?? 0) + (lesson.exercices?.length ?? 0) + (lesson.exams?.length ?? 0) + (lesson.resourses?.length ?? 0);
                                 const completedCount = localCompletedResources.length;
                                 const progressPct = totalResources > 0 ? Math.min(100, Math.round((completedCount / totalResources) * 100)) : 0;
@@ -416,7 +432,7 @@ export default function LessonPage() {
                                         <h4 className="text-xs font-bold text-muted-foreground uppercase tracking-wider">{t("courses_pdf")}</h4>
                                         {lesson.coursesPdf.map((res: any, idx: number) => {
                                             const resourceUrl = getResourceURL(res.url) || res.url;
-                                            const safeId = res.docId || (typeof btoa !== 'undefined' ? btoa(encodeURIComponent(resourceUrl)) : encodeURIComponent(resourceUrl));
+                                            const safeId = res.docId || (typeof btoa !== 'undefined' ? btoa(encodeURIComponent(res.url)) : encodeURIComponent(res.url));
                                             const isCompleted = localCompletedResources.includes(safeId);
                                             return (
                                                 <button
@@ -426,7 +442,7 @@ export default function LessonPage() {
                                                 >
                                                     <FileText className={activeResource?.url === res.url ? 'text-green' : 'text-muted-foreground'} size={20} />
                                                     <span className="font-semibold text-sm line-clamp-1 flex-1">{res.title}</span>
-                                                    {isCompleted && <CheckCircle2 size={16} className="text-green ml-auto flex-shrink-0" />}
+                                                    {user && isCompleted && <CheckCircle2 size={16} className="text-green ml-auto flex-shrink-0" />}
                                                 </button>
                                             );
                                         })}
@@ -439,7 +455,7 @@ export default function LessonPage() {
                                         <h4 className="text-xs font-bold text-muted-foreground uppercase tracking-wider">{t("videos")}</h4>
                                         {lesson.videos.map((res: any, idx: number) => {
                                             const resourceUrl = getResourceURL(res.url) || res.url;
-                                            const safeId = res.docId || (typeof btoa !== 'undefined' ? btoa(encodeURIComponent(resourceUrl)) : encodeURIComponent(resourceUrl));
+                                            const safeId = res.docId || (typeof btoa !== 'undefined' ? btoa(encodeURIComponent(res.url)) : encodeURIComponent(res.url));
                                             const isCompleted = localCompletedResources.includes(safeId);
                                             return (
                                                 <button
@@ -449,7 +465,7 @@ export default function LessonPage() {
                                                 >
                                                     <Play className={activeResource?.url === res.url ? 'text-green' : 'text-muted-foreground'} size={20} />
                                                     <span className="font-semibold text-sm line-clamp-1 flex-1">{res.title}</span>
-                                                    {isCompleted && <CheckCircle2 size={16} className="text-green ml-auto flex-shrink-0" />}
+                                                    {user && isCompleted && <CheckCircle2 size={16} className="text-green ml-auto flex-shrink-0" />}
                                                 </button>
                                             );
                                         })}
@@ -462,7 +478,7 @@ export default function LessonPage() {
                                         <h4 className="text-xs font-bold text-muted-foreground uppercase tracking-wider">{t("exercises")}</h4>
                                         {lesson.exercices.map((res: any, idx: number) => {
                                             const resourceUrl = getResourceURL(res.url) || res.url;
-                                            const safeId = res.docId || (typeof btoa !== 'undefined' ? btoa(encodeURIComponent(resourceUrl)) : encodeURIComponent(resourceUrl));
+                                            const safeId = res.docId || (typeof btoa !== 'undefined' ? btoa(encodeURIComponent(res.url)) : encodeURIComponent(res.url));
                                             const isCompleted = localCompletedResources.includes(safeId);
                                             return (
                                                 <button
@@ -472,7 +488,7 @@ export default function LessonPage() {
                                                 >
                                                     <ClipboardList className={activeResource?.url === res.url ? 'text-green' : 'text-muted-foreground'} size={20} />
                                                     <span className="font-semibold text-sm line-clamp-1 flex-1">{res.title}</span>
-                                                    {isCompleted && <CheckCircle2 size={16} className="text-green ml-auto flex-shrink-0" />}
+                                                    {user && isCompleted && <CheckCircle2 size={16} className="text-green ml-auto flex-shrink-0" />}
                                                 </button>
                                             );
                                         })}
@@ -485,7 +501,7 @@ export default function LessonPage() {
                                         <h4 className="text-xs font-bold text-muted-foreground uppercase tracking-wider">{t("exams")}</h4>
                                         {lesson.exams.map((res: any, idx: number) => {
                                             const resourceUrl = getResourceURL(res.url) || res.url;
-                                            const safeId = res.docId || (typeof btoa !== 'undefined' ? btoa(encodeURIComponent(resourceUrl)) : encodeURIComponent(resourceUrl));
+                                            const safeId = res.docId || (typeof btoa !== 'undefined' ? btoa(encodeURIComponent(res.url)) : encodeURIComponent(res.url));
                                             const isCompleted = localCompletedResources.includes(safeId);
                                             return (
                                                 <button
@@ -495,7 +511,7 @@ export default function LessonPage() {
                                                 >
                                                     <FileText className={activeResource?.url === res.url ? 'text-green' : 'text-muted-foreground'} size={20} />
                                                     <span className="font-semibold text-sm line-clamp-1 flex-1">{res.title}</span>
-                                                    {isCompleted && <CheckCircle2 size={16} className="text-green ml-auto flex-shrink-0" />}
+                                                    {user && isCompleted && <CheckCircle2 size={16} className="text-green ml-auto flex-shrink-0" />}
                                                 </button>
                                             );
                                         })}
@@ -508,7 +524,7 @@ export default function LessonPage() {
                                         <h4 className="text-xs font-bold text-muted-foreground uppercase tracking-wider">{t("resources")}</h4>
                                         {lesson.resourses.map((res: any, idx: number) => {
                                             const resourceUrl = getResourceURL(res.url) || res.url;
-                                            const safeId = res.docId || (typeof btoa !== 'undefined' ? btoa(encodeURIComponent(resourceUrl)) : encodeURIComponent(resourceUrl));
+                                            const safeId = res.docId || (typeof btoa !== 'undefined' ? btoa(encodeURIComponent(res.url)) : encodeURIComponent(res.url));
                                             const isCompleted = localCompletedResources.includes(safeId);
                                             return (
                                                 <button

@@ -3,12 +3,73 @@ import { AuthRequest } from '../middleware/auth';
 import { User } from '../models/User';
 import { News } from '../models/News';
 import { Feedback } from '../models/Feedback';
+import { Subject } from '../models/Subject';
+import { Lesson } from '../models/Lesson';
 import { config } from '../config';
 import { hashPassword, comparePassword } from '../utils/auth';
 import path from 'path';
 import fs from 'fs/promises';
 
 export class UserController {
+    // Admin: Get all users
+    static async getAllUsers(req: AuthRequest, res: Response): Promise<void> {
+        try {
+            const caller = await User.findById(req.userId);
+            if (!caller || caller.role !== 'admin') {
+                res.status(403).json({ error: 'Admin only' });
+                return;
+            }
+
+            const users = await User.find({})
+                .select('-password -refreshToken -calendar')
+                .sort({ createdAt: -1 })
+                .lean();
+
+            res.json(users);
+        } catch (error) {
+            console.error('Get all users error:', error);
+            res.status(500).json({ error: 'Failed to get users' });
+        }
+    }
+
+    // Admin: set user role
+    static async setUserRole(req: AuthRequest, res: Response): Promise<void> {
+        try {
+            const caller = await User.findById(req.userId);
+            if (!caller || caller.role !== 'admin') { res.status(403).json({ error: 'Admin only' }); return; }
+            const { role } = req.body;
+            if (!['user', 'admin', 'instructor', 'teacher'].includes(role)) { res.status(400).json({ error: 'Invalid role' }); return; }
+            const user = await User.findByIdAndUpdate(req.params.id, { role }, { new: true }).select('-password -refreshToken');
+            if (!user) { res.status(404).json({ error: 'User not found' }); return; }
+            res.json(user);
+        } catch (error) { res.status(500).json({ error: 'Failed to update role' }); }
+    }
+
+    // Admin: set user subscription
+    static async setUserSubscription(req: AuthRequest, res: Response): Promise<void> {
+        try {
+            const caller = await User.findById(req.userId);
+            if (!caller || caller.role !== 'admin') { res.status(403).json({ error: 'Admin only' }); return; }
+            const { plan, billingCycle, expiresAt } = req.body;
+            if (!['free', 'premium', 'pro'].includes(plan)) { res.status(400).json({ error: 'Invalid plan' }); return; }
+            const user = await User.findByIdAndUpdate(req.params.id, { subscription: { plan, billingCycle: billingCycle || 'none', expiresAt } }, { new: true }).select('-password -refreshToken');
+            if (!user) { res.status(404).json({ error: 'User not found' }); return; }
+            res.json(user);
+        } catch (error) { res.status(500).json({ error: 'Failed to update subscription' }); }
+    }
+
+    // Admin: delete any user
+    static async deleteUserAdmin(req: AuthRequest, res: Response): Promise<void> {
+        try {
+            const caller = await User.findById(req.userId);
+            if (!caller || caller.role !== 'admin') { res.status(403).json({ error: 'Admin only' }); return; }
+            if (req.params.id === req.userId) { res.status(400).json({ error: 'Cannot delete yourself' }); return; }
+            const user = await User.findByIdAndDelete(req.params.id);
+            if (!user) { res.status(404).json({ error: 'User not found' }); return; }
+            res.json({ message: 'User deleted' });
+        } catch (error) { res.status(500).json({ error: 'Failed to delete user' }); }
+    }
+
     // Get user profile
     static async getProfile(req: AuthRequest, res: Response): Promise<void> {
         try {
@@ -17,6 +78,37 @@ export class UserController {
             if (!user) {
                 res.status(404).json({ error: 'User not found' });
                 return;
+            }
+
+            let totalGuidanceResources = 0;
+            if (user.selectedPath && user.selectedPath.guidanceId) {
+                try {
+                    const subjects = await Subject.find({ guidanceId: user.selectedPath.guidanceId }, '_id').lean();
+                    const subjectIds = subjects.map(s => s._id);
+
+                    if (subjectIds.length > 0) {
+                        const countResult = await Lesson.aggregate([
+                            { $match: { subjectId: { $in: subjectIds } } },
+                            { $project: {
+                                totalRes: {
+                                    $add: [
+                                        { $size: { $ifNull: ["$coursesPdf", []] } },
+                                        { $size: { $ifNull: ["$videos", []] } },
+                                        { $size: { $ifNull: ["$exercices", []] } },
+                                        { $size: { $ifNull: ["$exams", []] } },
+                                        { $size: { $ifNull: ["$resourses", []] } }
+                                    ]
+                                }
+                            }},
+                            { $group: { _id: null, total: { $sum: "$totalRes" } } }
+                        ]);
+                        if (countResult && countResult.length > 0) {
+                            totalGuidanceResources = countResult[0].total;
+                        }
+                    }
+                } catch (err) {
+                    console.error('Failed to compute guidance total resources', err);
+                }
             }
 
             res.json({
@@ -34,10 +126,14 @@ export class UserController {
                 nickname: user.nickname,
                 city: user.city,
                 age: user.age,
+                birthday: user.birthday,
                 gender: user.gender,
                 schoolName: user.schoolName,
                 studyLocation: user.studyLocation,
                 role: user.role,
+                points: user.points,
+                coverPhotoURL: user.coverPhotoURL,
+                totalGuidanceResources,
             });
         } catch (error) {
             console.error('Get profile error:', error);
@@ -55,6 +151,7 @@ export class UserController {
                 'nickname',
                 'city',
                 'age',
+                'birthday',
                 'gender',
                 'schoolName',
                 'studyLocation',
@@ -78,6 +175,23 @@ export class UserController {
             // Convert age to number if present
             if (filteredUpdates.age !== undefined) {
                 filteredUpdates.age = parseInt(filteredUpdates.age);
+            }
+            
+            // Parse birthday if present
+            if (filteredUpdates.birthday) {
+                const bday = new Date(filteredUpdates.birthday);
+                filteredUpdates.birthday = bday;
+                
+                // If age wasn't explicitly provided, calculate it from birthday natively
+                if (filteredUpdates.age === undefined) {
+                    const monthDiff = new Date().getMonth() - bday.getMonth();
+                    let age = new Date().getFullYear() - bday.getFullYear();
+                    // subtract 1 if the current month is before the birth month, or if it's the birth month but the day is earlier
+                    if (monthDiff < 0 || (monthDiff === 0 && new Date().getDate() < bday.getDate())) {
+                        age--;
+                    }
+                    filteredUpdates.age = age;
+                }
             }
 
             // Phone validation
@@ -115,10 +229,12 @@ export class UserController {
                 nickname: user.nickname,
                 city: user.city,
                 age: user.age,
+                birthday: user.birthday,
                 gender: user.gender,
                 schoolName: user.schoolName,
                 studyLocation: user.studyLocation,
                 role: user.role,
+                points: user.points,
             });
         } catch (error: any) {
             console.error('Update profile error:', error);
@@ -253,6 +369,51 @@ export class UserController {
         }
     }
 
+    // Admin: Get all feedback/reports
+    static async getAllFeedback(req: AuthRequest, res: Response): Promise<void> {
+        try {
+            const caller = await User.findById(req.userId);
+            if (!caller || caller.role !== 'admin') { res.status(403).json({ error: 'Admin only' }); return; }
+            const feedbacks = await Feedback.find({}).sort({ createdAt: -1 }).lean();
+            const userIds = [...new Set(feedbacks.map(f => f.userId))];
+            const users = await User.find({ _id: { $in: userIds } }, 'displayName email photoURL').lean();
+            const result = feedbacks.map(f => {
+                const user = users.find(u => u._id.toString() === f.userId.toString());
+                return { ...f, user: user || null };
+            });
+            res.json(result);
+        } catch (error) {
+            res.status(500).json({ error: 'Failed to get feedback' });
+        }
+    }
+
+    // Admin: Update feedback status
+    static async updateFeedbackStatus(req: AuthRequest, res: Response): Promise<void> {
+        try {
+            const caller = await User.findById(req.userId);
+            if (!caller || caller.role !== 'admin') { res.status(403).json({ error: 'Admin only' }); return; }
+            const { status } = req.body;
+            if (!['pending', 'reviewed', 'resolved'].includes(status)) { res.status(400).json({ error: 'Invalid status' }); return; }
+            const fb = await Feedback.findByIdAndUpdate(req.params.id, { status }, { new: true });
+            if (!fb) { res.status(404).json({ error: 'Not found' }); return; }
+            res.json(fb);
+        } catch (error) {
+            res.status(500).json({ error: 'Failed to update status' });
+        }
+    }
+
+    // Admin: Delete feedback
+    static async deleteFeedback(req: AuthRequest, res: Response): Promise<void> {
+        try {
+            const caller = await User.findById(req.userId);
+            if (!caller || caller.role !== 'admin') { res.status(403).json({ error: 'Admin only' }); return; }
+            await Feedback.findByIdAndDelete(req.params.id);
+            res.json({ message: 'Deleted' });
+        } catch (error) {
+            res.status(500).json({ error: 'Failed to delete' });
+        }
+    }
+
     // Create report
     static async createReport(req: AuthRequest, res: Response): Promise<void> {
         try {
@@ -380,6 +541,147 @@ export class UserController {
         } catch (error) {
             console.error('Subscribe error:', error);
             res.status(500).json({ error: 'Failed to subscribe' });
+        }
+    }
+
+    // Admin: Random Giveaway — grant 1 month premium to a random free user
+    static async runGiveaway(req: AuthRequest, res: Response): Promise<void> {
+        try {
+            // Only admins can trigger this
+            const caller = await User.findById(req.userId);
+            if (!caller || caller.role !== 'admin') {
+                res.status(403).json({ error: 'Admin only' });
+                return;
+            }
+
+            // Find all free users
+            const freeUsers = await User.find({ 'subscription.plan': 'free' }, '_id displayName email').lean();
+            if (freeUsers.length === 0) {
+                res.status(404).json({ error: 'No free users found' });
+                return;
+            }
+
+            // Pick random winner
+            const winner = freeUsers[Math.floor(Math.random() * freeUsers.length)];
+            const expiresAt = new Date(Date.now() + 30 * 24 * 60 * 60 * 1000); // 30 days
+
+            await User.findByIdAndUpdate(winner._id, {
+                subscription: { plan: 'premium', billingCycle: 'none', expiresAt },
+            });
+
+            res.json({ message: 'Giveaway winner selected!', winner: { id: winner._id, displayName: winner.displayName, email: winner.email }, expiresAt });
+        } catch (error) {
+            console.error('Giveaway error:', error);
+            res.status(500).json({ error: 'Failed to run giveaway' });
+        }
+    }
+
+    // Get affiliate code (for sharing)
+    static async getAffiliateCode(req: AuthRequest, res: Response): Promise<void> {
+        try {
+            const user = await User.findById(req.userId);
+            if (!user) {
+                res.status(404).json({ error: 'User not found' });
+                return;
+            }
+
+            // Generate code if missing
+            if (!user.affiliateCode) {
+                user.affiliateCode = Math.random().toString(36).substring(2, 8).toUpperCase();
+                await user.save();
+            }
+
+            res.json({ affiliateCode: user.affiliateCode });
+        } catch (error) {
+            console.error('Get affiliate code error:', error);
+            res.status(500).json({ error: 'Failed to get affiliate code' });
+        }
+    }
+
+    // Get contribution count for the month
+    static async getContributionStatus(req: AuthRequest, res: Response): Promise<void> {
+        try {
+            const user = await User.findById(req.userId);
+            if (!user) {
+                res.status(404).json({ error: 'User not found' });
+                return;
+            }
+
+            const isPremium = user.isPremium;
+            const LIMIT = 30;
+
+            // Reset count if we're in a new month
+            const now = new Date();
+            const resetAt = user.contributionCount?.resetAt || new Date(0);
+            const isNewMonth = resetAt.getFullYear() < now.getFullYear() ||
+                (resetAt.getFullYear() === now.getFullYear() && resetAt.getMonth() < now.getMonth());
+
+            let count = user.contributionCount?.count || 0;
+            if (isNewMonth) {
+                count = 0;
+                await User.findByIdAndUpdate(req.userId, {
+                    'contributionCount.count': 0,
+                    'contributionCount.resetAt': now,
+                });
+            }
+
+            res.json({
+                count,
+                limit: isPremium ? null : LIMIT,
+                remaining: isPremium ? null : Math.max(0, LIMIT - count),
+                isPremium,
+                canContribute: isPremium || count < LIMIT,
+            });
+        } catch (error) {
+            console.error('Get contribution status error:', error);
+            res.status(500).json({ error: 'Failed to get contribution status' });
+        }
+    }
+
+    // Increment contribution count (called after successful upload)
+    static async incrementContributionCount(req: AuthRequest, res: Response): Promise<void> {
+        try {
+            const user = await User.findById(req.userId);
+            if (!user) {
+                res.status(404).json({ error: 'User not found' });
+                return;
+            }
+
+            const LIMIT = 30;
+            const now = new Date();
+
+            // Check premium
+            if (user.isPremium) {
+                // Premium users: just increment, no limit
+                await User.findByIdAndUpdate(req.userId, {
+                    $inc: { 'contributionCount.count': 1 },
+                    'contributionCount.resetAt': user.contributionCount?.resetAt || now,
+                });
+                res.json({ success: true, unlimited: true });
+                return;
+            }
+
+            // Reset if new month
+            const resetAt = user.contributionCount?.resetAt || new Date(0);
+            const isNewMonth = resetAt.getFullYear() < now.getFullYear() ||
+                (resetAt.getFullYear() === now.getFullYear() && resetAt.getMonth() < now.getMonth());
+
+            const currentCount = isNewMonth ? 0 : (user.contributionCount?.count || 0);
+
+            if (currentCount >= LIMIT) {
+                res.status(429).json({ error: 'Monthly contribution limit reached', limit: LIMIT });
+                return;
+            }
+
+            await User.findByIdAndUpdate(req.userId, {
+                'contributionCount.count': currentCount + 1,
+                'contributionCount.resetAt': isNewMonth ? now : resetAt,
+            });
+
+            res.json({ success: true, count: currentCount + 1, remaining: LIMIT - (currentCount + 1) });
+        } catch (error) {
+            console.error('Increment contribution count error:', error);
+            res.status(500).json({ error: 'Failed to increment contribution count' });
         }
     }
 }

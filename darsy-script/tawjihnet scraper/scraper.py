@@ -33,6 +33,7 @@ from openpyxl.utils import get_column_letter
 from collections import Counter
 from datetime import datetime
 from urllib.parse import urljoin
+from pathlib import Path
 
 BACKEND_API = "http://localhost:5000"  # Darsy backend for incremental check
 
@@ -768,7 +769,14 @@ def run():
 # SAVE FUNCTIONS
 # ─────────────────────────────────────────────────────────────────────────────
 
-def save_json(articles: list[dict], path: str):
+def get_data_dir() -> Path:
+    current_dir = Path(__file__).resolve().parent
+    data_dir = current_dir.parent / "data"
+    data_dir.mkdir(exist_ok=True)
+    return data_dir
+
+def save_json(articles: list[dict], filename: str):
+    path = get_data_dir() / filename
     with open(path, "w", encoding="utf-8") as f:
         json.dump({
             "scraped_at": datetime.now().isoformat(),
@@ -779,7 +787,8 @@ def save_json(articles: list[dict], path: str):
     print(f"  ✓ JSON saved    → {path}")
 
 
-def save_cards_csv(articles: list[dict], path: str):
+def save_cards_csv(articles: list[dict], filename: str):
+    path = get_data_dir() / filename
     fields = ["id", "page_number", "title", "type", "card_date", "deadline",
               "url", "n_paragraphs", "n_images", "n_links", "n_attachments"]
     with open(path, "w", encoding="utf-8-sig", newline="") as f:
@@ -789,7 +798,8 @@ def save_cards_csv(articles: list[dict], path: str):
     print(f"  ✓ Cards CSV     → {path}")
 
 
-def save_attachments_csv(articles: list[dict], path: str):
+def save_attachments_csv(articles: list[dict], filename: str):
+    path = get_data_dir() / filename
     fields = ["article_id", "article_title", "article_date",
               "label", "format", "url"]
     with open(path, "w", encoding="utf-8-sig", newline="") as f:
@@ -849,7 +859,7 @@ def set_cell(ws, row, col, value, font=None, fill=None, align=None, border=None)
     return c
 
 
-def build_excel(articles: list[dict], path: str):
+def build_excel(articles: list[dict], filename: str):
     wb = Workbook()
     wb.remove(wb.active)
 
@@ -860,6 +870,7 @@ def build_excel(articles: list[dict], path: str):
     _sheet_images(wb, articles)
     _sheet_summary(wb, articles)
 
+    path = get_data_dir() / filename
     wb.save(path)
     print(f"  ✓ Excel saved   → {path}")
 

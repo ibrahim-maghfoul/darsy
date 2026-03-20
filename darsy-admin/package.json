@@ -12,8 +12,6 @@
   "dependencies": {
     "@types/react-router-dom": "^5.3.3",
     "axios": "^1.13.5",
-    "firebase": "^12.9.0",
-    "firebase-admin": "^13.6.1",
     "framer-motion": "^12.34.0",
     "lucide-react": "^0.563.0",
     "prop-types": "^15.8.1",

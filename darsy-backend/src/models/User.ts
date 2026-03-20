@@ -1,13 +1,41 @@
 import mongoose, { Schema, Document } from 'mongoose';
 
+export interface CalEvent {
+    id: string;
+    title: string;
+    desc?: string;
+    date: string;       // YYYY-MM-DD
+    endDate?: string;
+    time?: string;      // HH:MM
+    endTime?: string;
+    duration?: number;  // minutes
+    allDay?: boolean;
+    category: string;
+    color: string;
+    reminder?: boolean;
+    reminderMins?: number;
+    createdAt: string;
+    updatedAt?: string;
+    isGlobal?: boolean;
+}
+
+export interface CalTodo {
+    id: string;
+    label: string;
+    done: boolean;
+    createdAt: string;
+    completedAt?: string | null;
+    updatedAt?: string;
+}
 
 
 export interface IUser extends Document {
     displayName: string;
     email: string;
     password: string;
-    role: 'user' | 'admin';
+    role: 'user' | 'admin' | 'instructor' | 'teacher';
     photoURL?: string;
+    coverPhotoURL?: string;
     subscription: {
         plan: 'free' | 'premium' | 'pro';
         billingCycle: 'monthly' | 'yearly' | 'none';
@@ -22,6 +50,7 @@ export interface IUser extends Document {
     nickname?: string;
     city?: string;
     age?: number;
+    birthday?: Date;
     gender?: 'male' | 'female';
     schoolName?: string;
     studyLocation?: string;
@@ -32,6 +61,10 @@ export interface IUser extends Document {
         documentsOpened: number;
         videosWatched: number;
         usageTime: number;
+        timeSpentHistory: {
+            date: string; // YYYY-MM-DD
+            minutes: number;
+        }[];
         savedNews: string[];
         lessons: {
             lessonId: string;
@@ -52,6 +85,18 @@ export interface IUser extends Document {
         levelId: string;
         guidanceId: string;
     };
+    calendar: {
+        events: CalEvent[];
+        todos: CalTodo[];
+    };
+    points: number;
+    affiliateCode?: string;
+    referredBy?: string;
+    pointsPremiumGrantedAt?: Date;
+    contributionCount: {
+        count: number;
+        resetAt: Date;
+    };
     refreshToken?: string;
     createdAt: Date;
     updatedAt: Date;
@@ -62,8 +107,9 @@ const UserSchema = new Schema<IUser>({
     displayName: { type: String, required: true },
     email: { type: String, required: true, unique: true, lowercase: true, trim: true },
     password: { type: String, required: true, select: false },
-    role: { type: String, enum: ['user', 'admin'], default: 'user' },
+    role: { type: String, enum: ['user', 'admin', 'instructor', 'teacher'], default: 'user' },
     photoURL: { type: String },
+    coverPhotoURL: { type: String },
     subscription: {
         plan: { type: String, enum: ['free', 'premium', 'pro'], default: 'free' },
         billingCycle: { type: String, enum: ['monthly', 'yearly', 'none'], default: 'none' },
@@ -78,6 +124,7 @@ const UserSchema = new Schema<IUser>({
     nickname: String,
     city: String,
     age: { type: Number, max: 80 },
+    birthday: { type: Date },
     gender: { type: String, enum: ['male', 'female'] },
     schoolName: String,
     studyLocation: String,
@@ -88,6 +135,10 @@ const UserSchema = new Schema<IUser>({
         documentsOpened: { type: Number, default: 0 },
         videosWatched: { type: Number, default: 0 },
         usageTime: { type: Number, default: 0 },
+        timeSpentHistory: [{
+            date: { type: String, required: true },
+            minutes: { type: Number, default: 0 }
+        }],
         savedNews: { type: [String], default: [] },
         lessons: [{
             lessonId: { type: String, required: true },
@@ -108,9 +159,43 @@ const UserSchema = new Schema<IUser>({
         levelId: String,
         guidanceId: String,
     },
+    calendar: {
+        events: { type: [Schema.Types.Mixed], default: [] },
+        todos:  { type: [Schema.Types.Mixed], default: [] },
+    },
+    points: { type: Number, default: 0 },
+    affiliateCode: { type: String, unique: true, sparse: true },
+    referredBy: { type: String },
+    pointsPremiumGrantedAt: { type: Date },
+    contributionCount: {
+        count: { type: Number, default: 0 },
+        resetAt: { type: Date, default: () => new Date() },
+    },
     refreshToken: { type: String, select: false },
 }, {
     timestamps: true,
+});
+
+// Pre-save hook to seed timeSpentHistory for new users
+UserSchema.pre('save', function(next) {
+    if (this.isNew && (!this.progress.timeSpentHistory || this.progress.timeSpentHistory.length === 0)) {
+        const history = [];
+        const today = new Date();
+        // Generate last 7 days including today
+        for (let i = 6; i >= 0; i--) {
+            const d = new Date(today);
+            d.setDate(today.getDate() - i);
+            const dateStr = d.toISOString().split('T')[0];
+            // Random minutes between 15 and 120
+            const randomMinutes = Math.floor(Math.random() * (120 - 15 + 1) + 15);
+            history.push({ date: dateStr, minutes: randomMinutes });
+        }
+        this.progress.timeSpentHistory = history;
+        
+        // Also update total learningTime to match the seeded data
+        this.progress.learningTime = history.reduce((sum, entry) => sum + entry.minutes, 0);
+    }
+    next();
 });
 
 // Indexes for better query performance

@@ -21,10 +21,10 @@ const INTRO_ROT = ["rotateZ(-90deg)", "rotateZ(90deg)", "rotateZ(90deg)", "rotat
 const DIAG_OFFSETS: [number, number][] = [[-40, -40], [-40, 40], [40, -40], [40, 40]];
 
 // ─── Module-level constants (visual only) ───────────────────────────────────
-const GRAD_A_TOP = { bg1: "#16a34a", bg2: "#22c55e" };
-const GRAD_A_BOT = { bg1: "#22c55e", bg2: "#16a34a" };
-const GRAD_B_TOP = { bg1: "#15803d", bg2: "#16a34a" };
-const GRAD_B_BOT = { bg1: "#16a34a", bg2: "#22c55e" };
+const GRAD_A_TOP = { bg2: "#22c55e" };
+const GRAD_A_BOT = { bg2: "#16a34a" };
+const GRAD_B_TOP = { bg2: "#16a34a" };
+const GRAD_B_BOT = { bg2: "#22c55e" };
 
 // ─── buildPath cache ──────────────────────────────────────────────────────
 const pathCache = new Map<number, ReturnType<typeof _buildPath>>();
@@ -351,10 +351,7 @@ const CardPair = memo(function CardPair({
     const botData = buildPath(H_EXPANDED);
     const clipTop = hoverTop ? H_EXPANDED : H_COLLAPSED;
     const clipBot = hoverBot ? H_EXPANDED : H_COLLAPSED;
-    const uid = contentTop.title + contentBot.title;
-    const vg = "vg-" + uid.replace(/\s/g, "");
-    const clTop = "clip-" + uid + "-top";
-    const clBot = "clip-" + uid + "-bot";
+    const vg = "vg-" + (contentTop.title + contentBot.title).replace(/\s/g, "");
     const PAIR_H = H_COLLAPSED * 2 + GAP;
 
     return (
@@ -364,11 +361,10 @@ const CardPair = memo(function CardPair({
             <div style={{ ...introTop, position: "absolute", left: 0, right: 0, bottom: H_COLLAPSED + GAP, height: H_COLLAPSED, overflow: "visible" }}>
                 <div style={{ position: "absolute", left: 0, right: 0, bottom: 0, cursor: "pointer" }}
                     onMouseEnter={() => setHoverTop(true)} onMouseLeave={() => setHoverTop(false)}>
-                    <div style={{ overflow: "hidden", height: clipTop, position: "absolute", bottom: 0, left: 0, right: 0, transition: "height 0.5s cubic-bezier(0.4,0,0.2,1)", borderRadius: r + "px " + r + "px 0 0" }}>
+                    <div style={{ overflow: "hidden", height: H_EXPANDED, clipPath: `inset(${H_EXPANDED - clipTop}px 0 0 0)`, position: "absolute", bottom: 0, left: 0, right: 0, transition: "clip-path 0.5s cubic-bezier(0.4,0,0.2,1)", borderRadius: r + "px " + r + "px 0 0" }}>
                         <svg width={W} height={H_EXPANDED} viewBox={"0 0 " + W + " " + H_EXPANDED}
                             style={{ display: "block", position: "absolute", bottom: 0, left: 0 }}>
                             <defs>
-                                <clipPath id={clTop}><path d={topData.path} /></clipPath>
                                 <linearGradient id="grad-top-dir" x1="0%" y1="100%" x2="0%" y2="0%">
                                     <stop offset="0%" stopColor="white" stopOpacity="0.7" />
                                     <stop offset="70%" stopColor="white" stopOpacity="0" />
@@ -380,7 +376,6 @@ const CardPair = memo(function CardPair({
                             <path d={topData.path} fill={gradientTop.bg2} />
                             <path d={topData.path} fill={`url(#${textureTop})`} mask="url(#mask-fade)" opacity="0.8" />
                             <path d={topData.path} fill={`url(#${dirTextureTop})`} mask="url(#mask-top-dir)" />
-                            <path d={topData.path} fill="rgba(255,255,255,0.04)" filter="url(#filter-noise)" style={{ pointerEvents: 'none' }} />
                             <path d={topData.path} fill="none" stroke="rgba(255,255,255,0.12)" strokeWidth="1.5" className="card-border-anim" />
                             <circle cx={CX} cy={topData.circleY} r={circleR} fill="white" stroke="rgba(34,197,94,0.1)" strokeWidth="1" />
                             <circle cx={CX} cy={topData.circleY - 5} r={5.5} fill="#22c55e" />
@@ -397,11 +392,10 @@ const CardPair = memo(function CardPair({
             <div style={{ ...introBot, position: "absolute", left: 0, right: 0, top: H_COLLAPSED + GAP, height: H_COLLAPSED, overflow: "visible" }}>
                 <div style={{ position: "absolute", left: 0, right: 0, top: 0, cursor: "pointer" }}
                     onMouseEnter={() => setHoverBot(true)} onMouseLeave={() => setHoverBot(false)}>
-                    <div style={{ overflow: "hidden", height: clipBot, position: "absolute", top: 0, left: 0, right: 0, transition: "height 0.5s cubic-bezier(0.4,0,0.2,1)", borderRadius: "0 0 " + r + "px " + r + "px" }}>
+                    <div style={{ overflow: "hidden", height: H_EXPANDED, clipPath: `inset(0 0 ${H_EXPANDED - clipBot}px 0)`, position: "absolute", top: 0, left: 0, right: 0, transition: "clip-path 0.5s cubic-bezier(0.4,0,0.2,1)", borderRadius: "0 0 " + r + "px " + r + "px" }}>
                         <svg width={W} height={H_EXPANDED} viewBox={"0 0 " + W + " " + H_EXPANDED}
                             style={{ display: "block", transform: "scaleY(-1)", transformOrigin: "center" }}>
                             <defs>
-                                <clipPath id={clBot}><path d={botData.path} /></clipPath>
                                 <linearGradient id="grad-bot-dir" x1="0%" y1="100%" x2="0%" y2="0%">
                                     <stop offset="0%" stopColor="white" stopOpacity="0.7" />
                                     <stop offset="70%" stopColor="white" stopOpacity="0" />
@@ -413,7 +407,6 @@ const CardPair = memo(function CardPair({
                             <path d={botData.path} fill={gradientBot.bg2} />
                             <path d={botData.path} fill={`url(#${textureBot})`} mask="url(#mask-fade)" opacity="0.8" />
                             <path d={botData.path} fill={`url(#${dirTextureBot})`} mask="url(#mask-bot-dir)" />
-                            <path d={botData.path} fill="rgba(255,255,255,0.04)" filter="url(#filter-noise)" style={{ pointerEvents: 'none' }} />
                             <path d={botData.path} fill="none" stroke="rgba(255,255,255,0.12)" strokeWidth="1.5" className="card-border-anim" />
                         </svg>
                         <div style={{ position: "absolute", top: botData.flippedCircleY, left: CX - circleR, width: circleR * 2, height: circleR * 2 }}>
@@ -490,6 +483,7 @@ const ChatRoomUI = memo(function ChatRoomUI({ phase2, messages, liveMessages, ro
     // OPTIMIZATION: pulse via direct DOM — eliminated a state variable + re-render
     const wrapperRef = useRef<HTMLDivElement>(null);
     const inputSpan = useRef<HTMLSpanElement>(null);
+    const msgContainerRef = useRef<HTMLDivElement>(null);
 
     // Stagger base messages once on mount
     useEffect(() => {
@@ -549,8 +543,14 @@ const ChatRoomUI = memo(function ChatRoomUI({ phase2, messages, liveMessages, ro
     }, []);
 
     const allMessages = useMemo(() =>
-        [...messages, ...liveMessages.slice(0, liveIdx)].slice(-6),
+        [...messages, ...liveMessages.slice(0, liveIdx)].slice(-5),
         [liveIdx, messages, liveMessages]);
+
+    // Auto-scroll messages to bottom when new ones arrive
+    useEffect(() => {
+        const el = msgContainerRef.current;
+        if (el) el.scrollTop = el.scrollHeight;
+    }, [allMessages, typing]);
 
     return (
         <div
@@ -564,7 +564,7 @@ const ChatRoomUI = memo(function ChatRoomUI({ phase2, messages, liveMessages, ro
                 willChange: "transform, opacity",
             }}
         >
-            <div style={{ background: "rgba(255,255,255,0.85)", backdropFilter: "blur(16px)", WebkitBackdropFilter: "blur(16px)", border: "1px solid rgba(0,0,0,0.08)", borderRadius: 32, overflow: "hidden", boxShadow: "0 40px 100px rgba(0,0,0,0.08), inset 0 1px 0 rgba(255,255,255,0.5)" }}>
+            <div style={{ background: "rgba(255,255,255,0.92)", backdropFilter: "blur(8px)", WebkitBackdropFilter: "blur(8px)", border: "1px solid rgba(0,0,0,0.08)", borderRadius: 32, overflow: "hidden", boxShadow: "0 40px 100px rgba(0,0,0,0.08), inset 0 1px 0 rgba(255,255,255,0.5)" }}>
                 {/* Header */}
                 <div style={{ padding: "18px 22px 16px", borderBottom: "1px solid rgba(0,0,0,0.06)", display: "flex", alignItems: "center", gap: 12, background: "rgba(255,255,255,0.3)" }}>
                     <div style={{ width: 44, height: 44, borderRadius: 14, background: "rgba(34,197,94,0.1)", border: "1px solid rgba(34,197,94,0.2)", display: "flex", alignItems: "center", justifyContent: "center" }}>
@@ -580,7 +580,7 @@ const ChatRoomUI = memo(function ChatRoomUI({ phase2, messages, liveMessages, ro
                 </div>
 
                 {/* Messages */}
-                <div style={{ padding: "16px 20px 12px", display: "flex", flexDirection: "column", gap: 16, minHeight: 220, background: "rgba(0,0,0,0.02)" }}>
+                <div ref={msgContainerRef} className="chat-msgs" style={{ padding: "16px 20px 12px", display: "flex", flexDirection: "column", gap: 16, background: "rgba(0,0,0,0.02)" }}>
                     {allMessages.map((msg) => {
                         const isBase = msg.id < 100;
                         if (isBase && msg.id > visibleCount) return null;
@@ -609,7 +609,7 @@ const ChatRoomUI = memo(function ChatRoomUI({ phase2, messages, liveMessages, ro
             </div>
 
             {/* CTA */}
-            <div style={{ marginTop: 30, display: "flex", justifyContent: "center", opacity: phase2 ? 1 : 0, transform: phase2 ? "translateY(0)" : "translateY(20px)", transition: "opacity 0.8s ease 0.3s, transform 0.8s cubic-bezier(0.23,1,0.32,1) 0.3s", pointerEvents: phase2 ? "auto" : "none" }}>
+            <div style={{ marginTop: 30, paddingBottom: 24, display: "flex", justifyContent: "center", opacity: phase2 ? 1 : 0, transform: phase2 ? "translateY(0)" : "translateY(20px)", transition: "opacity 0.8s ease 0.3s, transform 0.8s cubic-bezier(0.23,1,0.32,1) 0.3s", pointerEvents: phase2 ? "auto" : "none" }}>
                 <DownloadButton
                     id="chat-cta"
                     href="#"
@@ -650,6 +650,113 @@ function makeSetters(dispatch: React.Dispatch<HoverAction>) {
     };
 }
 
+// ─── MobileChatPreview — animated chat for mobile ─────────────────────────
+const MobileChatPreview = memo(function MobileChatPreview({ roomTitle, roomStatus, messages, liveMessages }: { roomTitle: string; roomStatus: string; messages: any[]; liveMessages: any[] }) {
+    const [visibleCount, setVisibleCount] = useState(0);
+    const [liveIdx, setLiveIdx] = useState(0);
+    const [typing, setTyping] = useState(false);
+    const [isSending, setIsSending] = useState(false);
+    const inputSpan = useRef<HTMLSpanElement>(null);
+
+    useEffect(() => {
+        let i = 0, tid: ReturnType<typeof setTimeout>;
+        const step = () => { i++; setVisibleCount(i); if (i < messages.length) tid = setTimeout(step, 120); };
+        tid = setTimeout(step, 400);
+        return () => clearTimeout(tid);
+    }, []);
+
+    useEffect(() => {
+        let cancelled = false, rafId = 0;
+        let state = "INITIAL_WAIT", nextTime = performance.now() + 1400;
+        let msgIdx = 0, typeIdx = 0;
+        const tick = (now: number) => {
+            if (cancelled) return;
+            rafId = requestAnimationFrame(tick);
+            if (now < nextTime) return;
+            const msg = liveMessages[msgIdx % liveMessages.length];
+            const chars = msg.text;
+            if (state === "INITIAL_WAIT" || state === "WAITING") {
+                state = "TYPING_WAIT"; setTyping(true);
+                if (inputSpan.current) inputSpan.current.textContent = "";
+                nextTime = now + 800;
+            } else if (state === "TYPING_WAIT") {
+                state = "TYPING"; typeIdx = 0; nextTime = now + 60;
+            } else if (state === "TYPING") {
+                typeIdx++;
+                if (inputSpan.current) inputSpan.current.textContent = chars.slice(0, typeIdx);
+                if (typeIdx >= chars.length) { state = "PRE_SEND_WAIT"; nextTime = now + 600; }
+                else nextTime = now + 60;
+            } else if (state === "PRE_SEND_WAIT") {
+                state = "SENDING"; setTyping(false); setIsSending(true);
+                if (inputSpan.current) inputSpan.current.textContent = "";
+                nextTime = now + 500;
+            } else if (state === "SENDING") {
+                setIsSending(false); setLiveIdx(p => p + 1);
+                state = "WAITING"; msgIdx++; nextTime = now + 2800;
+            }
+        };
+        rafId = requestAnimationFrame(tick);
+        return () => { cancelled = true; cancelAnimationFrame(rafId); };
+    }, []);
+
+    const allMessages = useMemo(() =>
+        [...messages, ...liveMessages.slice(0, liveIdx)].slice(-5),
+        [liveIdx, messages, liveMessages]);
+
+    return (
+        <div className="w-full max-w-sm mx-auto bg-white/90 backdrop-blur-xl border border-black/[0.06] rounded-[28px] overflow-hidden shadow-[0_24px_60px_rgba(0,0,0,0.08)]">
+            <div className="flex items-center gap-3 p-4 border-b border-black/[0.05]">
+                <div className="w-10 h-10 rounded-2xl bg-green/10 border border-green/20 flex items-center justify-center">
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#22c55e" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2" /><circle cx="9" cy="7" r="4" /><path d="M23 21v-2a4 4 0 0 0-3-3.87" /><path d="M16 3.13a4 4 0 0 1 0 7.75" /></svg>
+                </div>
+                <div>
+                    <p className="text-[13px] font-black text-[#111]">{roomTitle}</p>
+                    <div className="flex items-center gap-1.5 mt-0.5">
+                        <span className="w-1.5 h-1.5 rounded-full bg-green shadow-[0_0_5px_rgba(34,197,94,0.5)]" />
+                        <span className="text-[10px] text-black/40 font-semibold uppercase tracking-wide">{roomStatus}</span>
+                    </div>
+                </div>
+            </div>
+            <div className="p-4 flex flex-col gap-3 bg-black/[0.01] min-h-[180px]">
+                {allMessages.map((msg, i) => {
+                    const isBase = msg.id < 100;
+                    if (isBase && msg.id > visibleCount) return null;
+                    return (
+                        <div key={msg.id} className="flex items-start gap-2.5" style={{ animation: "fadeSlideUp 0.3s ease forwards" }}>
+                            <div className="w-8 h-8 rounded-xl overflow-hidden border flex-shrink-0" style={{ borderColor: msg.color + "30" }}>
+                                <img src={msg.img} alt={msg.name} className="w-full h-full object-cover" />
+                            </div>
+                            <div>
+                                <p className="text-[11px] font-black text-[#111] mb-0.5">{msg.name}</p>
+                                <p className="text-[12px] text-black/60 leading-snug">{msg.text}</p>
+                            </div>
+                        </div>
+                    );
+                })}
+                <div className="flex items-center gap-2" style={{ opacity: typing ? 1 : 0, transform: typing ? "translateY(0)" : "translateY(6px)", transition: "opacity 0.25s ease, transform 0.25s ease" }}>
+                    <div className="w-8 h-8 rounded-xl bg-green/10 border border-green/20 flex items-center justify-center flex-shrink-0">
+                        <span className="text-[11px] font-black text-green">I</span>
+                    </div>
+                    <div className="flex items-center gap-1 px-3 py-2 bg-green/5 rounded-xl">
+                        {[0, 1, 2].map(k => (
+                            <span key={k} style={{ animationDelay: `${k * 0.18}s` }}
+                                className="w-1.5 h-1.5 rounded-full bg-green/50 inline-block animate-bounce" />
+                        ))}
+                    </div>
+                </div>
+            </div>
+            <div className="p-4 pt-0">
+                <div className="flex items-center gap-2 bg-black/[0.03] border border-black/[0.05] rounded-2xl px-4 py-2.5">
+                    <span ref={inputSpan} className="flex-1 text-sm text-black/70 font-medium min-h-[20px]" />
+                    <div className="w-8 h-8 rounded-xl bg-green/20 flex items-center justify-center flex-shrink-0" style={{ transition: "transform 0.15s", transform: isSending ? "scale(0.85)" : "scale(1)" }}>
+                        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#22c55e" strokeWidth="2.5" strokeLinecap="round"><line x1="22" y1="2" x2="11" y2="13" /><polygon points="22 2 15 22 11 13 2 9 22 2" /></svg>
+                    </div>
+                </div>
+            </div>
+        </div>
+    );
+});
+
 // ─── Main export ──────────────────────────────────────────────────────────
 export const ChatFeatureSection = () => {
     const t = useTranslations('Hero');
@@ -683,27 +790,22 @@ export const ChatFeatureSection = () => {
         return () => { clearTimeout(t1); clearTimeout(t2); };
     }, [isVisible]);
 
-    const Htop_A = hover.aTop ? H_EXPANDED : H_COLLAPSED, Hbot_A = hover.aBot ? H_EXPANDED : H_COLLAPSED;
-    const Htop_B = hover.bTop ? H_EXPANDED : H_COLLAPSED, Hbot_B = hover.bBot ? H_EXPANDED : H_COLLAPSED;
-
-    const topDataA = buildPath(Htop_A), botDataA = buildPath(Hbot_A);
-    const topDataB = buildPath(Htop_B), botDataB = buildPath(Hbot_B);
-
     const colBX = W + COL_GAP;
     const canvasW = W * 2 + COL_GAP;
-    const canvasH = Math.max(Htop_A + GAP + Hbot_A, Htop_B + GAP + Hbot_B) + PAGE_PAD_V * 2;
+    // Stable max height — never changes on hover so the canvas bitmap is never reset
+    const canvasH = H_EXPANDED * 2 + GAP + PAGE_PAD_V * 2;
 
     const phase2DxLeft = phase2 ? -200 : 0;
     const phase2DxRight = phase2 ? 200 : 0;
 
+    // Use H_COLLAPSED for stable dot positions — orb endpoints don't need to track hover expansion
+    const stableData = buildPath(H_COLLAPSED);
     const dots = useMemo(() => ({
-        a_top: { x: CX + (settled ? -40 : 0) + phase2DxLeft, y: PAGE_PAD_V + topDataA.greenDotY + (settled ? -40 : 0) },
-        a_bot: { x: CX + (settled ? -40 : 0) + phase2DxLeft, y: PAGE_PAD_V + Htop_A + GAP + botDataA.flippedGreenDotY + (settled ? 40 : 0) },
-        b_top: { x: colBX + CX + (settled ? 40 : 0) + phase2DxRight, y: PAGE_PAD_V + topDataB.greenDotY + (settled ? -40 : 0) },
-        b_bot: { x: colBX + CX + (settled ? 40 : 0) + phase2DxRight, y: PAGE_PAD_V + Htop_B + GAP + botDataB.flippedGreenDotY + (settled ? 40 : 0) },
-    }), [settled, phase2DxLeft, phase2DxRight,
-        topDataA.greenDotY, Htop_A, botDataA.flippedGreenDotY,
-        topDataB.greenDotY, Htop_B, botDataB.flippedGreenDotY, colBX]);
+        a_top: { x: CX + (settled ? -40 : 0) + phase2DxLeft, y: PAGE_PAD_V + stableData.greenDotY + (settled ? -40 : 0) },
+        a_bot: { x: CX + (settled ? -40 : 0) + phase2DxLeft, y: PAGE_PAD_V + H_COLLAPSED + GAP + stableData.flippedGreenDotY + (settled ? 40 : 0) },
+        b_top: { x: colBX + CX + (settled ? 40 : 0) + phase2DxRight, y: PAGE_PAD_V + stableData.greenDotY + (settled ? -40 : 0) },
+        b_bot: { x: colBX + CX + (settled ? 40 : 0) + phase2DxRight, y: PAGE_PAD_V + H_COLLAPSED + GAP + stableData.flippedGreenDotY + (settled ? 40 : 0) },
+    }), [settled, phase2DxLeft, phase2DxRight, colBX]);
 
     // OPTIMIZATION: pre-compute all 4 intro style objects together — stable references
     //               previously makeIntro() was called 4x per render, each returning a new object
@@ -727,16 +829,36 @@ export const ChatFeatureSection = () => {
         }),
         [settled, phase2, phase2DxLeft, phase2DxRight]);
 
+    const chatRoomProps = {
+        phase2: true, // Always active for mobile display
+        roomTitle: t("room_title"),
+        roomStatus: t("room_status"),
+        messages: [
+            { id: 1, name: t("msg1_name"), color: "#22c55e", img: "https://i.pravatar.cc/150?u=sara", text: t("msg1_text"), time: "17:20" },
+            { id: 2, name: t("msg2_name"), color: "#16a34a", img: "https://i.pravatar.cc/150?u=ahmed", text: t("msg2_text"), time: "17:21" },
+            { id: 3, name: t("msg3_name"), color: "#15803d", img: "https://i.pravatar.cc/150?u=karim", text: t("msg3_text"), time: "17:21" },
+            { id: 4, name: t("msg4_name"), color: "#22c55e", img: "https://i.pravatar.cc/150?u=yassine", text: t("msg4_text"), time: "17:22" },
+        ],
+        liveMessages: [
+            { id: 101, name: t("msg101_name"), color: "#16a34a", img: "https://i.pravatar.cc/150?u=ines", text: t("msg101_text"), time: "17:23" },
+            { id: 102, name: t("msg102_name"), color: "#15803d", img: "https://i.pravatar.cc/150?u=sami", text: t("msg102_text"), time: "17:24" },
+            { id: 103, name: t("msg103_name"), color: "#22c55e", img: "https://i.pravatar.cc/150?u=laila", text: t("msg103_text"), time: "17:25" },
+        ],
+    };
+
     return (
-        <div ref={sectionRef} dir="ltr" className="relative w-full min-h-[90vh] bg-[radial-gradient(circle_at_center,_#dcfce7_0%,_#ffffff_100%)] overflow-hidden flex items-center justify-center py-24">
+        <div ref={sectionRef} dir="ltr" className="relative w-full min-h-[90vh] bg-[radial-gradient(circle_at_center,_#dcfce7_0%,_#ffffff_100%)] overflow-hidden flex flex-col items-center justify-center py-16 md:py-24 gap-10 md:gap-14">
             <style>{`
                 @keyframes glow{0%,100%{opacity:1}50%{opacity:0.4}}
-                @keyframes ripple{0%{r:6;opacity:0.9}100%{r:22;opacity:0}}
+                @keyframes ripple{0%{transform:scale(1);opacity:0.9}100%{transform:scale(3.67);opacity:0}}
                 @keyframes typingBounce{0%,80%,100%{transform:translateY(0)}40%{transform:translateY(-5px)}}
                 @keyframes borderFlow{0%{stroke-dashoffset:1000}100%{stroke-dashoffset:0}}
+                @keyframes fadeSlideUp{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:translateY(0)}}
                 .glow-dot{animation:glow 1.8s ease-in-out infinite}
-                .ripple-dot{animation:ripple 1.8s ease-out infinite}
+                .ripple-dot{animation:ripple 1.8s ease-out infinite;transform-box:fill-box;transform-origin:center}
                 .card-border-anim{stroke-dasharray:200 800;animation:borderFlow 15s linear infinite}
+                .chat-msgs{overflow-y:scroll;scrollbar-width:none;max-height:200px}
+                .chat-msgs::-webkit-scrollbar{display:none}
             `}</style>
             <div style={{ position: "absolute", width: 0, height: 0, overflow: "hidden" }}>
                 <svg>
@@ -774,18 +896,35 @@ export const ChatFeatureSection = () => {
                         <mask id="mask-fade">
                             <rect width="100%" height="100%" fill="url(#fade-grad)" />
                         </mask>
-                        <filter id="filter-noise">
-                            <feTurbulence type="fractalNoise" baseFrequency="0.6" numOctaves="3" result="noise" />
-                            <feDiffuseLighting in="noise" lightingColor="#fff" surfaceScale="2">
-                                <feDistantLight azimuth="45" elevation="60" />
-                            </feDiffuseLighting>
-                            <feComposite operator="in" in2="SourceGraphic" result="textured" />
-                            <feBlend in="SourceGraphic" in2="textured" mode="overlay" />
-                        </filter>
                     </defs>
                 </svg>
             </div>
-            <div style={{ position: "relative", paddingTop: PAGE_PAD_V, paddingBottom: PAGE_PAD_V }}>
+
+            {/* ─── Shared section header ─── */}
+            <div className="text-center px-4 w-full max-w-2xl mx-auto">
+                <span className="inline-block text-xs font-black uppercase tracking-widest text-green mb-3 px-4 py-1.5 bg-green/10 rounded-full">
+                    {t("chat_a_title")}
+                </span>
+                <h2 className="text-[clamp(28px,5vw,52px)] font-bold text-dark leading-tight mb-3">
+                    {t("chat_b_title")}
+                </h2>
+                <p className="text-[#6a8a78] text-base md:text-lg max-w-xl mx-auto leading-relaxed">
+                    {t("chat_b_subtitle")}
+                </p>
+            </div>
+
+            {/* ─── Mobile layout: animated chat preview ─── */}
+            <div className="md:hidden flex flex-col items-center gap-8 px-4 w-full">
+                <MobileChatPreview
+                    roomTitle={chatRoomProps.roomTitle}
+                    roomStatus={chatRoomProps.roomStatus}
+                    messages={chatRoomProps.messages}
+                    liveMessages={chatRoomProps.liveMessages}
+                />
+            </div>
+
+            {/* ─── Desktop layout: card pairs + orbs ─── */}
+            <div className="hidden md:block" style={{ position: "relative", paddingTop: PAGE_PAD_V, paddingBottom: PAGE_PAD_V }}>
                 <div style={{ display: "flex", flexDirection: "row", gap: COL_GAP, alignItems: "flex-start" }}>
                     <CardPair
                         hoverTop={hover.aTop} hoverBot={hover.aBot}

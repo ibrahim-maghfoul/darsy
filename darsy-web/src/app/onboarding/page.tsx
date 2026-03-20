@@ -3,7 +3,8 @@
 import { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { useRouter } from "next/navigation";
-import { ChevronRight, GraduationCap, School, BookOpen, User } from "lucide-react";
+import { ChevronRight, GraduationCap, School, BookOpen, User, Calendar, ChevronDown, MapPin } from "lucide-react";
+import DatePicker from "@/components/ui/DatePicker";
 import { getSchools, getLevels, getGuidances } from "@/services/data";
 import api from "@/lib/api";
 import { useAuth } from "@/contexts/AuthContext";
@@ -23,8 +24,11 @@ export default function OnboardingPage() {
     const { user, checkAuth } = useAuth();
     const { showSnackbar } = useSnackbar();
     const [currentStep, setCurrentStep] = useState(0);
+    const [showGenderDropdown, setShowGenderDropdown] = useState(false);
     const [selections, setSelections] = useState({
-        age: "",
+        nickname: "",
+        birthday: "",
+        gender: "",
         city: "",
         schoolId: "",
         levelId: "",
@@ -118,7 +122,9 @@ export default function OnboardingPage() {
 
             if (user) {
                 await api.patch('/user/profile', {
-                    age: finalSelections.age,
+                    nickname: finalSelections.nickname,
+                    birthday: finalSelections.birthday,
+                    gender: finalSelections.gender,
                     city: finalSelections.city,
                     selectedPath: {
                         schoolId: finalSelections.schoolId,
@@ -180,27 +186,97 @@ export default function OnboardingPage() {
                             {currentStep === 0 ? (
                                 <div className="space-y-6 bg-white p-8 rounded-3xl border border-green/10 shadow-sm">
                                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
+                                        <div className="space-y-2 relative sm:col-span-2">
+                                            <label className="text-sm font-bold text-dark/60 uppercase tracking-widest px-1">{t("nickname")}</label>
+                                            <div className="relative">
+                                                <User className="absolute left-4 top-1/2 -translate-y-1/2 text-green" size={20} />
+                                                <input
+                                                    type="text"
+                                                    value={selections.nickname}
+                                                    onChange={(e) => setSelections(prev => ({ ...prev, nickname: e.target.value }))}
+                                                    className="w-full pl-12 pr-4 py-4 rounded-2xl bg-gray-50 border border-transparent focus:border-green focus:bg-white outline-none transition-all font-medium"
+                                                    placeholder="e.g. DarsyStudent"
+                                                />
+                                            </div>
+                                        </div>
+
                                         <div className="space-y-2">
-                                            <label className="text-sm font-bold text-dark/60 uppercase tracking-widest px-1">{t("age")}</label>
-                                            <input
-                                                type="number"
-                                                value={selections.age}
-                                                onChange={(e) => setSelections(prev => ({ ...prev, age: e.target.value }))}
-                                                className="w-full px-5 py-4 rounded-2xl bg-gray-50 border border-transparent focus:border-green focus:bg-white outline-none transition-all font-medium"
-                                                placeholder="e.g. 18"
+                                            <label className="text-sm font-bold text-dark/60 uppercase tracking-widest px-1">{t("birthday")}</label>
+                                            <DatePicker 
+                                                value={selections.birthday}
+                                                onChange={(val: string) => setSelections(prev => ({ ...prev, birthday: val }))}
+                                                placeholder="Pick your birthday"
                                             />
                                         </div>
 
-                                        <div className="space-y-2 relative">
+                                        <div className="space-y-2 relative gender-dropdown-container">
+                                            <label className="text-sm font-bold text-dark/60 uppercase tracking-widest px-1">{t("gender")}</label>
+                                            <div className="relative">
+                                                <button
+                                                    type="button"
+                                                    onClick={() => setShowGenderDropdown(!showGenderDropdown)}
+                                                    className={`w-full px-5 py-4 rounded-2xl bg-gray-50 border border-transparent focus:bg-white focus:border-green outline-none font-medium transition-all text-left flex items-center justify-between ${!selections.gender ? 'text-dark/40' : 'text-dark'}`}
+                                                >
+                                                    <span className="flex items-center gap-3">
+                                                        {selections.gender ? (
+                                                            <>
+                                                                <span className="text-green font-bold text-lg">{selections.gender === 'male' ? '♂' : '♀'}</span>
+                                                                {selections.gender.charAt(0).toUpperCase() + selections.gender.slice(1)}
+                                                            </>
+                                                        ) : (
+                                                            <>
+                                                                <User size={18} className="text-green/40" />
+                                                                <span>Select Gender</span>
+                                                            </>
+                                                        )}
+                                                    </span>
+                                                    <ChevronDown size={18} className={`text-dark/20 transition-transform duration-300 ${showGenderDropdown ? 'rotate-180 text-green' : 'rotate-0'}`} />
+                                                </button>
+
+                                                <AnimatePresence>
+                                                    {showGenderDropdown && (
+                                                        <motion.div
+                                                            initial={{ opacity: 0, y: 10, scale: 0.95 }}
+                                                            animate={{ opacity: 1, y: 0, scale: 1 }}
+                                                            exit={{ opacity: 0, y: 10, scale: 0.95 }}
+                                                            className="absolute z-50 left-0 right-0 top-full mt-2 bg-white border border-green/10 rounded-[24px] shadow-2xl shadow-green/10 overflow-hidden p-2"
+                                                        >
+                                                            {['male', 'female'].map((g) => (
+                                                                <button
+                                                                    key={g}
+                                                                    type="button"
+                                                                    onClick={() => {
+                                                                        setSelections(prev => ({ ...prev, gender: g }));
+                                                                        setShowGenderDropdown(false);
+                                                                    }}
+                                                                    className="w-full px-6 py-3.5 text-left text-sm font-bold text-dark/70 hover:text-green hover:bg-green/5 rounded-2xl transition-all flex items-center justify-between group"
+                                                                >
+                                                                    <span className="flex items-center gap-3">
+                                                                        <span className="text-lg text-green font-black">{g === 'male' ? '♂' : '♀'}</span>
+                                                                        {g.charAt(0).toUpperCase() + g.slice(1)}
+                                                                    </span>
+                                                                    <div className="w-1.5 h-1.5 rounded-full bg-green scale-0 group-hover:scale-100 transition-transform" />
+                                                                </button>
+                                                            ))}
+                                                        </motion.div>
+                                                    )}
+                                                </AnimatePresence>
+                                            </div>
+                                        </div>
+
+                                        <div className="space-y-2 relative sm:col-span-2">
                                             <label className="text-sm font-bold text-dark/60 uppercase tracking-widest px-1">{t("city")}</label>
-                                            <input
-                                                type="text"
-                                                list="moroccan-cities"
-                                                value={selections.city}
-                                                onChange={(e) => setSelections(prev => ({ ...prev, city: e.target.value }))}
-                                                className="w-full px-5 py-4 rounded-2xl bg-gray-50 border border-transparent focus:border-green focus:bg-white outline-none transition-all font-medium"
-                                                placeholder="e.g. Casablanca"
-                                            />
+                                            <div className="relative">
+                                                <MapPin className="absolute left-4 top-1/2 -translate-y-1/2 text-green" size={20} />
+                                                <input
+                                                    type="text"
+                                                    list="moroccan-cities"
+                                                    value={selections.city}
+                                                    onChange={(e) => setSelections(prev => ({ ...prev, city: e.target.value }))}
+                                                    className="w-full pl-12 pr-4 py-4 rounded-2xl bg-gray-50 border border-transparent focus:border-green focus:bg-white outline-none transition-all font-medium"
+                                                    placeholder="e.g. Casablanca"
+                                                />
+                                            </div>
                                             <datalist id="moroccan-cities">
                                                 {moroccanCities.map(city => (
                                                     <option key={city} value={city} />
@@ -210,7 +286,7 @@ export default function OnboardingPage() {
                                     </div>
                                     <button
                                         onClick={() => setCurrentStep(1)}
-                                        disabled={!selections.age || !selections.city}
+                                        disabled={!selections.nickname || !selections.birthday || !selections.gender || !selections.city}
                                         className="w-full py-4 bg-green text-white font-bold rounded-2xl flex items-center justify-center gap-2 hover:shadow-xl hover:shadow-green/20 transition-all disabled:opacity-50 mt-4"
                                     >
                                         {t("next")} <ChevronRight size={20} />

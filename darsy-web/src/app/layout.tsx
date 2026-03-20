@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
-import { Roboto, Cairo } from "next/font/google";
+import { Cairo } from "next/font/google";
 import "./globals.css";
+import "../styles/pickers.css";
 import { Navbar } from "@/components/Navbar";
 import { Footer } from "@/components/Footer";
 import { AuthProvider } from "@/contexts/AuthContext";
@@ -8,6 +9,8 @@ import { SnackbarProvider } from "@/contexts/SnackbarContext";
 import { NextIntlClientProvider } from 'next-intl';
 import { getMessages, getLocale } from 'next-intl/server';
 import { LanguageSwitcher } from "@/components/LanguageSwitcher";
+import CookieBanner from "@/components/CookieBanner";
+import { GoogleOAuthProvider } from '@react-oauth/google';
 
 const cairo = Cairo({
   variable: "--font-cairo",
@@ -30,18 +33,23 @@ export default async function RootLayout({
 
   return (
     <html lang={locale} dir={locale === 'ar' ? 'rtl' : 'ltr'}>
-      <body
-        className={`${cairo.variable} font-cairo antialiased`}
-      >
+      <head>
+        <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@24,400,0,0&icon_names=android" />
+        <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200&icon_names=ios" />
+      </head>
+      <body className={`${cairo.variable} font-cairo antialiased`}>
         <NextIntlClientProvider messages={messages}>
-          <AuthProvider>
-            <SnackbarProvider>
-              <Navbar />
-              <main>{children}</main>
-              <LanguageSwitcher />
-              <Footer />
-            </SnackbarProvider>
-          </AuthProvider>
+          <GoogleOAuthProvider clientId={process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID || 'placeholder-client-id'}>
+            <AuthProvider>
+              <SnackbarProvider>
+                <Navbar />
+                <main>{children}</main>
+                <LanguageSwitcher />
+                <Footer />
+                <CookieBanner />
+              </SnackbarProvider>
+            </AuthProvider>
+          </GoogleOAuthProvider>
         </NextIntlClientProvider>
       </body>
     </html>

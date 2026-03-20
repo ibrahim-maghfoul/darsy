@@ -11,6 +11,8 @@ router.delete('/all', authMiddleware, adminMiddleware, NewsController.deleteAllN
 
 // --- Standard CRUD ---
 router.get('/', NewsController.getAllNews);
+router.post('/', authMiddleware, adminMiddleware, NewsController.createNews);
+router.put('/:id', authMiddleware, adminMiddleware, NewsController.updateNews);
 router.delete('/:id', authMiddleware, adminMiddleware, NewsController.deleteNews);
 
 // --- View count & rating ---

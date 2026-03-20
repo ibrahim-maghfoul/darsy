@@ -1,0 +1,12 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(npx tsc:*)",
+      "Bash(node -e \":*)",
+      "Bash(cmd //c \"netstat -ano | findstr \"\":3000 :5000 :5173\"\"\")",
+      "Bash(cmd //c \"netstat -ano | findstr LISTENING\")",
+      "Bash(npx vite:*)",
+      "Bash(npm install:*)"
+    ]
+  }
+}

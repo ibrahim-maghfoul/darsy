@@ -144,12 +144,15 @@ export default function ChatPage() {
     }, [messages.length]); // Only trigger when a NEW message is added
 
     useEffect(() => {
-        if (loading || !isProfileComplete) return;
+        if (loading) return;
 
         if (!user) {
-            router.push("/login");
+            // Do NOT auto-redirect to /login
+            // Let the UI render the unauthorized screen instead
             return;
         }
+
+        if (!isProfileComplete) return;
 
         const guidance = user.level?.guidance;
         const level = user.level?.level;
@@ -337,9 +340,46 @@ export default function ChatPage() {
     };
 
     if (!user || loading) {
+        if (loading) {
+            return (
+                <div className="flex items-center justify-center min-h-screen">
+                    <div className="w-8 h-8 border-4 border-green border-t-transparent rounded-full animate-spin"></div>
+                </div>
+            );
+        }
+        
+        // Not logged in UI
         return (
-            <div className="flex items-center justify-center min-h-screen">
-                <div className="w-8 h-8 border-4 border-green border-t-transparent rounded-full animate-spin"></div>
+            <div className="min-h-[100dvh] bg-white flex items-center justify-center p-6 text-center">
+                <motion.div
+                    initial={{ opacity: 0, scale: 0.9 }}
+                    animate={{ opacity: 1, scale: 1 }}
+                    className="max-w-md w-full bg-white rounded-[40px] border border-green/10 p-10 shadow-2xl shadow-green/5 space-y-8"
+                >
+                    <div className="w-24 h-24 bg-green/10 rounded-[2rem] flex items-center justify-center mx-auto text-green">
+                        <User size={48} />
+                    </div>
+                    <div className="space-y-4">
+                        <h1 className="text-3xl font-bold text-dark">Sign In Required</h1>
+                        <p className="text-muted-foreground leading-relaxed">
+                            You need to be signed in to access the Class Chat and communicate with other students.
+                        </p>
+                    </div>
+                    <div className="flex flex-col gap-3">
+                        <Link
+                            href="/login"
+                            className="w-full py-4 bg-green text-white font-bold rounded-2xl hover:shadow-xl hover:shadow-green/20 transition-all"
+                        >
+                            Sign In to Chat
+                        </Link>
+                        <Link
+                            href="/"
+                            className="w-full py-4 bg-white border border-green/10 text-dark/60 font-bold rounded-2xl hover:bg-green/5 transition-all outline-none"
+                        >
+                            Return Home
+                        </Link>
+                    </div>
+                </motion.div>
             </div>
         );
     }
@@ -383,44 +423,148 @@ export default function ChatPage() {
     const roomName = user.level?.level || "Class Chat";
 
     return (
-        <div className="h-[100dvh] bg-gray-50 flex flex-col overflow-hidden relative">
-            {/* Background Decorative Mesh */}
-            <div className="absolute inset-0 pointer-events-none opacity-20 overflow-hidden">
-                <div className="absolute top-[-10%] left-[-10%] w-[40%] h-[40%] bg-green/20 blur-[120px] rounded-full animate-pulse"></div>
-                <div className="absolute bottom-[10%] right-[-5%] w-[30%] h-[30%] bg-green/10 blur-[100px] rounded-full animate-pulse" style={{ animationDelay: '2s' }}></div>
-            </div>
+        <div className="h-[100dvh] bg-white md:bg-[#0d1117] flex flex-col md:flex-row overflow-hidden relative">
 
-            {/* Header */}
-            <header className="glass-effect px-6 py-4 flex items-center justify-between sticky top-0 z-40 shadow-sm border-b border-white/40">
-                <div className="flex items-center gap-4">
-                    <motion.button
-                        whileHover={{ scale: 1.05 }}
-                        whileTap={{ scale: 0.95 }}
-                        onClick={() => router.back()}
-                        className="w-10 h-10 rounded-2xl bg-white border border-gray-100 flex items-center justify-center hover:bg-gray-50 transition-all shadow-sm group"
-                    >
-                        <ChevronLeft size={20} className="text-dark group-hover:text-green transition-colors" />
-                    </motion.button>
+            {/* ── Desktop: dark sidebar left strip with back + room info ── */}
+            <div className="hidden md:flex flex-col w-[260px] shrink-0 bg-[#0d1117] border-r border-white/5 p-5 gap-5 relative overflow-hidden">
+                {/* Hive texture overlay */}
+                <div className="absolute inset-0 opacity-[0.07] pointer-events-none" style={{
+                    backgroundImage: `url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='56' height='97' viewBox='0 0 56 97'%3E%3Cpath d='M28 64.6L0 48.45L0 16.15L28 0L56 16.15L56 48.45L28 64.6L28 97' fill='none' stroke='%23FFFFFF' stroke-width='1'/%3E%3C/svg%3E")`,
+                    backgroundSize: '28px 48.5px',
+                    backgroundRepeat: 'repeat',
+                }} />
+                {/* Back button */}
+                <motion.button
+                    whileHover={{ scale: 1.04 }}
+                    whileTap={{ scale: 0.95 }}
+                    onClick={() => router.back()}
+                    className="relative z-10 flex items-center gap-2 text-white/40 hover:text-white transition-colors text-sm font-bold group w-fit"
+                >
+                    <ChevronLeft size={18} className="group-hover:-translate-x-0.5 transition-transform" />
+                    Back
+                </motion.button>
+
+                {/* Room card */}
+                <div className="relative z-10 rounded-2xl bg-white/5 border border-white/8 p-4 space-y-3">
+                    <div className="w-12 h-12 rounded-2xl bg-green/20 flex items-center justify-center">
+                        <MessageCircle size={22} className="text-green" />
+                    </div>
                     <div>
-                        <h1 className="text-xl font-black text-dark tracking-tight flex items-center gap-2">
-                            {roomName}
-                            <div className="flex items-center">
-                                {isConnecting ? (
-                                    <span className="flex h-2 w-2 rounded-full bg-yellow-500 animate-pulse"></span>
-                                ) : (
-                                    <div className="relative flex">
-                                        <span className="flex h-2 w-2 rounded-full bg-green"></span>
-                                        <span className="absolute h-2 w-2 rounded-full bg-green animate-ping opacity-75"></span>
-                                    </div>
-                                )}
-                            </div>
-                        </h1>
-                        <p className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground flex items-center gap-1 opacity-70">
-                            <MessageCircle size={10} strokeWidth={3} /> {t("class_space")}
-                        </p>
+                        <h2 className="text-white font-black text-lg leading-tight">{roomName}</h2>
+                        <p className="text-white/40 text-xs font-bold uppercase tracking-widest mt-0.5">{t("class_space")}</p>
+                    </div>
+                    <div className="flex items-center gap-2 pt-1">
+                        {isConnecting ? (
+                            <span className="w-2 h-2 rounded-full bg-yellow-400 animate-pulse" />
+                        ) : (
+                            <span className="relative flex w-2 h-2">
+                                <span className="w-2 h-2 rounded-full bg-green" />
+                                <span className="absolute inset-0 rounded-full bg-green animate-ping opacity-60" />
+                            </span>
+                        )}
+                        <span className="text-xs font-bold text-white/50">
+                            {isConnecting ? "Connecting…" : `${onlineUsers.length} online`}
+                        </span>
                     </div>
                 </div>
+
+                {/* Online users list */}
+                <div className="relative z-10 flex-1 overflow-y-auto space-y-1 min-h-0">
+                    <p className="text-[10px] font-black uppercase tracking-[0.18em] text-white/25 px-1 mb-3">Online</p>
+                    <AnimatePresence>
+                        {onlineUsers.map((ou) => (
+                            <motion.div
+                                key={ou.userId}
+                                initial={{ opacity: 0, x: -8 }}
+                                animate={{ opacity: 1, x: 0 }}
+                                exit={{ opacity: 0 }}
+                                className="flex items-center gap-3 px-2 py-2 rounded-xl hover:bg-white/5 transition-colors group"
+                            >
+                                <div className="relative shrink-0">
+                                    <div className="w-8 h-8 rounded-xl bg-white/10 overflow-hidden flex items-center justify-center">
+                                        {ou.photoURL ? (
+                                            <Image src={getPhotoURL(ou.photoURL) || ''} alt={ou.displayName} fill sizes="32px" className="object-cover" />
+                                        ) : (
+                                            <User size={16} className="text-white/50" />
+                                        )}
+                                    </div>
+                                    <span className="absolute bottom-0 right-0 w-2.5 h-2.5 bg-green rounded-full border-2 border-[#0d1117]" />
+                                </div>
+                                <span className="text-sm font-semibold text-white/70 group-hover:text-white transition-colors truncate">{ou.displayName}</span>
+                                {(ou.subscriptionPlan === 'premium' || ou.subscriptionPlan === 'pro') && (
+                                    <Star size={10} className="text-amber-400 fill-amber-400 shrink-0 ml-auto" />
+                                )}
+                            </motion.div>
+                        ))}
+                    </AnimatePresence>
+
+                    {allParticipants.filter(p => !onlineUsers.some(ou => ou.userId === p._id)).length > 0 && (
+                        <>
+                            <p className="text-[10px] font-black uppercase tracking-[0.18em] text-white/15 px-1 mt-5 mb-3">Offline</p>
+                            {allParticipants
+                                .filter(p => p && !onlineUsers.some(ou => ou.userId === p._id))
+                                .map((p) => (
+                                    <div key={p._id} className="flex items-center gap-3 px-2 py-2 rounded-xl opacity-40">
+                                        <div className="w-8 h-8 rounded-xl bg-white/5 overflow-hidden flex items-center justify-center shrink-0">
+                                            {p.photoURL ? (
+                                                <Image src={getPhotoURL(p.photoURL) || ''} alt={p.displayName} fill sizes="32px" className="object-cover grayscale" />
+                                            ) : (
+                                                <User size={16} className="text-white/30" />
+                                            )}
+                                        </div>
+                                        <span className="text-sm font-semibold text-white/40 truncate">{p.displayName}</span>
+                                    </div>
+                                ))}
+                        </>
+                    )}
+                </div>
+            </div>
+
+            {/* ── Chat panel (white floating card on desktop) ── */}
+            <div className="flex-1 flex flex-col min-w-0 md:m-3 md:rounded-[20px] bg-white overflow-hidden md:shadow-2xl md:shadow-black/40">
+
+            {/* Mobile Header */}
+            <header className="md:hidden px-5 py-4 flex items-center gap-4 border-b border-gray-100 bg-white sticky top-0 z-40">
+                <motion.button
+                    whileTap={{ scale: 0.95 }}
+                    onClick={() => router.back()}
+                    className="w-9 h-9 rounded-2xl bg-gray-50 border border-gray-100 flex items-center justify-center"
+                >
+                    <ChevronLeft size={20} className="text-dark" />
+                </motion.button>
+                <div>
+                    <h1 className="text-base font-black text-dark flex items-center gap-2">
+                        {roomName}
+                        {isConnecting ? (
+                            <span className="w-2 h-2 rounded-full bg-yellow-500 animate-pulse" />
+                        ) : (
+                            <span className="relative flex w-2 h-2">
+                                <span className="w-2 h-2 rounded-full bg-green" />
+                                <span className="absolute inset-0 rounded-full bg-green animate-ping opacity-75" />
+                            </span>
+                        )}
+                    </h1>
+                    <p className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground">{t("class_space")}</p>
+                </div>
             </header>
+
+            {/* Desktop top bar inside the white panel */}
+            <div className="hidden md:flex items-center justify-between px-6 py-4 border-b border-gray-100/80">
+                <div className="flex items-center gap-3">
+                    <div className="w-8 h-8 rounded-xl bg-green/10 flex items-center justify-center">
+                        <MessageCircle size={16} className="text-green" />
+                    </div>
+                    <span className="font-black text-dark text-sm">{roomName}</span>
+                    <span className="text-xs text-muted-foreground font-medium">— {t("class_space")}</span>
+                </div>
+                <div className="flex items-center gap-2 text-xs text-muted-foreground font-bold">
+                    {isConnecting ? (
+                        <><span className="w-2 h-2 rounded-full bg-yellow-400 animate-pulse" /> Connecting…</>
+                    ) : (
+                        <><span className="relative flex w-2 h-2"><span className="w-2 h-2 rounded-full bg-green" /><span className="absolute inset-0 rounded-full bg-green animate-ping opacity-60" /></span> {onlineUsers.length} online</>
+                    )}
+                </div>
+            </div>
 
             {/* Main Layout containing Chat and Sidebar */}
             <div className="flex flex-1 overflow-hidden relative">
@@ -431,7 +575,7 @@ export default function ChatPage() {
                     <div
                         ref={scrollContainerRef}
                         onScroll={handleScroll}
-                        className="flex-1 overflow-y-auto p-6 space-y-6"
+                        className="flex-1 overflow-y-auto p-4 md:p-6 space-y-4 md:space-y-6"
                     >
                         {messages.length === 0 && !isConnecting ? (
                             <div className="h-full flex flex-col items-center justify-center text-muted-foreground space-y-4 pt-20">
@@ -442,7 +586,7 @@ export default function ChatPage() {
                             messages.map((msg, index) => {
                                 const currentUserId = user.id || (user as { _id?: string })._id;
                                 const isMe = msg.sender?._id === currentUserId;
-                                const showAvatar = !isMe && (index === 0 || messages[index - 1]?.sender?._id !== msg.sender?._id);
+                                const showAvatar = index === 0 || messages[index - 1]?.sender?._id !== msg.sender?._id;
 
                                 // Group reactions by emoji
                                 const reactionCounts = msg.reactions.reduce((acc, r) => {
@@ -460,33 +604,37 @@ export default function ChatPage() {
                                             type: "spring",
                                             stiffness: 260,
                                             damping: 20,
-                                            delay: Math.min(index * 0.05, 0.3) // Stagger only for first few
+                                            delay: Math.min(index * 0.05, 0.3)
                                         }}
                                         key={msg._id || index}
-                                        className={`flex gap-3 max-w-[85%] ${isMe ? "ml-auto flex-row-reverse" : "mr-auto"}`}
+                                        className={`flex gap-3 max-w-[85%] ${isMe ? "ml-auto flex-row-reverse" : "mr-auto"} ${!showAvatar ? "!mt-0.5" : ""}`}
                                     >
-                                        {/* Avatar */}
-                                        <div className="relative">
-                                            <motion.div
-                                                whileHover={{ scale: 1.1 }}
-                                                className={`w-9 h-9 rounded-2xl flex-shrink-0 ${showAvatar ? 'bg-green/10 ring-4 ring-green/5' : 'bg-transparent'} flex items-center justify-center overflow-hidden relative shadow-sm transition-all`}
-                                            >
-                                                {showAvatar && (msg.sender?.photoURL || (msg.sender as any)?.avatar) ? (
-                                                    <Image src={getPhotoURL(msg.sender?.photoURL || (msg.sender as any)?.avatar) || ''} alt={msg.sender?.displayName || 'User'} fill sizes="36px" className="object-cover" />
-                                                ) : showAvatar ? (
-                                                    <User size={18} className="text-green" />
-                                                ) : null}
-                                            </motion.div>
-                                            {showAvatar && (msg.sender?.subscription?.plan === 'premium' || msg.sender?.subscription?.plan === 'pro') && (
-                                                <div className={`absolute -top-1 ${isMe ? '-left-1' : '-right-1'} w-4 h-4 rounded-full bg-amber-400 border-[1.5px] border-white flex items-center justify-center shadow-sm z-10`} title="Premium">
-                                                    <Star size={8} className="text-white fill-current" />
-                                                </div>
+                                        {/* Avatar — visible only for first message in a group */}
+                                        <div className="relative w-9 shrink-0">
+                                            {showAvatar && (
+                                                <>
+                                                    <motion.div
+                                                        whileHover={{ scale: 1.1 }}
+                                                        className="w-9 h-9 rounded-2xl bg-green/10 ring-4 ring-green/5 flex items-center justify-center overflow-hidden relative shadow-sm"
+                                                    >
+                                                        {(msg.sender?.photoURL || (msg.sender as any)?.avatar) ? (
+                                                            <Image src={getPhotoURL(msg.sender?.photoURL || (msg.sender as any)?.avatar) || ''} alt={msg.sender?.displayName || 'User'} fill sizes="36px" className="object-cover" />
+                                                        ) : (
+                                                            <User size={18} className="text-green" />
+                                                        )}
+                                                    </motion.div>
+                                                    {(msg.sender?.subscription?.plan === 'premium' || msg.sender?.subscription?.plan === 'pro') && (
+                                                        <div className={`absolute -top-1 ${isMe ? '-left-1' : '-right-1'} w-4 h-4 rounded-full bg-amber-400 border-[1.5px] border-white flex items-center justify-center shadow-sm z-10`} title="Premium">
+                                                            <Star size={8} className="text-white fill-current" />
+                                                        </div>
+                                                    )}
+                                                </>
                                             )}
                                         </div>
 
                                         {/* Message Bubble */}
                                         <div className={`flex flex-col ${isMe ? "items-end" : "items-start"} min-w-0`}>
-                                            {msg.sender && (
+                                            {showAvatar && msg.sender && (
                                                 <span className="text-[11px] font-black text-dark/40 mb-1 ml-1 uppercase tracking-tight">
                                                     {msg.sender.displayName}
                                                 </span>
@@ -629,7 +777,7 @@ export default function ChatPage() {
                     </div>
 
                     {/* Input Area */}
-                    <div className="bg-white border-t border-gray-100 p-4 relative z-20">
+                    <div className="bg-white border-t border-gray-100 p-4 pb-[calc(env(safe-area-inset-bottom)+92px)] md:pb-5 relative z-20">
                         <div className="max-w-5xl mx-auto">
                             {/* Typing Indicator */}
                             <AnimatePresence>
@@ -702,102 +850,8 @@ export default function ChatPage() {
                         </div>
                     </div>
                 </div> {/* End Left Column */}
-
-                {/* Right Sidebar: Online Users (Refined Glassmorphism) */}
-                <div className="w-80 bg-white/40 backdrop-blur-xl border-l border-white/60 hidden md:flex flex-col relative z-30">
-                    <div className="p-6 border-b border-white/40">
-                        <h3 className="font-black flex items-center justify-between text-xs uppercase tracking-widest text-dark/60">
-                            <span>Online Classmates</span>
-                            <span className="bg-green text-white px-3 py-1 rounded-full text-[10px] shadow-lg shadow-green/20">
-                                {onlineUsers.length}
-                            </span>
-                        </h3>
-                    </div>
-                    <div className="flex-1 overflow-y-auto p-5 space-y-8">
-                        {/* Online Section */}
-                        <div className="space-y-4">
-                            <AnimatePresence>
-                                {onlineUsers.map((ou) => (
-                                    <motion.div
-                                        key={ou.userId}
-                                        initial={{ opacity: 0, x: 10 }}
-                                        animate={{ opacity: 1, x: 0 }}
-                                        exit={{ opacity: 0, scale: 0.95 }}
-                                        whileHover={{ x: 5 }}
-                                        className="flex items-center gap-4 group cursor-pointer"
-                                    >
-                                        <div className="relative">
-                                            <div className="w-12 h-12 rounded-[18px] bg-white flex-shrink-0 flex items-center justify-center relative border border-gray-100 overflow-hidden shadow-sm group-hover:shadow-md transition-all">
-                                                {ou.photoURL ? (
-                                                    <Image src={getPhotoURL(ou.photoURL) || ''} alt={ou.displayName} fill sizes="48px" className="object-cover" />
-                                                ) : (
-                                                    <User size={20} className="text-gray-400" />
-                                                )}
-                                                {/* Online Indicator Badge */}
-                                                <div className="absolute bottom-1 right-1 w-3.5 h-3.5 bg-green rounded-full border-[3px] border-white shadow-sm"></div>
-                                            </div>
-                                            {/* Premium Badge */}
-                                            {(ou.subscriptionPlan === 'premium' || ou.subscriptionPlan === 'pro') && (
-                                                <div className="absolute -top-1 -right-1 w-5 h-5 rounded-full bg-amber-400 border-2 border-white flex items-center justify-center shadow-sm z-10" title="Premium">
-                                                    <Star size={10} className="text-white fill-current" />
-                                                </div>
-                                            )}
-                                        </div>
-                                        <div className="flex-1 min-w-0">
-                                            <div className="truncate text-[14px] font-black text-dark group-hover:text-green transition-colors">
-                                                {ou.displayName}
-                                            </div>
-                                            <div className="text-[10px] text-green/70 font-black uppercase tracking-widest">Active</div>
-                                        </div>
-                                    </motion.div>
-                                ))}
-                            </AnimatePresence>
-                        </div>
-
-                        {/* Offline Section */}
-                        {allParticipants.filter(p => !onlineUsers.some(ou => ou.userId === p._id)).length > 0 && (
-                            <div className="space-y-4">
-                                <h4 className="text-[10px] font-black uppercase tracking-[0.2em] text-dark/30 pl-1">Offline</h4>
-                                <AnimatePresence>
-                                    {allParticipants
-                                        .filter(p => p && !onlineUsers.some(ou => ou.userId === p._id))
-                                        .map((p) => (
-                                            <motion.div
-                                                key={p._id}
-                                                initial={{ opacity: 0 }}
-                                                animate={{ opacity: 1 }}
-                                                whileHover={{ x: 5 }}
-                                                className="flex items-center gap-4 group cursor-pointer grayscale-[0.25] hover:grayscale-0 transition-all bg-white/10 hover:bg-white/30 rounded-2xl p-2 -m-2"
-                                            >
-                                                <div className="relative">
-                                                    <div className="w-10 h-10 rounded-[14px] bg-gray-100 flex-shrink-0 flex items-center justify-center relative border border-gray-200 overflow-hidden shadow-none group-hover:shadow-sm transition-all text-dark">
-                                                        {p.photoURL ? (
-                                                            <Image src={getPhotoURL(p.photoURL) || ''} alt={p.displayName} fill sizes="40px" className="object-cover opacity-80 group-hover:opacity-100" />
-                                                        ) : (
-                                                            <User size={16} className="text-gray-400" />
-                                                        )}
-                                                    </div>
-                                                    {/* Premium Badge */}
-                                                    {(p.subscription?.plan === 'premium' || p.subscription?.plan === 'pro') && (
-                                                        <div className="absolute -top-1 -right-1 w-4 h-4 rounded-full bg-amber-400 border-[1.5px] border-white flex items-center justify-center shadow-sm z-10" title="Premium">
-                                                            <Star size={8} className="text-white fill-current" />
-                                                        </div>
-                                                    )}
-                                                </div>
-                                                <div className="flex-1 min-w-0">
-                                                    <div className="truncate text-[13px] font-black text-dark/70 group-hover:text-dark transition-colors">
-                                                        {p.displayName}
-                                                    </div>
-                                                    <div className="text-[9px] text-dark/40 font-black uppercase tracking-widest">Away</div>
-                                                </div>
-                                            </motion.div>
-                                        ))}
-                                </AnimatePresence>
-                            </div>
-                        )}
-                    </div>
-                </div> {/* End Right Sidebar */}
             </div> {/* End Main Layout Wrapper */}
+            </div> {/* End white chat panel */}
 
             {/* Reporting Modal */}
             <AnimatePresence>

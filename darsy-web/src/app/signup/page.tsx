@@ -2,22 +2,32 @@
 
 import { useState, useEffect, useRef } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { User, Mail, Lock, UserPlus, ChevronRight, Users } from "lucide-react";
+import { User, Mail, Lock, UserPlus, Chrome, Gift } from "lucide-react";
+import { useSearchParams } from "next/navigation";
 import Link from "next/link";
 import { useAuth } from "@/contexts/AuthContext";
+import { useGoogleLogin } from '@react-oauth/google';
 
 import { useTranslations } from "next-intl";
 
 export default function SignupPage() {
-    const { register } = useAuth();
+    const { register, googleLogin } = useAuth();
     const t = useTranslations('Auth');
     const t_pricing = useTranslations('Pricing');
+    const searchParams = useSearchParams();
     const [name, setName] = useState("");
     const [nickname, setNickname] = useState("");
     const [email, setEmail] = useState("");
     const [password, setPassword] = useState("");
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState("");
+    const [referralCode, setReferralCode] = useState<string | null>(null);
+    const [rememberMe, setRememberMe] = useState(false);
+
+    useEffect(() => {
+        const ref = searchParams.get('ref');
+        if (ref) setReferralCode(ref.toUpperCase());
+    }, [searchParams]);
 
 
 
@@ -26,7 +36,7 @@ export default function SignupPage() {
         setLoading(true);
         setError("");
         try {
-            await register(email, password, name, nickname);
+            await register(email, password, name, nickname, referralCode || undefined);
         } catch (err: any) {
             setError(err.message);
         } finally {
@@ -34,8 +44,24 @@ export default function SignupPage() {
         }
     };
 
+    const handleGoogleLogin = useGoogleLogin({
+        onSuccess: async (tokenResponse) => {
+            setLoading(true);
+            try {
+                await googleLogin(tokenResponse.access_token, referralCode || undefined, rememberMe);
+            } catch (err: any) {
+                setError(err.message || 'Google Signup failed');
+            } finally {
+                setLoading(false);
+            }
+        },
+        onError: () => {
+            setError('Google Signup Failed');
+        }
+    });
+
     return (
-        <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-white via-white to-green/10 p-6 pt-32">
+        <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-white via-white to-green/10 p-6 pt-4 md:pt-32">
             <motion.div
                 initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}
@@ -45,6 +71,13 @@ export default function SignupPage() {
                     <h1 className="text-4xl font-black text-dark tracking-tight">{t('signup_title')}</h1>
                     <p className="text-muted-foreground">{t('signup_desc')}</p>
                 </div>
+
+                {referralCode && (
+                    <div className="flex items-center gap-2 p-3 bg-green/5 border border-green/20 rounded-2xl text-green text-sm font-bold">
+                        <Gift size={16} />
+                        Referred by a friend — you&apos;re joining with a referral!
+                    </div>
+                )}
 
                 {error && (
                     <div className="p-4 bg-red-50 text-red-500 text-sm font-medium rounded-2xl border border-red-100 italic">
@@ -101,17 +134,62 @@ export default function SignupPage() {
                         </div>
                     </div>
 
+                    <div className="flex items-center gap-3 px-1">
+                        <div className="relative flex items-center justify-center">
+                            <input
+                                type="checkbox"
+                                id="rememberMe"
+                                checked={rememberMe}
+                                onChange={(e) => setRememberMe(e.target.checked)}
+                                className="w-5 h-5 appearance-none rounded-lg border-2 border-green/20 bg-green/5 checked:bg-green checked:border-green transition-all cursor-pointer peer"
+                            />
+                            <svg className="absolute w-3 h-3 text-white opacity-0 peer-checked:opacity-100 pointer-events-none transition-opacity" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={3}>
+                                <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
+                            </svg>
+                        </div>
+                        <label htmlFor="rememberMe" className="text-sm font-medium text-dark/70 cursor-pointer select-none">
+                            Remember me for 15 days
+                        </label>
+                    </div>
+
                     <button
                         type="submit"
                         disabled={loading}
-                        className="w-full py-4 bg-green text-white font-bold rounded-2xl hover:shadow-xl hover:shadow-green/20 transition-all flex items-center justify-center gap-2 group active:scale-95 disabled:opacity-50"
+                        className="w-full py-4 bg-green text-white font-bold rounded-2xl hover:shadow-xl hover:shadow-green/20 transition-all flex items-center justify-center gap-2 group active:scale-95 disabled:opacity-70"
                     >
-                        {loading ? "..." : (
+                        {loading ? (
+                            <>
+                                <svg className="animate-spin h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                                    <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
+                                    <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
+                                </svg>
+                                Loading...
+                            </>
+                        ) : (
                             <>
                                 <UserPlus size={20} />
                                 {t('signup_btn')}
                             </>
                         )}
+                    </button>
+
+                    <div className="relative">
+                        <div className="absolute inset-0 flex items-center">
+                            <div className="w-full border-t border-green/10"></div>
+                        </div>
+                        <div className="relative flex justify-center text-sm">
+                            <span className="px-2 bg-white text-muted-foreground">Or continue with</span>
+                        </div>
+                    </div>
+
+                    <button
+                        type="button"
+                        disabled={loading}
+                        onClick={() => handleGoogleLogin()}
+                        className="w-full py-4 bg-white border-2 border-green/10 text-dark font-bold rounded-2xl hover:bg-green/5 transition-all flex items-center justify-center gap-2 group active:scale-95 disabled:opacity-50"
+                    >
+                        <Chrome size={20} className="text-green" />
+                        Google
                     </button>
                 </form>
 

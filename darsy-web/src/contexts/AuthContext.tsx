@@ -8,8 +8,9 @@ import { User } from '@/types';
 interface AuthContextType {
     user: User | null;
     loading: boolean;
-    login: (email: string, password: string) => Promise<void>;
-    register: (email: string, password: string, name: string, nickname: string) => Promise<void>;
+    login: (email: string, password: string, rememberMe?: boolean) => Promise<void>;
+    register: (email: string, password: string, name: string, nickname: string, referralCode?: string) => Promise<void>;
+    googleLogin: (accessToken: string, referralCode?: string, rememberMe?: boolean) => Promise<void>;
     logout: () => Promise<void>;
     isAuthenticated: boolean;
     checkAuth: () => Promise<void>;
@@ -33,14 +34,18 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
             return;
         }
 
+        const controller = new AbortController();
+        const timeout = setTimeout(() => controller.abort(), 8000);
+
         try {
-            const res = await api.get('/user/profile');
+            const res = await api.get('/user/profile', { signal: controller.signal });
             setUser(res.data);
         } catch (error) {
             console.error("Auth check failed:", error);
             localStorage.removeItem('token');
             setUser(null);
         } finally {
+            clearTimeout(timeout);
             setLoading(false);
         }
     }, []);
@@ -49,9 +54,9 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         checkAuth();
     }, [checkAuth]);
 
-    const login = useCallback(async (email: string, password: string) => {
+    const login = useCallback(async (email: string, password: string, rememberMe: boolean = false) => {
         try {
-            const res = await api.post('/auth/login', { email, password });
+            const res = await api.post('/auth/login', { email, password, rememberMe });
             const { token, user: userData } = res.data;
 
             if (typeof window !== 'undefined') {
@@ -67,9 +72,9 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         }
     }, [router]);
 
-    const register = useCallback(async (email: string, password: string, name: string, nickname: string) => {
+    const register = useCallback(async (email: string, password: string, name: string, nickname: string, referralCode?: string) => {
         try {
-            const res = await api.post('/auth/register', { displayName: name, email, password, nickname });
+            const res = await api.post('/auth/register', { displayName: name, email, password, nickname, ...(referralCode ? { referralCode } : {}) });
             const { token, user: userData } = res.data;
 
             if (typeof window !== 'undefined') {
@@ -107,6 +112,29 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         }
     }, [router]);
 
+    const googleLogin = useCallback(async (accessToken: string, referralCode?: string, rememberMe: boolean = false) => {
+        try {
+            const res = await api.post('/auth/google', { accessToken, ...(referralCode ? { referralCode } : {}), rememberMe });
+            const { token, user: userData, isNewUser } = res.data;
+
+            if (typeof window !== 'undefined') {
+                localStorage.setItem('token', token);
+            }
+
+            setUser(userData);
+            
+            if (isNewUser) {
+                router.push('/onboarding');
+            } else {
+                router.push('/explore');
+            }
+        } catch (error: any) {
+            const errorMsg = error.response?.data?.error || 'Google Login failed';
+            console.error("Google Login attempt failed:", errorMsg);
+            throw new Error(errorMsg);
+        }
+    }, [router]);
+
     const getPhotoURL = useCallback((url: string | undefined | null) => {
         if (!url) return null;
         if (url.startsWith('http')) return url;
@@ -138,16 +166,51 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         loading,
         login,
         register,
+        googleLogin,
         logout,
         isAuthenticated: !!user,
         checkAuth,
         getPhotoURL,
         getResourceURL,
-    }), [user, loading, login, register, logout, checkAuth, getPhotoURL, getResourceURL]);
+    }), [user, loading, login, register, googleLogin, logout, checkAuth, getPhotoURL, getResourceURL]);
 
     return (
         <AuthContext.Provider value={contextValue}>
-            {!loading && children}
+            {loading && (
+                <div style={{
+                    position: 'fixed',
+                    inset: 0,
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    background: '#fff',
+                    zIndex: 9999
+                }}>
+                    <div style={{
+                        display: 'flex',
+                        flexDirection: 'column',
+                        alignItems: 'center',
+                        gap: '1rem'
+                    }}>
+                        <div style={{
+                            width: '40px',
+                            height: '40px',
+                            border: '3px solid #f3f3f3',
+                            borderTop: '3px solid #3498db',
+                            borderRadius: '50%',
+                            animation: 'spin 1s linear infinite'
+                        }} />
+                        <p style={{ color: '#666', fontSize: '14px' }}>Loading...</p>
+                    </div>
+                    <style>{`
+                        @keyframes spin {
+                            0% { transform: rotate(0deg); }
+                            100% { transform: rotate(360deg); }
+                        }
+                    `}</style>
+                </div>
+            )}
+            {children}
         </AuthContext.Provider>
     );
 }

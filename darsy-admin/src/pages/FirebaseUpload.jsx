@@ -1,9 +1,11 @@
 import { useState } from 'react';
-import { db, clearAllCollections } from '../services/firebase';
-import { collection, writeBatch, doc } from 'firebase/firestore';
+import { useAuth } from '../context/AuthContext';
 import './FirebaseUpload.css';
 
+const API = import.meta.env.VITE_API_URL || 'http://localhost:5000/api';
+
 function FirebaseUpload() {
+    const { token } = useAuth();
     const [uploading, setUploading] = useState(false);
     const [progress, setProgress] = useState({
         schools: { total: 0, uploaded: 0, status: 'pending' },
@@ -12,91 +14,38 @@ function FirebaseUpload() {
         subjects: { total: 0, uploaded: 0, status: 'pending' },
         lessons: { total: 0, uploaded: 0, status: 'pending' },
         exams: { total: 0, uploaded: 0, status: 'pending' },
-        content_stats: { total: 0, uploaded: 0, status: 'pending' },
-        news: { total: 0, uploaded: 0, status: 'pending' },
     });
     const [errors, setErrors] = useState([]);
 
+    const headers = { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' };
+
     const loadJsonFile = async (filename) => {
-        try {
-            const response = await fetch(`/firebase_data/metadata/${filename}`);
-            if (!response.ok) {
-                throw new Error(`Failed to load ${filename}`);
-            }
-            return await response.json();
-        } catch (error) {
-            console.error(`Error loading ${filename}:`, error);
-            throw error;
-        }
+        const response = await fetch(`/firebase_data/metadata/${filename}`);
+        if (!response.ok) throw new Error(`Failed to load ${filename}`);
+        return response.json();
     };
 
-    const uploadCollection = async (collectionName, documents) => {
-        const BATCH_SIZE = 500;
+    const uploadCollection = async (collectionName, endpoint, documents, transformFn) => {
         const total = documents.length;
+        setProgress(prev => ({ ...prev, [collectionName]: { total, uploaded: 0, status: 'uploading' } }));
 
-        setProgress(prev => ({
-            ...prev,
-            [collectionName]: { total, uploaded: 0, status: 'uploading' }
-        }));
-
-        try {
-            for (let i = 0; i < total; i += BATCH_SIZE) {
-                const batch = writeBatch(db);
-                const chunk = documents.slice(i, Math.min(i + BATCH_SIZE, total));
-
-                chunk.forEach(document => {
-                    if (!document.id) return;
-                    const docRef = doc(db, collectionName, document.id);
-                    batch.set(docRef, document);
+        let uploaded = 0;
+        for (const doc of documents) {
+            try {
+                const payload = transformFn ? transformFn(doc) : doc;
+                await fetch(`${API}/data/${endpoint}`, {
+                    method: 'POST',
+                    headers,
+                    body: JSON.stringify(payload),
                 });
-
-                await batch.commit();
-                const uploaded = Math.min(i + BATCH_SIZE, total);
-                setProgress(prev => ({
-                    ...prev,
-                    [collectionName]: { total, uploaded, status: 'uploading' }
-                }));
+                uploaded++;
+            } catch (err) {
+                setErrors(prev => [...prev, `${collectionName}: ${err.message}`]);
             }
-
-            setProgress(prev => ({
-                ...prev,
-                [collectionName]: { total, uploaded: total, status: 'complete' }
-            }));
-        } catch (error) {
-            setProgress(prev => ({
-                ...prev,
-                [collectionName]: { ...prev[collectionName], status: 'error' }
-            }));
-            throw error;
-        }
-    };
-
-    const handleDeleteAll = async () => {
-        if (!window.confirm('⚠️ WARNING: This will PERMANENTLY DELETE all educational data from Firebase. Are you sure?')) {
-            return;
+            setProgress(prev => ({ ...prev, [collectionName]: { total, uploaded, status: 'uploading' } }));
         }
 
-        setUploading(true);
-        setErrors([]);
-
-        try {
-            await clearAllCollections((name, status) => {
-                setProgress(prev => {
-                    const current = prev[name] || { total: 0, uploaded: 0 };
-                    return {
-                        ...prev,
-                        [name]: {
-                            ...current,
-                            status: status === 'clearing' ? 'uploading' : 'complete'
-                        }
-                    };
-                });
-            });
-        } catch (error) {
-            setErrors(prev => [...prev, `Global Clean: ${error.message}`]);
-        } finally {
-            setUploading(false);
-        }
+        setProgress(prev => ({ ...prev, [collectionName]: { total, uploaded, status: 'complete' } }));
     };
 
     const handleUpload = async () => {
@@ -104,49 +53,44 @@ function FirebaseUpload() {
         setErrors([]);
 
         const collections = [
-            { name: 'schools', file: 'school.json' },
-            { name: 'levels', file: 'levels.json' },
-            { name: 'guidances', file: 'guidances.json' },
-            { name: 'subjects', file: 'subjects.json' },
-            { name: 'lessons', file: 'lessons.json' },
-            { name: 'exams', file: 'exams.json' },
-            { name: 'content_stats', file: 'content_stats.json' },
-            { name: 'news', file: 'news.json' },
+            { name: 'schools', file: 'school.json', endpoint: 'schools', transform: d => ({ _id: d.id, title: d.name || d.title, image: d.image, category: d.category || 'Secondary' }) },
+            { name: 'levels', file: 'levels.json', endpoint: 'levels', transform: d => ({ _id: d.id, title: d.name || d.title, schoolId: d.schoolId, image: d.image }) },
+            { name: 'guidances', file: 'guidances.json', endpoint: 'guidances', transform: d => ({ _id: d.id, title: d.title, levelId: d.levelId, image: d.image }) },
+            { name: 'subjects', file: 'subjects.json', endpoint: 'subjects', transform: d => ({ _id: d.id, title: d.title, guidanceId: d.guidanceId, imageUrl: d.image || d.imageUrl }) },
+            { name: 'lessons', file: 'lessons.json', endpoint: 'lessons', transform: d => ({ _id: d.id, title: d.title, subjectId: d.subjectId, type: d.type || 'lesson', order: d.order || 0, coursesPdf: d.coursesPdf || [], videos: d.videos || [], exercices: d.exercices || [], exams: d.exams || [], resourses: d.resourses || [] }) },
+            { name: 'exams', file: 'exams.json', endpoint: 'lessons', transform: d => ({ _id: d.id, title: d.title, subjectId: d.subjectId, type: 'exam', coursesPdf: d.examPdfs || d.coursesPdf || [], videos: d.videos || [], exercices: d.exercices || [], resourses: d.resourses || [] }) },
         ];
 
-        try {
-            for (const { name, file } of collections) {
-                try {
-                    const documents = await loadJsonFile(file);
-                    if (documents && documents.length > 0) {
-                        await uploadCollection(name, documents);
-                    } else {
-                        setProgress(prev => ({
-                            ...prev,
-                            [name]: { total: 0, uploaded: 0, status: 'skipped' }
-                        }));
-                    }
-                } catch (error) {
-                    setErrors(prev => [...prev, `${name}: ${error.message}`]);
-                    setProgress(prev => ({
-                        ...prev,
-                        [name]: { ...prev[name], status: 'error' }
-                    }));
+        for (const { name, file, endpoint, transform } of collections) {
+            try {
+                const documents = await loadJsonFile(file);
+                if (documents && documents.length > 0) {
+                    await uploadCollection(name, endpoint, documents, transform);
+                } else {
+                    setProgress(prev => ({ ...prev, [name]: { total: 0, uploaded: 0, status: 'skipped' } }));
                 }
+            } catch (error) {
+                setErrors(prev => [...prev, `${name}: ${error.message}`]);
+                setProgress(prev => ({ ...prev, [name]: { ...prev[name], status: 'error' } }));
             }
-        } finally {
-            setUploading(false);
         }
+
+        // Recalculate stats
+        try {
+            await fetch(`${API}/data/stats/recalculate`, { method: 'POST', headers });
+        } catch (e) { console.error('Stats recalc failed:', e); }
+
+        setUploading(false);
     };
 
     const getStatusIcon = (status) => {
         switch (status) {
-            case 'pending': return '⏳';
-            case 'uploading': return '🔄';
-            case 'complete': return '✅';
-            case 'error': return '❌';
-            case 'skipped': return '⊝';
-            default: return '⏳';
+            case 'pending': return '...';
+            case 'uploading': return '...';
+            case 'complete': return 'Done';
+            case 'error': return 'Error';
+            case 'skipped': return 'Skip';
+            default: return '...';
         }
     };
 
@@ -155,40 +99,23 @@ function FirebaseUpload() {
 
     return (
         <div className="firebase-upload">
-            <h1>Firebase Data Upload</h1>
+            <h1>Batch Data Upload</h1>
             <p className="description">
-                Upload all organized educational data to Firebase Firestore.
-                This will create collections for schools, levels, guidances, subjects, lessons, and exams.
+                Upload organized educational data (JSON) to MongoDB.
+                This will create records for schools, levels, guidances, subjects, lessons, and exams.
             </p>
 
             <div className="upload-section">
-                <button
-                    className="upload-btn"
-                    onClick={handleUpload}
-                    disabled={uploading}
-                >
-                    {uploading ? '⏳ Processing...' : '🚀 Start Upload'}
-                </button>
-
-                <button
-                    className="delete-all-btn"
-                    onClick={handleDeleteAll}
-                    disabled={uploading}
-                >
-                    {uploading ? '⏳ Processing...' : '🗑️ Clear All Data'}
+                <button className="upload-btn" onClick={handleUpload} disabled={uploading}>
+                    {uploading ? 'Processing...' : 'Start Upload to MongoDB'}
                 </button>
 
                 {uploading && totalDocuments > 0 && (
                     <div className="overall-progress">
                         <div className="progress-bar">
-                            <div
-                                className="progress-fill"
-                                style={{ width: `${(uploadedDocuments / totalDocuments) * 100}%` }}
-                            />
+                            <div className="progress-fill" style={{ width: `${(uploadedDocuments / totalDocuments) * 100}%` }} />
                         </div>
-                        <div className="progress-text">
-                            {uploadedDocuments} / {totalDocuments} documents
-                        </div>
+                        <div className="progress-text">{uploadedDocuments} / {totalDocuments} documents</div>
                     </div>
                 )}
             </div>
@@ -204,10 +131,7 @@ function FirebaseUpload() {
                             {status === 'uploading' || status === 'complete' ? (
                                 <div className="progress-info">
                                     <div className="mini-progress-bar">
-                                        <div
-                                            className="mini-progress-fill"
-                                            style={{ width: total > 0 ? `${(uploaded / total) * 100}%` : '0%' }}
-                                        />
+                                        <div className="mini-progress-fill" style={{ width: total > 0 ? `${(uploaded / total) * 100}%` : '0%' }} />
                                     </div>
                                     <span className="count">{uploaded} / {total}</span>
                                 </div>
@@ -225,19 +149,15 @@ function FirebaseUpload() {
 
             {errors.length > 0 && (
                 <div className="errors-section">
-                    <h3>⚠️ Errors</h3>
-                    <ul>
-                        {errors.map((error, idx) => (
-                            <li key={idx}>{error}</li>
-                        ))}
-                    </ul>
+                    <h3>Errors</h3>
+                    <ul>{errors.map((error, idx) => <li key={idx}>{error}</li>)}</ul>
                 </div>
             )}
 
             {!uploading && Object.values(progress).every(p => p.status === 'complete' || p.status === 'skipped') && uploadedDocuments > 0 && (
                 <div className="success-message">
-                    <h3>✅ Upload Complete!</h3>
-                    <p>Successfully uploaded {uploadedDocuments} documents to Firebase.</p>
+                    <h3>Upload Complete!</h3>
+                    <p>Successfully uploaded {uploadedDocuments} documents to MongoDB.</p>
                 </div>
             )}
         </div>

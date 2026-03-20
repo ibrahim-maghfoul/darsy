@@ -41,7 +41,7 @@ export default function ServicesPage() {
     };
 
     return (
-        <div className="min-h-screen bg-white pb-20 pt-32">
+        <div className="min-h-screen bg-white pb-20 md:pt-32">
             <div className="max-w-5xl mx-auto px-6">
                 <div className="flex flex-col md:flex-row items-center justify-between gap-6 mb-12">
                     <div className="space-y-2 text-center md:text-left">
@@ -56,7 +56,7 @@ export default function ServicesPage() {
                     </div>
                     <Link
                         href="/profile"
-                        className="flex items-center gap-2 px-6 py-3 rounded-2xl bg-dark text-white font-bold hover:shadow-xl transition-all"
+                        className="hidden md:flex items-center gap-2 px-6 py-3 rounded-2xl bg-dark text-white font-bold hover:shadow-xl transition-all"
                     >
                         <ArrowLeft size={20} className={isAr ? "rotate-180" : ""} />
                         Back to Profile

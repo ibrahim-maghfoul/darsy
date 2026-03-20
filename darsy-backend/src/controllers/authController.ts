@@ -38,7 +38,7 @@ export class AuthController {
                 return;
             }
 
-            const { email, password, displayName, nickname, gender } = req.body;
+            const { email, password, displayName, nickname, gender, referralCode } = req.body;
 
             const existingUser = await User.findOne({ email });
             if (existingUser) {
@@ -48,12 +48,17 @@ export class AuthController {
 
             const hashedPassword = await hashPassword(password);
 
+            // Generate unique affiliate code
+            const affiliateCode = Math.random().toString(36).substring(2, 8).toUpperCase();
+
             const user = await User.create({
                 email,
                 password: hashedPassword,
                 displayName,
                 nickname,
                 gender,
+                affiliateCode,
+                referredBy: referralCode || undefined,
                 isPremium: false,
                 progress: {
                     totalLessons: 0,
@@ -68,6 +73,14 @@ export class AuthController {
                     theme: 'system',
                 },
             });
+
+            // Award +100 pts to referrer if valid code
+            if (referralCode) {
+                await User.findOneAndUpdate(
+                    { affiliateCode: referralCode },
+                    { $inc: { points: 100 } }
+                );
+            }
 
             const accessToken = generateAccessToken(user._id.toString());
             const refreshToken = generateRefreshToken(user._id.toString());
@@ -100,6 +113,7 @@ export class AuthController {
                     progress: user.progress,
                     isPremium: user.isPremium,
                     settings: user.settings,
+                    points: user.points,
                 },
                 token: accessToken,
             });
@@ -126,11 +140,16 @@ export class AuthController {
                 return;
             }
 
-            const { email, password } = req.body;
+            const { email, password, rememberMe } = req.body;
 
             const user = await User.findOne({ email }).select('+password');
             if (!user) {
                 res.status(401).json({ error: 'Invalid credentials' });
+                return;
+            }
+
+            if (!user.password) {
+                res.status(401).json({ error: 'Invalid credentials or please login with Google' });
                 return;
             }
 
@@ -146,10 +165,12 @@ export class AuthController {
             user.refreshToken = refreshToken;
             await user.save();
 
+            const maxAge = rememberMe ? 15 * 24 * 60 * 60 * 1000 : config.cookie.maxAge;
+
             res.cookie('token', accessToken, {
                 httpOnly: true,
                 secure: config.nodeEnv === 'production',
-                maxAge: config.cookie.maxAge,
+                maxAge: maxAge,
                 sameSite: 'strict',
             });
 
@@ -173,6 +194,7 @@ export class AuthController {
                     progress: user.progress,
                     isPremium: user.isPremium,
                     settings: user.settings,
+                    points: user.points,
                 },
                 token: accessToken,
             });
@@ -193,23 +215,37 @@ export class AuthController {
         }
     }
 
-    // Google login — verify Google ID token and create/find user
+    // Google login — verify Google token and create/find user
     static async googleLogin(req: AuthRequest, res: Response): Promise<void> {
         try {
-            const { idToken } = req.body;
-            if (!idToken) {
-                res.status(400).json({ error: 'Google ID token is required' });
+            const { idToken, accessToken: googleAccessToken, referralCode } = req.body;
+            if (!idToken && !googleAccessToken) {
+                res.status(400).json({ error: 'Google token is required' });
                 return;
             }
 
-            // Verify the Google ID token by calling Google's tokeninfo endpoint
-            const googleRes = await fetch(`https://oauth2.googleapis.com/tokeninfo?id_token=${idToken}`);
-            if (!googleRes.ok) {
-                res.status(401).json({ error: 'Invalid Google token' });
-                return;
+            let googleData: any;
+
+            if (googleAccessToken) {
+                // Fetch user info using access token
+                const googleRes = await fetch('https://www.googleapis.com/oauth2/v3/userinfo', {
+                    headers: { Authorization: `Bearer ${googleAccessToken}` }
+                });
+                if (!googleRes.ok) {
+                    res.status(401).json({ error: 'Invalid Google access token' });
+                    return;
+                }
+                googleData = await googleRes.json();
+            } else {
+                // Verify the Google ID token — this is the fallback
+                const googleRes = await fetch(`https://oauth2.googleapis.com/tokeninfo?id_token=${idToken}`);
+                if (!googleRes.ok) {
+                    res.status(401).json({ error: 'Invalid Google ID token' });
+                    return;
+                }
+                googleData = await googleRes.json();
             }
 
-            const googleData = await googleRes.json() as any;
             const email = googleData.email;
             const displayName = googleData.name || googleData.email?.split('@')[0];
             const photoURL = googleData.picture;
@@ -226,11 +262,14 @@ export class AuthController {
             if (!user) {
                 isNewUser = true;
                 const hashedPassword = await hashPassword(Math.random().toString(36));
+                const affiliateCode = Math.random().toString(36).substring(2, 8).toUpperCase();
                 user = await User.create({
                     email,
                     password: hashedPassword,
                     displayName,
                     photoURL,
+                    affiliateCode,
+                    referredBy: referralCode || undefined,
                     progress: {
                         totalLessons: 0,
                         completedLessons: 0,
@@ -244,6 +283,14 @@ export class AuthController {
                         theme: 'system',
                     },
                 });
+
+                // Award +100 pts to referrer if valid code
+                if (referralCode) {
+                    await User.findOneAndUpdate(
+                        { affiliateCode: referralCode },
+                        { $inc: { points: 100 } }
+                    );
+                }
             }
 
             const accessToken = generateAccessToken(user._id.toString());
@@ -276,6 +323,7 @@ export class AuthController {
                     schoolName: user.schoolName,
                     studyLocation: user.studyLocation,
                     role: user.role,
+                    points: user.points,
                 },
                 token: accessToken,
                 isNewUser,

@@ -220,8 +220,16 @@ def scrape_article(url: str) -> dict:
     }
 
 def save_outputs(data: dict):
+    # Determine the directory relative to the script
+    current_dir = Path(__file__).resolve().parent
+    data_dir = current_dir.parent / "data"
+    data_dir.mkdir(exist_ok=True)
+    
+    json_path = data_dir / "moutamadris_content.json"
+    xlsx_path = data_dir / "moutamadris_content.xlsx"
+
     # JSON
-    with open("moutamadris_content.json", "w", encoding="utf-8") as f:
+    with open(json_path, "w", encoding="utf-8") as f:
         json.dump(data, f, ensure_ascii=False, indent=2)
     
     # Simple Excel summary
@@ -242,8 +250,8 @@ def save_outputs(data: dict):
         elif b_type == "image":
             ws.append([b_type, "Image", block.get("src")])
 
-    wb.save("moutamadris_content.xlsx")
-    print("✅ Saved to moutamadris_content.json and moutamadris_content.xlsx")
+    wb.save(xlsx_path)
+    print(f"✅ Saved to {json_path} and {xlsx_path}")
 
 def run():
     article_data = scrape_article(TARGET_URL)

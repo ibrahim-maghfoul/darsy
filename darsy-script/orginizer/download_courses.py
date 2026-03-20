@@ -233,7 +233,7 @@ def main():
 
     if total_pdfs > 0:
         # Use ThreadPoolExecutor to speed up downloads
-        max_workers = min(20, total_pdfs)  # Use up to 20 threads for massive speedup
+        max_workers = min(50, total_pdfs)  # Use up to 20 threads for massive speedup
         print(f"🚀 Starting download with {max_workers} threads...")
         with ThreadPoolExecutor(max_workers=max_workers) as executor:
             futures = [

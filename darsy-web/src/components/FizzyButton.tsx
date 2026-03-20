@@ -67,11 +67,7 @@ const FizzyButton: React.FC<FizzyButtonProps> = ({ href, icon, title, subtitle, 
                         <Check size={32} strokeWidth={3} />
                     </div>
 
-                    <div className="b_l_quad">
-                        {Array.from({ length: 52 }).map((_, i) => (
-                            <div key={i} className="button_spots" />
-                        ))}
-                    </div>
+
                 </div>
             </label>
         </div>

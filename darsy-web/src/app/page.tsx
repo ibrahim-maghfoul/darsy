@@ -6,10 +6,11 @@ import { CoursesSection } from "@/components/CoursesSection";
 import { ChatFeatureSection } from "@/components/ChatFeatureSection";
 import { WorksSection } from "@/components/WorksSection";
 import { TeamSection } from "@/components/TeamSection";
+import { PlatformFeatures } from "@/components/PlatformFeatures";
 import Link from "next/link";
 import { useTranslations } from 'next-intl';
 import { useState, useEffect, useRef } from "react";
-import { motion, AnimatePresence } from "framer-motion";
+import { AnimatePresence, motion } from "framer-motion";
 
 export default function Home() {
   const t = useTranslations('Trusted');
@@ -39,15 +40,10 @@ export default function Home() {
   }, []);
 
   return (
-    <motion.div
-      initial={{ opacity: 0 }}
-      animate={{ opacity: 1 }}
-      transition={{ duration: 0.6 }}
-      className="min-h-screen font-roboto bg-white selection:bg-green/10 selection:text-green"
-    >
+    <div className="min-h-screen font-roboto bg-white selection:bg-green/10 selection:text-green">
       <div className="absolute top-0 left-0 w-full h-[120vh] bg-gradient-to-b from-green/[0.03] to-transparent pointer-events-none" />
 
-      <main className="flex flex-col pt-[72px]">
+      <main className="flex flex-col pt-4 md:pt-[72px]">
         <HeroSection />
 
         {/* Trusted Strip */}
@@ -81,6 +77,7 @@ export default function Home() {
           <CoursesSection />
         </div>
         <WorksSection />
+        <PlatformFeatures />
         <TeamSection />
 
         <AnimatePresence>
@@ -90,7 +87,7 @@ export default function Home() {
                 initial={{ opacity: 0, scale: 0.8, y: 20 }}
                 animate={{ opacity: 1, scale: 1, y: 0 }}
                 exit={{ opacity: 0, scale: 0.8, y: 20 }}
-                className="fixed bottom-8 right-8 bg-dark text-white font-semibold text-sm p-[14px_26px] rounded-full shadow-[0_6px_28px_rgba(0,0,0,0.28)] z-[100] transition-all hover:-translate-y-0.5 hover:shadow-[0_10px_36px_rgba(0,0,0,0.35)]"
+                className="fixed bottom-24 right-4 md:bottom-8 md:right-8 bg-dark text-white font-semibold text-sm p-[14px_26px] rounded-full shadow-[0_6px_28px_rgba(0,0,0,0.28)] z-[100] transition-all hover:-translate-y-0.5 hover:shadow-[0_10px_36px_rgba(0,0,0,0.35)]"
               >
                 {commonT('start_learning')} →
               </motion.button>
@@ -99,7 +96,6 @@ export default function Home() {
         </AnimatePresence>
       </main>
 
-      {/* Footer newsletter spacing */}
-    </motion.div>
+    </div>
   );
 }

@@ -64,6 +64,12 @@ export class ProgressController {
                 user.progress.videosWatched = (user.progress.videosWatched || 0) + 1;
             }
 
+            // Award points: 2 pts per opened resource
+            user.points = (user.points || 0) + 2;
+
+            // Points-to-premium: 1000 pts = 2 weeks premium (once per calendar month)
+            ProgressController.maybeGrantPointsPremium(user);
+
             user.markModified('progress');
             await user.save();
 
@@ -71,6 +77,25 @@ export class ProgressController {
         } catch (error) {
             console.error('Track resource view error:', error);
             res.status(500).json({ error: 'Failed to track resource view' });
+        }
+    }
+
+    // Helper: grant 2 weeks premium if user hits 1000 pts and hasn't been rewarded this month
+    private static maybeGrantPointsPremium(user: any): void {
+        if ((user.points || 0) >= 1000 && user.subscription?.plan === 'free') {
+            const now = new Date();
+            const lastGrant = user.pointsPremiumGrantedAt;
+            const alreadyGrantedThisMonth = lastGrant &&
+                lastGrant.getFullYear() === now.getFullYear() &&
+                lastGrant.getMonth() === now.getMonth();
+            if (!alreadyGrantedThisMonth) {
+                user.subscription = {
+                    plan: 'premium',
+                    billingCycle: 'none',
+                    expiresAt: new Date(now.getTime() + 14 * 24 * 60 * 60 * 1000), // +14 days
+                };
+                user.pointsPremiumGrantedAt = now;
+            }
         }
     }
 
@@ -177,8 +202,14 @@ export class ProgressController {
                 } else if (resourceType === 'video') {
                     user.progress.videosWatched = (user.progress.videosWatched || 0) + 1;
                 }
+
+                // Award points: 10 pts per completed resource
+                user.points = (user.points || 0) + 10;
+
             } else if (!isCompleted && wasCompleted) {
                 lessonProgress.completedResources = lessonProgress.completedResources.filter(id => id !== resourceId);
+                // Deduct points when uncompleting
+                user.points = Math.max(0, (user.points || 0) - 10);
             }
 
             lessonProgress.lastAccessed = new Date();

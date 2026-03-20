@@ -1,11 +1,37 @@
 import express from 'express';
-import { authMiddleware } from '../middleware/auth';
+import { authMiddleware, adminMiddleware } from '../middleware/auth';
 import Message from '../models/Message';
 
 import ChatRoom from '../models/ChatRoom';
 import { UserReport } from '../models/UserReport';
 
 const router = express.Router();
+
+// Admin: Get all chat rooms
+router.get('/rooms', authMiddleware, adminMiddleware, async (_req: express.Request, res: express.Response): Promise<void> => {
+    try {
+        const rooms = await ChatRoom.find({}).sort({ lastMessageAt: -1, createdAt: -1 });
+        const withCounts = await Promise.all(rooms.map(async (room) => {
+            const messageCount = await Message.countDocuments({ chatRoomId: room._id });
+            return { ...room.toObject(), messageCount };
+        }));
+        res.json(withCounts);
+    } catch (error) {
+        res.status(500).json({ error: 'Failed to get rooms' });
+    }
+});
+
+// Admin: Delete a chat room and its messages
+router.delete('/rooms/:id', authMiddleware, adminMiddleware, async (req: express.Request, res: express.Response): Promise<void> => {
+    try {
+        const room = await ChatRoom.findByIdAndDelete(req.params.id);
+        if (!room) { res.status(404).json({ error: 'Room not found' }); return; }
+        await Message.deleteMany({ chatRoomId: req.params.id });
+        res.json({ message: 'Room deleted' });
+    } catch (error) {
+        res.status(500).json({ error: 'Failed to delete room' });
+    }
+});
 
 // Get chat history for a specific room (resolved by guidance + level)
 router.get('/history', authMiddleware, async (req: express.Request, res: express.Response): Promise<void> => {
