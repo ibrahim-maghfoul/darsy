@@ -1,18 +1,24 @@
-import { Router } from 'express';
+import { Router, Request, Response, NextFunction } from 'express';
 import { DataController } from '../controllers/dataController';
 import { authMiddleware, adminMiddleware } from '../middleware/auth';
 import { resourceUpload, verifyUploadedFile } from '../middleware/upload';
 
 const router = Router();
 
+// Cache-Control for semi-static curriculum data (browser + CDN can cache for 60s, stale-while-revalidate for 5 min)
+const curriculumCache = (_req: Request, res: Response, next: NextFunction) => {
+    res.set('Cache-Control', 'public, max-age=60, stale-while-revalidate=300');
+    next();
+};
+
 // --- Public read endpoints ---
-router.get('/schools', DataController.getSchools);
-router.get('/levels/:schoolId', DataController.getLevels);
-router.get('/guidances/:levelId', DataController.getGuidances);
-router.get('/subjects/:guidanceId', DataController.getSubjects);
-router.get('/lessons/:subjectId', DataController.getLessons);
+router.get('/schools', curriculumCache, DataController.getSchools);
+router.get('/levels/:schoolId', curriculumCache, DataController.getLevels);
+router.get('/guidances/:levelId', curriculumCache, DataController.getGuidances);
+router.get('/subjects/:guidanceId', curriculumCache, DataController.getSubjects);
+router.get('/lessons/:subjectId', curriculumCache, DataController.getLessons);
 router.get('/lesson/:lessonId', DataController.getLessonById);
-router.get('/school-services', DataController.getSchoolServices);
+router.get('/school-services', curriculumCache, DataController.getSchoolServices);
 router.get('/guidance-stats/global', DataController.getGlobalStats);
 router.get('/guidance-stats/:guidanceId', DataController.getGuidanceStats);
 

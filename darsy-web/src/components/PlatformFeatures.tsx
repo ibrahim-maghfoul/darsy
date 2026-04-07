@@ -1,7 +1,7 @@
 "use client";
 
-import { useEffect, useRef, useState, useCallback } from "react";
-import { motion } from "framer-motion";
+import { useEffect, useId, useRef, useState, useCallback, memo } from "react";
+import { useTranslations } from "next-intl";
 import {
   BarChart2, MessageSquare, Headphones, BookOpen, Star, Video,
   CloudOff, Users, Compass, Zap, Shield, Globe, TrendingUp,
@@ -24,8 +24,12 @@ type CardDef = {
   back: { Icon: LucideIcon; title: string; desc: string };
 };
 
-// ─── Textures ─────────────────────────────────────────────────────────────────
-const getTexture = (name: string, color: string): React.CSSProperties => {
+// ─── Textures (cached) ───────────────────────────────────────────────────────
+const _textureCache = new Map<string, React.CSSProperties>();
+function getTexture(name: string, color: string): React.CSSProperties {
+  const key = name + "|" + color;
+  let cached = _textureCache.get(key);
+  if (cached) return cached;
   const s: Record<string, React.CSSProperties> = {
     "t-grid": { backgroundImage: `linear-gradient(${color} 1px,transparent 1px),linear-gradient(90deg,${color} 1px,transparent 1px)`, backgroundSize: "12px 12px" },
     "t-dots": { backgroundImage: `radial-gradient(circle,${color} 1.2px,transparent 1.2px)`, backgroundSize: "8px 8px" },
@@ -33,10 +37,10 @@ const getTexture = (name: string, color: string): React.CSSProperties => {
     "t-dash": { backgroundImage: `repeating-linear-gradient(0deg,transparent,transparent 4px,${color} 4px,${color} 5px)` },
     "t-diagonal": { backgroundImage: `repeating-linear-gradient(45deg,${color},${color} 1px,transparent 1px,transparent 8px)` },
     "t-cross-hatch": { backgroundImage: `repeating-linear-gradient(45deg,${color},${color} 1px,transparent 1px,transparent 7px),repeating-linear-gradient(-45deg,${color},${color} 1px,transparent 1px,transparent 7px)` },
-    "t-zigzag": { 
+    "t-zigzag": {
       backgroundImage: `linear-gradient(135deg,${color} 25%,transparent 25%), linear-gradient(225deg,${color} 25%,transparent 25%), linear-gradient(315deg,${color} 25%,transparent 25%), linear-gradient(45deg,${color} 25%,transparent 25%)`,
       backgroundPosition: "-8px 0, -8px 0, 0 0, 0 0",
-      backgroundSize: "16px 16px" 
+      backgroundSize: "16px 16px"
     },
     "t-waves": { backgroundImage: `repeating-radial-gradient(circle at 0 50%,transparent 0,transparent 5px,${color} 6px,transparent 7px)`, backgroundSize: "13px 13px" },
     "t-hexagons": { backgroundImage: `radial-gradient(circle farthest-side at 0% 50%,transparent 23%,${color} 24%,${color} 26%,transparent 27%,transparent 49%),radial-gradient(circle farthest-side at 100% 50%,transparent 23%,${color} 24%,${color} 26%,transparent 27%)`, backgroundSize: "14px 8px" },
@@ -44,8 +48,10 @@ const getTexture = (name: string, color: string): React.CSSProperties => {
     "t-checker": { backgroundImage: `linear-gradient(45deg,${color} 25%,transparent 25%,transparent 75%,${color} 75%)`, backgroundSize: "10px 10px" },
     "t-herringbone": { backgroundImage: `repeating-linear-gradient(60deg,${color},${color} 1px,transparent 1px,transparent 10px),repeating-linear-gradient(-60deg,${color},${color} 1px,transparent 1px,transparent 10px)` },
   };
-  return s[name] || {};
-};
+  cached = s[name] || {};
+  _textureCache.set(key, cached);
+  return cached;
+}
 
 const CELL = 82;
 const GAP = 6;
@@ -138,6 +144,175 @@ const OUTER_SLIDE: Record<string, { hidden: string; visible: string }> = {
   oBR: { hidden: "translate(120%,120%)", visible: "translate(0,0)" },
 };
 
+// ─── Spider Circuit ───────────────────────────────────────────────────────────
+// 8 lines — pairs share first segments so sine frequencies align on overlap
+const CIRCUIT_LINES = [
+  // Top pair (shared first segment V300)
+  "M720,500 V300 H420 V0",
+  "M720,500 V300 H1020 V0",
+  // Bottom pair (shared first segment V660)
+  "M720,500 V660 H340 V800",
+  "M720,500 V660 H1100 V800",
+  // Left pair (shared first segment H500)
+  "M720,500 H500 V280 H0",
+  "M720,500 H500 V700 H0",
+  // Right pair (shared first segment H940)
+  "M720,500 H940 V280 H1440",
+  "M720,500 H940 V700 H1440",
+];
+
+const CIRCUIT_NODES = [
+  { cx: 720, cy: 500, r: 5.5 }, // center
+  { cx: 420, cy: 300, r: 2.5 },
+  { cx: 1020, cy: 300, r: 2.5 },
+  { cx: 340, cy: 660, r: 2.5 },
+  { cx: 1100, cy: 660, r: 2.5 },
+  { cx: 500, cy: 280, r: 2.5 },
+  { cx: 500, cy: 700, r: 2.5 },
+  { cx: 940, cy: 280, r: 2.5 },
+  { cx: 940, cy: 700, r: 2.5 },
+];
+
+// ─── Sinusoidal companion path generator ─────────────────────────────────────
+// Converts an M/V/H path into two sinusoidal wave paths, one on each side.
+// Each straight segment is sampled and offset perpendicular by a sine function.
+// Using integer freq ensures sin(freq·2π)=0 at segment endpoints → clean joins.
+function makeSineCompanions(d: string, amp = 5): [string, string] {
+  const pts: [number, number][] = [];
+  let cx = 0, cy = 0;
+  for (const tok of d.trim().split(/\s+/)) {
+    if (tok[0] === 'M') { [cx, cy] = tok.slice(1).split(',').map(Number); pts.push([cx, cy]); }
+    else if (tok[0] === 'V') { cy = +tok.slice(1); pts.push([cx, cy]); }
+    else if (tok[0] === 'H') { cx = +tok.slice(1); pts.push([cx, cy]); }
+  }
+  const a1: string[] = [], a2: string[] = [];
+  for (let s = 0; s < pts.length - 1; s++) {
+    const [x1, y1] = pts[s], [x2, y2] = pts[s + 1];
+    const dx = x2 - x1, dy = y2 - y1;
+    const len = Math.sqrt(dx * dx + dy * dy);
+    if (len < 1) continue;
+    const nx = -dy / len, ny = dx / len; 
+
+    if (s === 0) {
+      a1.push(`M${x1.toFixed(1)},${y1.toFixed(1)}`);
+      a2.push(`M${x1.toFixed(1)},${y1.toFixed(1)}`);
+    }
+
+    const freq = Math.max(1, Math.round(len / 55));
+    const halfPeriods = freq * 2;
+    const hpLen = len / halfPeriods;
+
+    for (let i = 0; i < halfPeriods; i++) {
+        const ef = (i + 1) * hpLen;
+        const epx = x1 + dx * (ef / len);
+        const epy = y1 + dy * (ef / len);
+
+        if (i === 0) {
+            const cf = 0.5 * hpLen;
+            const px = x1 + dx * (cf / len);
+            const py = y1 + dy * (cf / len);
+            const cp1x = px + nx * (2 * amp), cp1y = py + ny * (2 * amp);
+            const cp2x = px - nx * (2 * amp), cp2y = py - ny * (2 * amp);
+            a1.push(`Q${cp1x.toFixed(1)},${cp1y.toFixed(1)} ${epx.toFixed(1)},${epy.toFixed(1)}`);
+            a2.push(`Q${cp2x.toFixed(1)},${cp2y.toFixed(1)} ${epx.toFixed(1)},${epy.toFixed(1)}`);
+        } else {
+            a1.push(`T${epx.toFixed(1)},${epy.toFixed(1)}`);
+            a2.push(`T${epx.toFixed(1)},${epy.toFixed(1)}`);
+        }
+    }
+  }
+  return [a1.join(' '), a2.join(' ')];
+}
+
+// Precomputed once at module level — no runtime cost in the component
+const SINE_A = CIRCUIT_LINES.map(d => makeSineCompanions(d, 8)[0]);
+const SINE_B = CIRCUIT_LINES.map(d => makeSineCompanions(d, 8)[1]);
+
+// ─── Keyframes ────────────────────────────────────────────────────────────────
+// Injected into <head> once — Chrome ignores @keyframes inside SVG <defs><style>
+const PF_STYLE_ID = "pf-circuit-keyframes";
+function ensureKeyframes() {
+  if (typeof document === "undefined" || document.getElementById(PF_STYLE_ID)) return;
+  const s = document.createElement("style");
+  s.id = PF_STYLE_ID;
+  s.textContent = `
+    @keyframes pfDraw  { from{stroke-dashoffset:1500} to{stroke-dashoffset:0} }
+    @keyframes pfPulse { 0%,100%{opacity:.45} 50%{opacity:1} }
+    @keyframes pfWave  {
+      0%   { stroke-dashoffset: 300; opacity: 0; }
+      6%   { opacity: 0.9; }
+      65%  { stroke-dashoffset: -1100; opacity: 0.8; }
+      82%  { stroke-dashoffset: -1900; opacity: 0; }
+      100% { stroke-dashoffset: -1900; opacity: 0; }
+    }
+  `;
+  document.head.appendChild(s);
+}
+
+function SpiderCircuit({ active }: { active: boolean }) {
+  const uid = useId().replace(/\W/g, "");
+  useEffect(() => { ensureKeyframes(); }, []);
+
+  return (
+    <svg
+      aria-hidden="true"
+      className="hidden md:block"
+      style={{
+        position:"absolute", inset:0, width:"100%", height:"100%", pointerEvents:"none", zIndex:0
+      }}
+      viewBox="0 0 1440 800"
+      preserveAspectRatio="xMidYMid slice"
+    >
+      {/* All path data defined once — core lines + sinusoidal companions */}
+      <defs>
+        {CIRCUIT_LINES.map((d, i) => <path key={`d${i}`}  id={`${uid}L${i}`} d={d} />)}
+        {SINE_A.map(       (d, i) => <path key={`da${i}`} id={`${uid}A${i}`} d={d} />)}
+        {SINE_B.map(       (d, i) => <path key={`db${i}`} id={`${uid}B${i}`} d={d} />)}
+      </defs>
+
+      {active && <>
+        {CIRCUIT_LINES.map((_, i) => {
+          const dc = i * 0.05;
+          const dw = dc + 1.2;
+          const dw2 = dw + 0.4; // second wave staggered behind first
+          return (
+            <g key={`wG${i}`}>
+              <use href={`#${uid}L${i}`} fill="none"
+                stroke="rgba(0,215,105,0.44)" strokeWidth="1.5"
+                style={{ strokeDasharray:1500, strokeDashoffset:1500,
+                  animation:`pfDraw 3s ease-out ${dc}s forwards` }} />
+              {/* Wave A (side 1) */}
+              <use href={`#${uid}A${i}`} fill="none"
+                stroke="rgba(0,140,65,0.55)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"
+                style={{ strokeDasharray:"280 9999", strokeDashoffset:300,
+                  animation:`pfWave 9s ease-in-out ${dw}s infinite` }} />
+              <use href={`#${uid}A${i}`} fill="none"
+                stroke="rgba(0,255,148,0.9)" strokeWidth="6" strokeLinecap="round"
+                style={{ strokeDasharray:"0 280 0.01 9998.99", strokeDashoffset:300,
+                  animation:`pfWave 9s ease-in-out ${dw}s infinite` }} />
+              {/* Wave B (side 2) */}
+              <use href={`#${uid}B${i}`} fill="none"
+                stroke="rgba(0,140,65,0.55)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"
+                style={{ strokeDasharray:"280 9999", strokeDashoffset:300,
+                  animation:`pfWave 9s ease-in-out ${dw2}s infinite` }} />
+              <use href={`#${uid}B${i}`} fill="none"
+                stroke="rgba(0,255,148,0.9)" strokeWidth="6" strokeLinecap="round"
+                style={{ strokeDasharray:"0 280 0.01 9998.99", strokeDashoffset:300,
+                  animation:`pfWave 9s ease-in-out ${dw2}s infinite` }} />
+            </g>
+          );
+        })}
+        {CIRCUIT_NODES.map((n, i) => (
+          <circle key={`n${i}`} cx={n.cx} cy={n.cy}
+            r={i === 0 ? n.r * 1.4 : n.r}
+            fill={i === 0 ? "rgba(0,240,130,0.85)" : "rgba(0,220,120,0.65)"}
+            style={{ animation:`pfPulse 2.4s ease-in-out ${i*0.14+2}s infinite` }} />
+        ))}
+      </>}
+    </svg>
+  );
+}
+
 // ─── Countdown ring ───────────────────────────────────────────────────────────
 function RingCountdown({ total, current }: { total: number; current: number }) {
   const r = 28, circ = 2 * Math.PI * r, dash = circ * (current / total);
@@ -153,6 +328,7 @@ function RingCountdown({ total, current }: { total: number; current: number }) {
 
 // ─── Center card ──────────────────────────────────────────────────────────────
 function CenterCard({ card, isExpanded, started, onClick }: { card: CardDef; isExpanded: boolean; started: boolean; onClick: () => void }) {
+  const t = useTranslations("PlatformFeatures");
   const TOTAL = 3;
   const [count, setCount] = useState(TOTAL);
   const [phase, setPhase] = useState<"counting" | "enjoy" | "collapsed">("counting");
@@ -181,7 +357,7 @@ function CenterCard({ card, isExpanded, started, onClick }: { card: CardDef; isE
           {phase === "collapsed" ? (
             <div style={{ position: "relative", zIndex: 1, display: "flex", flexDirection: "column", alignItems: "center", gap: 5 }}>
               <card.front.Icon size={20} color="#fff" strokeWidth={2} />
-              <span style={{ fontWeight: 800, fontSize: 9.5, color: "#fff" }}>Expand</span>
+              <span style={{ fontWeight: 800, fontSize: 9.5, color: "#fff" }}>{t("card_status.expand")}</span>
             </div>
           ) : phase === "counting" ? (
             <>
@@ -191,8 +367,8 @@ function CenterCard({ card, isExpanded, started, onClick }: { card: CardDef; isE
           ) : (
             <div style={{ position: "relative", zIndex: 1, display: "flex", flexDirection: "column", alignItems: "center", gap: 4 }}>
               <Heart size={20} color="#fff" strokeWidth={2} fill="rgba(255,255,255,0.35)" />
-              <span style={{ fontWeight: 900, fontSize: 12, color: "#fff" }}>Enjoy!</span>
-              <span style={{ fontSize: 7.5, color: "rgba(255,255,255,0.7)" }}>tap to collapse</span>
+              <span style={{ fontWeight: 900, fontSize: 12, color: "#fff" }}>{t("card_status.enjoy")}</span>
+              <span style={{ fontSize: 7.5, color: "rgba(255,255,255,0.7)" }}>{t("card_status.tap_to_collapse")}</span>
             </div>
           )}
         </div>
@@ -202,10 +378,19 @@ function CenterCard({ card, isExpanded, started, onClick }: { card: CardDef; isE
 }
 
 // ─── Generic card ─────────────────────────────────────────────────────────────
-function Card({ card, isFlipped, isRevealed, isExpanded, onClick, onMouseEnter, onMouseLeave }: {
+// Shared constant base style — avoids creating a new object per Card per render
+const FACE_BASE: React.CSSProperties = {
+  position: "absolute", inset: 0, borderRadius: 13,
+  backfaceVisibility: "hidden", transition: "0.5s cubic-bezier(0.645,0.045,0.355,1)",
+  overflow: "hidden", display: "flex", flexDirection: "column",
+  alignItems: "center", justifyContent: "center", textAlign: "center", padding: 10,
+};
+
+const Card = memo(function Card({ card, isFlipped, isRevealed, isExpanded, onClick, onMouseEnter, onMouseLeave }: {
   card: CardDef; isFlipped: boolean; isRevealed: boolean; isExpanded: boolean;
   onClick: () => void; onMouseEnter: () => void; onMouseLeave: () => void;
 }) {
+  const t = useTranslations("PlatformFeatures");
   const isOuter = card.ring === 2;
   const slide = OUTER_SLIDE[card.id];
 
@@ -223,7 +408,6 @@ function Card({ card, isFlipped, isRevealed, isExpanded, onClick, onMouseEnter, 
       transform: isRevealed ? slide.visible : slide.hidden,
       pointerEvents: isRevealed ? "all" : "none",
       transition: "transform 0.65s cubic-bezier(0.34,1.18,0.64,1), opacity 0.4s ease",
-      willChange: "transform",
       position: "relative",
       cursor: "pointer",
     }
@@ -238,12 +422,7 @@ function Card({ card, isFlipped, isRevealed, isExpanded, onClick, onMouseEnter, 
     ? { width: "100%", height: "100%", transform: isExpanded ? "scale(1)" : "scale(0.80)", transformOrigin: card.transformOrigin || "center", transition: "transform 0.7s cubic-bezier(0.4,0,0.2,1)" }
     : { width: "100%", height: "100%" };
 
-  const faceBase: React.CSSProperties = {
-    position: "absolute", inset: 0, borderRadius: 13,
-    backfaceVisibility: "hidden", transition: "0.5s cubic-bezier(0.645,0.045,0.355,1)",
-    overflow: "hidden", display: "flex", flexDirection: "column",
-    alignItems: "center", justifyContent: "center", textAlign: "center", padding: 10,
-  };
+  const faceBase = FACE_BASE;
   const ct = "transform 0.45s cubic-bezier(0.4,0,0.2,1), opacity 0.35s ease";
   const frontContentStyle: React.CSSProperties = isFlipped
     ? card.flip === "v" ? { transform: "translateY(35%)", opacity: 0, transition: ct } : { transform: "translateX(35%)", opacity: 0, transition: ct }
@@ -259,26 +438,27 @@ function Card({ card, isFlipped, isRevealed, isExpanded, onClick, onMouseEnter, 
           <div style={{ position: "absolute", inset: 0, opacity: 0.05, zIndex: 0, ...getTexture(card.texture, "#009E60") }} />
           <div style={{ ...frontContentStyle, display: "flex", flexDirection: "column", alignItems: "center", gap: 6, position: "relative", zIndex: 1 }}>
             <card.front.Icon size={18} color="#009E60" strokeWidth={1.8} />
-            <span style={{ fontWeight: 700, fontSize: 9, color: "#003d25", lineHeight: 1.3, letterSpacing: "0.01em" }}>{card.front.title}</span>
+            <span style={{ fontWeight: 700, fontSize: 9, color: "#003d25", lineHeight: 1.3, letterSpacing: "0.01em" }}>{t(`cards.${card.id}.front`)}</span>
           </div>
         </div>
         <div style={{ ...faceBase, background: "linear-gradient(135deg,#00c471,#007a47)", zIndex: 1, ...backRest, ...backActive }}>
           <div style={{ position: "absolute", inset: 0, opacity: 0.16, zIndex: 0, ...getTexture(card.texture, "white") }} />
           <div style={{ ...backContentStyle, position: "relative", zIndex: 1, display: "flex", flexDirection: "column", alignItems: "center", gap: 5 }}>
             <card.back.Icon size={18} color="#ffffff" strokeWidth={1.8} />
-            <span style={{ fontWeight: 700, fontSize: 9, color: "#fff", lineHeight: 1.3 }}>{card.back.title}</span>
-            {card.back.desc && <span style={{ fontSize: 7.5, color: "rgba(255,255,255,0.88)", lineHeight: 1.4 }}>{card.back.desc}</span>}
+            <span style={{ fontWeight: 700, fontSize: 9, color: "#fff", lineHeight: 1.3 }}>{t(`cards.${card.id}.back_title`)}</span>
+            <span style={{ fontSize: 7.5, color: "rgba(255,255,255,0.88)", lineHeight: 1.4 }}>{t(`cards.${card.id}.back_desc`)}</span>
           </div>
         </div>
       </div>
     </div>
   );
-}
+});
 
 
 
 // ─── Main ─────────────────────────────────────────────────────────────────────
 export function PlatformFeatures() {
+  const t = useTranslations("PlatformFeatures");
   const [started, setStarted] = useState(false);
   const [expanded, setExpanded] = useState(false);
   const [flipped, setFlipped] = useState<Record<string, boolean>>({});
@@ -290,6 +470,7 @@ export function PlatformFeatures() {
   const autoFlipRef = useRef<Record<string, boolean>>({});
   const historyRef = useRef<string[]>([]);
   const hoveredRef = useRef<string | null>(null);
+  const visibleRef = useRef(false);
   const HISTORY_SIZE = 6;
 
   const revealOuter = useCallback(() => {
@@ -321,11 +502,9 @@ export function PlatformFeatures() {
   useEffect(() => {
     const el = sectionRef.current; if (!el) return;
     const obs = new IntersectionObserver(([e]) => {
-      // Relaxed threshold to 0.7 to ensure it triggers on most screens
-      if (e.isIntersecting && e.intersectionRatio >= 0.7) {
-        setStarted(true);
-      }
-    }, { threshold: [0, 0.7, 1.0] });
+      visibleRef.current = e.isIntersecting;
+      if (e.isIntersecting && e.intersectionRatio >= 0.3) setStarted(true);
+    }, { threshold: [0, 0.3] });
     obs.observe(el);
     return () => obs.disconnect();
   }, []);
@@ -338,6 +517,10 @@ export function PlatformFeatures() {
       return [...source].sort(() => Math.random() - 0.5).slice(0, count);
     }
     function autoFlip() {
+      if (!visibleRef.current) {
+        timerRef.current = setTimeout(autoFlip, 2000);
+        return;
+      }
       const revNow = revealedRef.current;
       const autoFl = autoFlipRef.current;
       const pool = ALL_CARDS.filter(c => {
@@ -350,11 +533,11 @@ export function PlatformFeatures() {
           historyRef.current = [...historyRef.current.slice(-(HISTORY_SIZE - 1)), pick.id];
           const t1 = setTimeout(() => {
             innerTimers.delete(t1);
-            autoFlipRef.current = { ...autoFlipRef.current, [pick.id]: true };
+            autoFlipRef.current[pick.id] = true;
             setFlipped(p => ({ ...p, [pick.id]: true }));
             const t2 = setTimeout(() => {
               innerTimers.delete(t2);
-              autoFlipRef.current = { ...autoFlipRef.current, [pick.id]: false };
+              autoFlipRef.current[pick.id] = false;
               setFlipped(p => ({ ...p, [pick.id]: false }));
             }, 2600);
             innerTimers.add(t2);
@@ -379,106 +562,89 @@ export function PlatformFeatures() {
     <section
       ref={sectionRef}
       className="py-16 md:py-24 bg-gradient-to-b from-white to-[#f0fbf5]"
-      style={{ overflow: "hidden" }}
+      style={{ overflow: "hidden", position: "relative" }}
     >
-      <div className="max-w-7xl mx-auto px-6 flex flex-col items-center gap-10 md:gap-12">
+      <SpiderCircuit active={started} />
+      <div className="max-w-7xl mx-auto px-6 flex flex-col items-center gap-10 md:gap-12" style={{ position: "relative", zIndex: 1 }}>
 
         {/* Header */}
-        <motion.div
-          initial={{ opacity: 0, y: -20 }}
-          whileInView={{ opacity: 1, y: 0 }}
-          viewport={{ once: true }}
-          transition={{ duration: 0.6 }}
-          className="text-center"
-        >
-          <span className="inline-block text-xs font-black uppercase tracking-widest text-[#009E60] mb-4 px-4 py-1.5 bg-[#009E60]/10 rounded-full">
-            Platform Features
-          </span>
+        <div className="text-center opacity-0 animate-[fadeSlideUp_0.6s_ease-out_0.1s_forwards]">
+          <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full border border-green/30 bg-green/5 text-[12px] font-semibold text-green/80 shadow-[0_0_12px_rgba(58,170,106,0.15)] mb-4">
+            <span className="w-1.5 h-1.5 rounded-full bg-green animate-pulse" />
+            {t("kicker")}
+          </div>
           <h2 className="text-3xl md:text-4xl lg:text-5xl font-black text-[#112A46] leading-tight">
-            Everything you need to <span className="text-[#009E60]">succeed</span>
+            {t("title1")}<span className="text-[#009E60]">{t("title_highlight")}</span>
           </h2>
-        </motion.div>
+        </div>
 
-        {/* ── Mobile: Vertical feature card list ── */}
-        <div className="md:hidden w-full grid grid-cols-2 gap-3">
-          {ALL_CARDS.filter(c => !c.isCenter).slice(0, 10).map((card, i) => {
+        {/* ── Mobile: Grid feature cards ── */}
+        <div className="md:hidden w-full grid grid-cols-3 gap-2 opacity-0 animate-[fadeSlideUp_0.5s_ease-out_0.2s_forwards]">
+          {ALL_CARDS.filter(c => !c.isCenter).map((card) => {
             const isFlippedMob = !!flipped[card.id];
             const isV = card.flip === "v";
             const CT = "transform 0.45s cubic-bezier(0.4,0,0.2,1), opacity 0.35s ease";
-            const frontOut  = isV ? "translateY(40%) rotateX(90deg)"  : "translateX(40%) rotateY(-90deg)";
-            const backRest  = isV ? "translateY(-40%) rotateX(-90deg)" : "translateX(-40%) rotateY(90deg)";
-            const isFeature = i === 1;
+            const frontOut = isV ? "translateY(40%) rotateX(90deg)" : "translateX(40%) rotateY(-90deg)";
+            const backRest = isV ? "translateY(-40%) rotateX(-90deg)" : "translateX(-40%) rotateY(90deg)";
             return (
-              <motion.div
+              <div
                 key={card.id}
-                initial={{ opacity: 0, y: 20 }}
-                whileInView={{ opacity: 1, y: 0 }}
-                viewport={{ once: true }}
-                transition={{ delay: i * 0.06, duration: 0.5 }}
                 onClick={() => setFlipped(p => ({ ...p, [card.id]: !p[card.id] }))}
-                className={`relative rounded-2xl cursor-pointer overflow-hidden${isFeature ? ' col-span-2' : ''}`}
-                style={{ height: isFeature ? 110 : 90, perspective: "600px", ...(isFeature ? { width: '80vw', justifySelf: 'center' } : {}) }}
+                className="relative rounded-2xl cursor-pointer overflow-hidden"
+                style={{ height: 88, perspective: "600px" }}
               >
                 {/* Front face */}
                 <div style={{
                   position: "absolute", inset: 0, display: "flex", flexDirection: "column",
-                  alignItems: "center", justifyContent: "center", gap: 8, padding: 14,
+                  alignItems: "center", justifyContent: "center", gap: 6, padding: 10,
                   borderRadius: 16, border: "1px solid rgba(0,158,96,0.15)",
                   background: "#ffffff", boxShadow: "0 2px 8px rgba(0,0,0,0.04)",
                   transition: CT,
                   transform: isFlippedMob ? frontOut : "translateY(0) translateX(0) rotateX(0deg) rotateY(0deg)",
                   opacity: isFlippedMob ? 0 : 1,
                 }}>
-                  <card.front.Icon size={22} color="#009E60" strokeWidth={1.8} />
-                  <span style={{ fontWeight: 700, fontSize: 10, color: "#003d25", textAlign: "center" }}>{card.front.title}</span>
+                  <card.front.Icon size={18} color="#009E60" strokeWidth={1.8} />
+                  <span style={{ fontWeight: 700, fontSize: 9, color: "#003d25", textAlign: "center", lineHeight: 1.3 }}>{t(`cards.${card.id}.front`)}</span>
                 </div>
-
                 {/* Back face */}
                 <div style={{
                   position: "absolute", inset: 0, display: "flex", flexDirection: "column",
-                  alignItems: "center", justifyContent: "center", gap: 6, padding: 14,
+                  alignItems: "center", justifyContent: "center", gap: 5, padding: 10,
                   borderRadius: 16, background: "linear-gradient(135deg,#00c471,#007a47)", overflow: "hidden",
                   transition: CT,
                   transform: isFlippedMob ? "translateY(0) translateX(0) rotateX(0deg) rotateY(0deg)" : backRest,
                   opacity: isFlippedMob ? 1 : 0,
                 }}>
                   <div style={{ position: "absolute", inset: 0, opacity: 0.15, ...getTexture(card.texture, "white") }} />
-                  <div style={{ position: "relative", zIndex: 1, display: "flex", flexDirection: "column", alignItems: "center", gap: 6 }}>
-                    <card.back.Icon size={20} color="#fff" strokeWidth={1.8} />
-                    <span style={{ fontWeight: 700, fontSize: 10, color: "#fff", textAlign: "center" }}>{card.back.title}</span>
-                    {card.back.desc && <span style={{ fontSize: 8.5, color: "rgba(255,255,255,0.8)", textAlign: "center" }}>{card.back.desc}</span>}
+                  <div style={{ position: "relative", zIndex: 1, display: "flex", flexDirection: "column", alignItems: "center", gap: 4 }}>
+                    <card.back.Icon size={16} color="#fff" strokeWidth={1.8} />
+                    <span style={{ fontWeight: 700, fontSize: 9, color: "#fff", textAlign: "center", lineHeight: 1.3 }}>{t(`cards.${card.id}.back_title`)}</span>
+                    {card.back.desc && <span style={{ fontSize: 7.5, color: "rgba(255,255,255,0.8)", textAlign: "center", lineHeight: 1.3 }}>{t(`cards.${card.id}.back_desc`)}</span>}
                   </div>
                 </div>
-              </motion.div>
+              </div>
             );
           })}
-          {/* Center card */}
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            whileInView={{ opacity: 1, y: 0 }}
-            viewport={{ once: true }}
-            transition={{ delay: 0.6 }}
-            className="rounded-2xl overflow-hidden cursor-pointer col-span-2"
+          {/* Center card — spans full row */}
+          <div
+            className="col-span-3 rounded-2xl overflow-hidden cursor-pointer"
             style={{
               background: "linear-gradient(135deg,#00c471,#009E60)",
-              padding: "18px",
-              display: "flex", alignItems: "center", justifyContent: "center", gap: 12,
-              boxShadow: "0 8px 28px rgba(0,140,70,0.35)"
+              padding: "14px",
+              display: "flex", alignItems: "center", justifyContent: "center", gap: 10,
+              boxShadow: "0 8px 28px rgba(0,140,70,0.3)"
             }}
+            onClick={() => !expanded ? revealOuter() : collapseAll()}
           >
-            <CENTER_CARD.front.Icon size={22} color="#fff" strokeWidth={2} />
-            <span style={{ fontWeight: 800, fontSize: 14, color: "#fff" }}>Explore All Features</span>
-          </motion.div>
+            <CENTER_CARD.front.Icon size={20} color="#fff" strokeWidth={2} />
+            <span style={{ fontWeight: 800, fontSize: 13, color: "#fff" }}>{t("cards.ctr.back_title")}</span>
+          </div>
         </div>
 
         {/* ── Desktop: Full interactive grid ── */}
-        <motion.div
-          initial={{ opacity: 0, scale: 0.95 }}
-          whileInView={{ opacity: 1, scale: 1 }}
-          viewport={{ once: true }}
-          transition={{ duration: 0.6, delay: 0.15 }}
-          className="hidden md:block"
-          style={{ width: fullW, height: fullH, overflow: "hidden", borderRadius: 16 }}
+        <div
+          className="hidden md:block opacity-0 animate-[fadeSlideUp_0.6s_ease-out_0.25s_forwards]"
+          style={{ width: fullW + 8, height: fullH + 8, padding: 4, overflow: "visible", borderRadius: 16 }}
         >
           <div style={{
             display: "grid",
@@ -502,7 +668,7 @@ export function PlatformFeatures() {
             ))}
             <CenterCard card={CENTER_CARD} isExpanded={expanded} started={started} onClick={() => handleCardClick(CENTER_CARD)} />
           </div>
-        </motion.div>
+        </div>
 
       </div>
     </section>

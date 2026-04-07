@@ -5,17 +5,35 @@ import { User } from '../models/User';
 import { Lesson } from '../models/Lesson';
 import { Subject } from '../models/Subject';
 
+// In-memory cache for lesson resource counts — avoids repeated DB hits
+const resourceCountCache = new Map<string, { count: number; expiresAt: number }>();
+const RESOURCE_COUNT_TTL = 10 * 60_000; // 10 minutes
+
+const DEFAULT_PROGRESS = { totalLessons: 0, completedLessons: 0, learningTime: 0, documentsOpened: 0, videosWatched: 0, usageTime: 0, savedNews: [], lessons: [] };
+
+function ensureProgress(user: any) {
+    if (!user.progress) user.progress = { ...DEFAULT_PROGRESS };
+    if (!user.progress.lessons) user.progress.lessons = [];
+}
+
 export class ProgressController {
     private static async getLessonTotalResources(lessonId: string): Promise<number> {
+        // Check cache first
+        const cached = resourceCountCache.get(lessonId);
+        if (cached && cached.expiresAt > Date.now()) return cached.count;
+
         try {
-            const lesson = await Lesson.findById(lessonId);
+            // Only fetch the array lengths we need, use lean() to skip hydration
+            const lesson = await Lesson.findById(lessonId, 'coursesPdf videos exercices exams resourses').lean();
             if (!lesson) return 0;
-            return (lesson.coursesPdf?.length || 0) +
+            const count = (lesson.coursesPdf?.length || 0) +
                 (lesson.videos?.length || 0) +
                 (lesson.exercices?.length || 0) +
                 (lesson.exams?.length || 0) +
                 (lesson.resourses?.length || 0);
-        } catch (e) {
+            resourceCountCache.set(lessonId, { count, expiresAt: Date.now() + RESOURCE_COUNT_TTL });
+            return count;
+        } catch {
             return 0;
         }
     }
@@ -25,49 +43,29 @@ export class ProgressController {
         try {
             const { lessonId, subjectId, resourceId, resourceType } = req.body;
 
-            const user = await User.findById(req.userId);
-            if (!user) {
-                res.status(404).json({ error: 'User not found' });
-                return;
-            }
+            // Use select() to only fetch fields we need
+            const user = await User.findById(req.userId).select('progress points subscription pointsPremiumGrantedAt');
+            if (!user) { res.status(404).json({ error: 'User not found' }); return; }
 
-            if (!user.progress) {
-                user.progress = { totalLessons: 0, completedLessons: 0, learningTime: 0, documentsOpened: 0, videosWatched: 0, usageTime: 0, savedNews: [], lessons: [] };
-            }
-            if (!user.progress.lessons) {
-                user.progress.lessons = [];
-            }
+            ensureProgress(user);
 
             let lessonIndex = user.progress.lessons.findIndex(l => l.lessonId === lessonId);
-            let lessonProgress;
 
             if (lessonIndex === -1) {
-                lessonProgress = {
-                    lessonId,
-                    subjectId,
-                    isFavorite: false,
-                    lastAccessed: new Date(),
-                    totalTimeSpent: 0,
+                user.progress.lessons.push({
+                    lessonId, subjectId, isFavorite: false,
+                    lastAccessed: new Date(), totalTimeSpent: 0,
                     completedResources: [],
                     totalResourcesCount: await ProgressController.getLessonTotalResources(lessonId),
-                };
-                user.progress.lessons.push(lessonProgress);
-                lessonIndex = user.progress.lessons.length - 1;
+                });
             } else {
-                lessonProgress = user.progress.lessons[lessonIndex];
-                lessonProgress.lastAccessed = new Date();
+                user.progress.lessons[lessonIndex].lastAccessed = new Date();
             }
 
-            if (resourceType === 'pdf') {
-                user.progress.documentsOpened = (user.progress.documentsOpened || 0) + 1;
-            } else if (resourceType === 'video') {
-                user.progress.videosWatched = (user.progress.videosWatched || 0) + 1;
-            }
+            if (resourceType === 'pdf') user.progress.documentsOpened = (user.progress.documentsOpened || 0) + 1;
+            else if (resourceType === 'video') user.progress.videosWatched = (user.progress.videosWatched || 0) + 1;
 
-            // Award points: 2 pts per opened resource
             user.points = (user.points || 0) + 2;
-
-            // Points-to-premium: 1000 pts = 2 weeks premium (once per calendar month)
             ProgressController.maybeGrantPointsPremium(user);
 
             user.markModified('progress');
@@ -80,7 +78,6 @@ export class ProgressController {
         }
     }
 
-    // Helper: grant 2 weeks premium if user hits 1000 pts and hasn't been rewarded this month
     private static maybeGrantPointsPremium(user: any): void {
         if ((user.points || 0) >= 1000 && user.subscription?.plan === 'free') {
             const now = new Date();
@@ -89,11 +86,7 @@ export class ProgressController {
                 lastGrant.getFullYear() === now.getFullYear() &&
                 lastGrant.getMonth() === now.getMonth();
             if (!alreadyGrantedThisMonth) {
-                user.subscription = {
-                    plan: 'premium',
-                    billingCycle: 'none',
-                    expiresAt: new Date(now.getTime() + 14 * 24 * 60 * 60 * 1000), // +14 days
-                };
+                user.subscription = { plan: 'premium', billingCycle: 'none', expiresAt: new Date(now.getTime() + 14 * 24 * 60 * 60 * 1000) };
                 user.pointsPremiumGrantedAt = now;
             }
         }
@@ -104,44 +97,41 @@ export class ProgressController {
         try {
             const { lessonId, resourceId, additionalTimeSpent, completionPercentage } = req.body;
 
-            const user = await User.findById(req.userId);
-            if (!user) {
-                res.status(404).json({ error: 'User not found' });
+            if (!lessonId || !resourceId) {
+                res.status(400).json({ error: 'lessonId and resourceId are required' });
                 return;
             }
 
-            if (!user.progress) {
-                user.progress = { totalLessons: 0, completedLessons: 0, learningTime: 0, documentsOpened: 0, videosWatched: 0, usageTime: 0, savedNews: [], lessons: [] };
-            }
-            if (!user.progress.lessons) {
-                user.progress.lessons = [];
-            }
+            const user = await User.findById(req.userId).select('progress');
+            if (!user) { res.status(404).json({ error: 'User not found' }); return; }
+
+            ensureProgress(user);
 
             const lessonIndex = user.progress.lessons.findIndex(l => l.lessonId === lessonId);
-            let lessonProgress;
 
             if (lessonIndex === -1) {
-                lessonProgress = {
-                    lessonId,
-                    subjectId: req.body.subjectId || '',
-                    isFavorite: false,
-                    lastAccessed: new Date(),
-                    totalTimeSpent: additionalTimeSpent,
+                let subjectId = req.body.subjectId || '';
+                if (!subjectId) {
+                    const lessonDoc = await Lesson.findById(lessonId, 'subjectId').lean();
+                    subjectId = lessonDoc?.subjectId || '';
+                }
+                user.progress.lessons.push({
+                    lessonId, subjectId, isFavorite: false,
+                    lastAccessed: new Date(), totalTimeSpent: additionalTimeSpent || 0,
                     completedResources: [],
                     totalResourcesCount: await ProgressController.getLessonTotalResources(lessonId),
-                };
-                user.progress.lessons.push(lessonProgress);
+                });
             } else {
-                lessonProgress = user.progress.lessons[lessonIndex];
-                lessonProgress.totalTimeSpent = (lessonProgress.totalTimeSpent || 0) + additionalTimeSpent;
-                lessonProgress.lastAccessed = new Date();
+                const lp = user.progress.lessons[lessonIndex];
+                lp.totalTimeSpent = (lp.totalTimeSpent || 0) + additionalTimeSpent;
+                lp.lastAccessed = new Date();
             }
 
+            // Compute totals in one pass
             let totalUsageSeconds = 0;
-            user.progress.lessons.forEach(lp => {
+            for (const lp of user.progress.lessons) {
                 totalUsageSeconds += lp.totalTimeSpent || 0;
-            });
-
+            }
             user.progress.usageTime = Math.round(totalUsageSeconds / 60);
             user.progress.learningTime = user.progress.usageTime;
 
@@ -160,64 +150,42 @@ export class ProgressController {
         try {
             const { lessonId, subjectId, resourceId, resourceType, isCompleted } = req.body;
 
-            const user = await User.findById(req.userId);
-            if (!user) {
-                res.status(404).json({ error: 'User not found' });
-                return;
-            }
+            const user = await User.findById(req.userId).select('progress points');
+            if (!user) { res.status(404).json({ error: 'User not found' }); return; }
 
-            if (!user.progress) {
-                user.progress = { totalLessons: 0, completedLessons: 0, learningTime: 0, documentsOpened: 0, videosWatched: 0, usageTime: 0, savedNews: [], lessons: [] };
-            }
-            if (!user.progress.lessons) {
-                user.progress.lessons = [];
-            }
+            ensureProgress(user);
 
             let lessonIndex = user.progress.lessons.findIndex(l => l.lessonId === lessonId);
-            let lessonProgress;
 
             if (lessonIndex === -1) {
-                lessonProgress = {
-                    lessonId,
-                    subjectId,
-                    isFavorite: false,
-                    lastAccessed: new Date(),
-                    totalTimeSpent: 0,
+                user.progress.lessons.push({
+                    lessonId, subjectId, isFavorite: false,
+                    lastAccessed: new Date(), totalTimeSpent: 0,
                     completedResources: [],
                     totalResourcesCount: await ProgressController.getLessonTotalResources(lessonId),
-                };
-                user.progress.lessons.push(lessonProgress);
+                });
                 lessonIndex = user.progress.lessons.length - 1;
-            } else {
-                lessonProgress = user.progress.lessons[lessonIndex];
             }
 
+            const lessonProgress = user.progress.lessons[lessonIndex];
             const wasCompleted = lessonProgress.completedResources.includes(resourceId);
 
             if (isCompleted && !wasCompleted) {
                 lessonProgress.completedResources.push(resourceId);
-
-                if (resourceType === 'pdf') {
-                    user.progress.documentsOpened = (user.progress.documentsOpened || 0) + 1;
-                } else if (resourceType === 'video') {
-                    user.progress.videosWatched = (user.progress.videosWatched || 0) + 1;
-                }
-
-                // Award points: 10 pts per completed resource
+                if (resourceType === 'pdf') user.progress.documentsOpened = (user.progress.documentsOpened || 0) + 1;
+                else if (resourceType === 'video') user.progress.videosWatched = (user.progress.videosWatched || 0) + 1;
                 user.points = (user.points || 0) + 10;
-
             } else if (!isCompleted && wasCompleted) {
                 lessonProgress.completedResources = lessonProgress.completedResources.filter(id => id !== resourceId);
-                // Deduct points when uncompleting
                 user.points = Math.max(0, (user.points || 0) - 10);
             }
 
             lessonProgress.lastAccessed = new Date();
 
             let totalUsageSeconds = 0;
-            user.progress.lessons.forEach(lp => {
+            for (const lp of user.progress.lessons) {
                 totalUsageSeconds += lp.totalTimeSpent || 0;
-            });
+            }
             user.progress.usageTime = Math.round(totalUsageSeconds / 60);
             user.progress.learningTime = user.progress.usageTime;
 
@@ -236,68 +204,58 @@ export class ProgressController {
         try {
             const { lessonId, subjectId } = req.body;
 
-            const user = await User.findById(req.userId);
-            if (!user) {
-                res.status(404).json({ error: 'User not found' });
+            const user = await User.findById(req.userId).select('progress');
+            if (!user) { res.status(404).json({ error: 'User not found' }); return; }
+
+            ensureProgress(user);
+
+            let lessonIndex = user.progress.lessons.findIndex(l => l.lessonId === lessonId);
+
+            if (lessonIndex === -1) {
+                user.progress.lessons.push({
+                    lessonId, subjectId, isFavorite: true,
+                    lastAccessed: new Date(), totalTimeSpent: 0,
+                    completedResources: [],
+                    totalResourcesCount: await ProgressController.getLessonTotalResources(lessonId),
+                });
+                user.markModified('progress');
+                await user.save();
+                res.json({ isFavorite: true });
                 return;
             }
 
-            if (!user.progress) {
-                user.progress = { totalLessons: 0, completedLessons: 0, learningTime: 0, documentsOpened: 0, videosWatched: 0, usageTime: 0, savedNews: [], lessons: [] };
-            }
-            if (!user.progress.lessons) {
-                user.progress.lessons = [];
-            }
-
-            let lessonIndex = user.progress.lessons.findIndex(l => l.lessonId === lessonId);
-            let lessonProgress;
-
-            if (lessonIndex === -1) {
-                lessonProgress = {
-                    lessonId,
-                    subjectId,
-                    isFavorite: false,
-                    lastAccessed: new Date(),
-                    totalTimeSpent: 0,
-                    completedResources: [],
-                    totalResourcesCount: await ProgressController.getLessonTotalResources(lessonId),
-                };
-                user.progress.lessons.push(lessonProgress);
-                lessonIndex = user.progress.lessons.length - 1;
-            } else {
-                lessonProgress = user.progress.lessons[lessonIndex];
-            }
-
-            lessonProgress.isFavorite = !lessonProgress.isFavorite;
+            user.progress.lessons[lessonIndex].isFavorite = !user.progress.lessons[lessonIndex].isFavorite;
 
             user.markModified('progress');
             await user.save();
 
-            res.json({ isFavorite: lessonProgress.isFavorite });
+            res.json({ isFavorite: user.progress.lessons[lessonIndex].isFavorite });
         } catch (error) {
             console.error('Toggle lesson favorite error:', error);
             res.status(500).json({ error: 'Failed to toggle favorite' });
         }
     }
 
-    // Get favorite lessons
+    // Get favorite lessons — parallel queries for enrichment
     static async getFavoriteLessons(req: AuthRequest, res: Response): Promise<void> {
         try {
-            const user = await User.findById(req.userId);
-            if (!user || !user.progress || !user.progress.lessons) {
-                res.json([]);
-                return;
-            }
+            const user = await User.findById(req.userId).select('progress.lessons').lean();
+            if (!user?.progress?.lessons) { res.json([]); return; }
 
             const favorites = user.progress.lessons
                 .filter(lesson => lesson.isFavorite)
                 .sort((a, b) => new Date(b.lastAccessed).getTime() - new Date(a.lastAccessed).getTime());
 
-            const lessonIds = favorites.map(f => f.lessonId);
-            const subjectIds = favorites.map(f => f.subjectId);
+            if (favorites.length === 0) { res.json([]); return; }
 
-            const lessonsInfo = await Lesson.find({ _id: { $in: lessonIds } }, '_id title').lean();
-            const subjectsInfo = await Subject.find({ _id: { $in: subjectIds } }, '_id title').lean();
+            const lessonIds = favorites.map(f => f.lessonId);
+            const subjectIds = [...new Set(favorites.map(f => f.subjectId))]; // deduplicate
+
+            // Parallel queries
+            const [lessonsInfo, subjectsInfo] = await Promise.all([
+                Lesson.find({ _id: { $in: lessonIds } }, '_id title').lean(),
+                Subject.find({ _id: { $in: subjectIds } }, '_id title').lean(),
+            ]);
 
             const lessonMap = new Map(lessonsInfo.map(l => [l._id, l.title]));
             const subjectMap = new Map(subjectsInfo.map(s => [s._id, s.title]));
@@ -321,13 +279,13 @@ export class ProgressController {
         }
     }
 
-    // Get subject progress
+    // Get subject progress — use lean() since we only read
     static async getSubjectProgress(req: AuthRequest, res: Response): Promise<void> {
         try {
             const { subjectId } = req.params;
 
-            const user = await User.findById(req.userId);
-            if (!user || !user.progress || !user.progress.lessons) {
+            const user = await User.findById(req.userId).select('progress.lessons').lean();
+            if (!user?.progress?.lessons) {
                 res.json({ completedResources: 0, totalResources: 0, progressPercentage: 0 });
                 return;
             }
@@ -335,12 +293,12 @@ export class ProgressController {
             let completedResources = 0;
             let totalResources = 0;
 
-            user.progress.lessons.forEach(lesson => {
+            for (const lesson of user.progress.lessons) {
                 if (lesson.subjectId === subjectId) {
                     completedResources += lesson.completedResources.length;
                     totalResources += lesson.totalResourcesCount;
                 }
-            });
+            }
 
             const progressPercentage = totalResources > 0 ? Math.round((completedResources / totalResources) * 100) : 0;
 
@@ -356,36 +314,26 @@ export class ProgressController {
         try {
             const { lessonId, subjectId, totalCount } = req.body;
 
-            const user = await User.findById(req.userId);
-            if (!user) {
-                res.status(404).json({ error: 'User not found' });
-                return;
-            }
+            const user = await User.findById(req.userId).select('progress');
+            if (!user) { res.status(404).json({ error: 'User not found' }); return; }
 
-            if (!user.progress) {
-                user.progress = { totalLessons: 0, completedLessons: 0, learningTime: 0, documentsOpened: 0, videosWatched: 0, usageTime: 0, savedNews: [], lessons: [] };
-            }
-            if (!user.progress.lessons) {
-                user.progress.lessons = [];
-            }
+            ensureProgress(user);
 
             let lessonIndex = user.progress.lessons.findIndex(l => l.lessonId === lessonId);
-            let lessonProgress;
 
             if (lessonIndex === -1) {
-                lessonProgress = {
-                    lessonId,
-                    subjectId,
-                    isFavorite: false,
-                    lastAccessed: new Date(),
-                    totalTimeSpent: 0,
+                user.progress.lessons.push({
+                    lessonId, subjectId, isFavorite: false,
+                    lastAccessed: new Date(), totalTimeSpent: 0,
                     completedResources: [],
                     totalResourcesCount: totalCount || await ProgressController.getLessonTotalResources(lessonId),
-                };
-                user.progress.lessons.push(lessonProgress);
+                });
             } else {
                 user.progress.lessons[lessonIndex].totalResourcesCount = totalCount;
             }
+
+            // Update resource count cache
+            if (totalCount) resourceCountCache.set(lessonId, { count: totalCount, expiresAt: Date.now() + RESOURCE_COUNT_TTL });
 
             user.markModified('progress');
             await user.save();
@@ -397,16 +345,13 @@ export class ProgressController {
         }
     }
 
-    // Get specific lesson progress
+    // Get specific lesson progress — lean read
     static async getLessonProgressById(req: AuthRequest, res: Response): Promise<void> {
         try {
             const { lessonId } = req.params;
 
-            const user = await User.findById(req.userId);
-            if (!user || !user.progress || !user.progress.lessons) {
-                res.json(null);
-                return;
-            }
+            const user = await User.findById(req.userId).select('progress.lessons').lean();
+            if (!user?.progress?.lessons) { res.json(null); return; }
 
             const progress = user.progress.lessons.find(l => l.lessonId === lessonId);
             res.json(progress || null);

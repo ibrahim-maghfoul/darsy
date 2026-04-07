@@ -38,24 +38,11 @@ function AnimatedConnectLine({ x1, y1, x2, y2, delay = 0 }: { x1: number, y1: nu
     );
 }
 
-function AnimatedShapePop({ shape, delay }: { shape: 'hex' | 'blob' | 'circle' | 'diamond', delay: number }) {
-    const base = {
-        fill: "#ffffff",
-        className: "anim-shape-pop",
-        pointerEvents: "none" as const,
-        style: { animationDelay: `${delay}s`, transformBox: 'fill-box' as const, transformOrigin: 'center' },
-    };
-    if (shape === 'hex') return (
-        <path {...base} d="M 239.6,24 Q 250,18 260.4,24 L 302,48 Q 312.4,54 312.4,66 L 312.4,114 Q 312.4,126 302,132 L 260.4,156 Q 250,162 239.6,156 L 198,132 Q 187.6,126 187.6,114 L 187.6,66 Q 187.6,54 198,48 Z" />
-    );
-    if (shape === 'blob') return (
-        <path {...base} d="M 110,151 C 123,151 122,162 134,169 C 146,176 155,170 161,181 C 168,192 159,197 159,210 C 159,223 168,228 161,239 C 155,250 146,244 134,251 C 122,258 123,269 110,269 C 97,269 98,258 86,251 C 74,244 65,250 59,239 C 52,228 61,223 61,210 C 61,197 52,192 59,181 C 65,170 74,176 86,169 C 98,162 97,151 110,151 Z" />
-    );
-    if (shape === 'circle') return (
-        <circle {...base} cx="390" cy="210" r="64" />
-    );
+function AnimatedShapePop({ x, y, delay }: { x: number, y: number, delay: number }) {
     return (
-        <path {...base} d="M 234.4,266 Q 250,250 265.6,266 L 310.4,310.4 Q 326,326 310.4,341.6 L 265.6,386 Q 250,402 234.4,386 L 189.6,341.6 Q 174,326 189.6,310.4 Z" />
+        <g transform={`translate(${x},${y})`} pointerEvents="none">
+            <circle cx="0" cy="0" r="50" fill="#ffffff" className="anim-shape-pop" style={{ animationDelay: `${delay}s`, opacity: 0 }} />
+        </g>
     );
 }
 
@@ -98,23 +85,6 @@ export function Diagram() {
     return (
         <div className="w-[clamp(300px,44vw,500px)] relative shrink-0 z-3">
             <svg viewBox="0 0 500 580" xmlns="http://www.w3.org/2000/svg" className="block w-full h-auto overflow-visible font-roboto">
-                <style>{`
-                    @keyframes conn-fill {
-                        0%    { stroke-dashoffset: 100; opacity: 0; }
-                        2.5%  { opacity: 1; }
-                        22.5% { opacity: 1; }
-                        25%   { stroke-dashoffset: -100; opacity: 0; }
-                        100%  { stroke-dashoffset: -100; opacity: 0; }
-                    }
-                    .anim-flow { animation: conn-fill 4.8s ease-in-out infinite both; }
-                    
-                    @keyframes conn-pop {
-                        0%        { opacity: 0; transform: scale(0.88); }
-                        10%       { opacity: 0.45; transform: scale(1); }
-                        35%, 100% { opacity: 0; transform: scale(1.06); }
-                    }
-                    .anim-shape-pop { animation: conn-pop 4.8s ease-out infinite both; }
-                `}</style>
                 <defs>
                     <radialGradient id={`gHex${uid}`} cx="50%" cy="50%" r="60%">
                         <stop offset="0%" stopColor="#7ddba8" />
@@ -246,7 +216,7 @@ export function Diagram() {
                         <tspan x="250" y="86" textAnchor="middle">{t('hex1')}</tspan>
                         <tspan x="250" dy="17" textAnchor="middle">{t('hex2')}</tspan>
                     </text>
-                    <AnimatedShapePop shape="hex" delay={0.6} />
+                    <AnimatedShapePop x={250} y={90} delay={0} />
                 </g>
 
                 <g className="group cursor-pointer" filter={`url(#shBlob${uid})`}>
@@ -261,7 +231,7 @@ export function Diagram() {
                         <tspan x="110" y="205" textAnchor="middle">{t('blob1')}</tspan>
                         <tspan x="110" dy="17" textAnchor="middle">{t('blob2')}</tspan>
                     </text>
-                    <AnimatedShapePop shape="blob" delay={1.8} />
+                    <AnimatedShapePop x={110} y={210} delay={1.2} />
                 </g>
 
                 <g className="group cursor-pointer" filter={`url(#shCirc${uid})`}>
@@ -276,7 +246,7 @@ export function Diagram() {
                         <tspan x="390" y="205" textAnchor="middle">{t('circ1')}</tspan>
                         <tspan x="390" dy="17" textAnchor="middle">{t('circ2')}</tspan>
                     </text>
-                    <AnimatedShapePop shape="circle" delay={3.0} />
+                    <AnimatedShapePop x={390} y={210} delay={2.4} />
                 </g>
 
                 <g className="group cursor-pointer" filter={`url(#shDiam${uid})`}>
@@ -291,7 +261,7 @@ export function Diagram() {
                         <tspan x="250" y="320" textAnchor="middle">{t('diam1')}</tspan>
                         <tspan x="250" dy="17" textAnchor="middle">{t('diam2')}</tspan>
                     </text>
-                    <AnimatedShapePop shape="diamond" delay={4.2} />
+                    <AnimatedShapePop x={250} y={326} delay={3.6} />
                 </g>
 
                 <g id={`snowflake${uid}`} transform="translate(233,193)">

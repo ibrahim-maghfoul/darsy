@@ -13,14 +13,14 @@ export const config = {
     },
 
     jwt: {
-        secret: process.env.JWT_SECRET || 'your-secret-key',
-        refreshSecret: process.env.JWT_REFRESH_SECRET || 'your-refresh-secret',
+        secret: process.env.JWT_SECRET || (() => { if (process.env.NODE_ENV === 'production') throw new Error('JWT_SECRET is required in production'); return 'dev-only-secret-key'; })(),
+        refreshSecret: process.env.JWT_REFRESH_SECRET || (() => { if (process.env.NODE_ENV === 'production') throw new Error('JWT_REFRESH_SECRET is required in production'); return 'dev-only-refresh-secret'; })(),
         expiresIn: process.env.JWT_EXPIRES_IN || '7d',
         refreshExpiresIn: process.env.JWT_REFRESH_EXPIRES_IN || '30d',
     },
 
     cookie: {
-        secret: process.env.COOKIE_SECRET || 'cookie-secret',
+        secret: process.env.COOKIE_SECRET || (() => { if (process.env.NODE_ENV === 'production') throw new Error('COOKIE_SECRET is required in production'); return 'dev-only-cookie-secret'; })(),
         maxAge: parseInt(process.env.COOKIE_MAX_AGE || '604800000'),
     },
 
@@ -29,6 +29,7 @@ export const config = {
         credentials: true,
         methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
         allowedHeaders: ['Content-Type', 'Authorization', 'Cookie', 'X-App-Key'],
+        maxAge: 86400, // Cache preflight for 24h — eliminates redundant OPTIONS requests
     },
 
     upload: {

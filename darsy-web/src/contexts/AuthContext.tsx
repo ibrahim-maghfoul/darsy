@@ -1,6 +1,6 @@
 'use client';
 
-import React, { createContext, useContext, useEffect, useState, useMemo, useCallback } from 'react';
+import React, { createContext, useContext, useEffect, useState, useMemo, useCallback, useRef } from 'react';
 import { useRouter } from 'next/navigation';
 import api from '@/lib/api';
 import { User } from '@/types';
@@ -14,16 +14,22 @@ interface AuthContextType {
     logout: () => Promise<void>;
     isAuthenticated: boolean;
     checkAuth: () => Promise<void>;
+    refreshUser: () => void;
     getPhotoURL: (url: string | undefined | null) => string | null;
     getResourceURL: (url: string | undefined | null) => string | null;
 }
 
 const AuthContext = createContext<AuthContextType | null>(null);
 
+// Throttle: only allow checkAuth once per interval
+const CHECK_AUTH_THROTTLE = 10_000; // 10 seconds
+
 export function AuthProvider({ children }: { children: React.ReactNode }) {
     const [user, setUser] = useState<User | null>(null);
     const [loading, setLoading] = useState(true);
     const router = useRouter();
+    const lastCheckRef = useRef(0);
+    const refreshTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
     const checkAuth = useCallback(async () => {
         if (typeof window === 'undefined') return;
@@ -34,14 +40,22 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
             return;
         }
 
+        // Throttle: skip if we checked recently
+        const now = Date.now();
+        if (now - lastCheckRef.current < CHECK_AUTH_THROTTLE) return;
+        lastCheckRef.current = now;
+
         const controller = new AbortController();
         const timeout = setTimeout(() => controller.abort(), 8000);
 
         try {
             const res = await api.get('/user/profile', { signal: controller.signal });
             setUser(res.data);
-        } catch (error) {
-            console.error("Auth check failed:", error);
+        } catch (error: any) {
+            // Network errors (backend down) are expected when not logged in — don't spam console
+            if (error?.code !== 'ERR_NETWORK' && error?.code !== 'ERR_CANCELED') {
+                console.error("Auth check failed:", error);
+            }
             localStorage.removeItem('token');
             setUser(null);
         } finally {
@@ -50,8 +64,23 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         }
     }, []);
 
+    /**
+     * Debounced refresh: call this instead of checkAuth() after mutations.
+     * Coalesces multiple rapid calls into a single API call after 2s.
+     */
+    const refreshUser = useCallback(() => {
+        if (refreshTimerRef.current) clearTimeout(refreshTimerRef.current);
+        refreshTimerRef.current = setTimeout(() => {
+            lastCheckRef.current = 0; // reset throttle so the check goes through
+            checkAuth();
+        }, 2000);
+    }, [checkAuth]);
+
     useEffect(() => {
         checkAuth();
+        return () => {
+            if (refreshTimerRef.current) clearTimeout(refreshTimerRef.current);
+        };
     }, [checkAuth]);
 
     const login = useCallback(async (email: string, password: string, rememberMe: boolean = false) => {
@@ -84,8 +113,6 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
             setUser(userData);
             router.push('/onboarding');
         } catch (error: any) {
-            // Backend returns { errors: [{msg: '...'}] } on validation failure
-            // or { error: '...' } on other errors
             const data = error.response?.data;
             let errorMsg = 'Registration failed';
             if (data?.errors && Array.isArray(data.errors) && data.errors.length > 0) {
@@ -122,7 +149,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
             }
 
             setUser(userData);
-            
+
             if (isNewUser) {
                 router.push('/onboarding');
             } else {
@@ -138,26 +165,14 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     const getPhotoURL = useCallback((url: string | undefined | null) => {
         if (!url) return null;
         if (url.startsWith('http')) return url;
-
-        // If it's just a filename (no slashes), prepend the profile picture path
-        if (!url.includes('/')) {
-            return `/data/images/profile-picture/${url}`;
-        }
-
-        // For legacy paths that already start with /data, return as-is (they are relative)
-        // If they don't start with / but have slashes, prepend /
+        if (!url.includes('/')) return `/data/images/profile-picture/${url}`;
         return url.startsWith('/') ? url : `/${url}`;
     }, []);
 
     const getResourceURL = useCallback((url: string | undefined | null) => {
         if (!url) return null;
         if (url.startsWith('http')) return url;
-
-        // If it's just a filename, prepend the resources path
-        if (!url.includes('/')) {
-            return `/data/resources/${url}`;
-        }
-
+        if (!url.includes('/')) return `/data/resources/${url}`;
         return url.startsWith('/') ? url : `/${url}`;
     }, []);
 
@@ -170,9 +185,10 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         logout,
         isAuthenticated: !!user,
         checkAuth,
+        refreshUser,
         getPhotoURL,
         getResourceURL,
-    }), [user, loading, login, register, googleLogin, logout, checkAuth, getPhotoURL, getResourceURL]);
+    }), [user, loading, login, register, googleLogin, logout, checkAuth, refreshUser, getPhotoURL, getResourceURL]);
 
     return (
         <AuthContext.Provider value={contextValue}>
@@ -196,7 +212,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
                             width: '40px',
                             height: '40px',
                             border: '3px solid #f3f3f3',
-                            borderTop: '3px solid #3498db',
+                            borderTop: '3px solid #3aaa6a',
                             borderRadius: '50%',
                             animation: 'spin 1s linear infinite'
                         }} />

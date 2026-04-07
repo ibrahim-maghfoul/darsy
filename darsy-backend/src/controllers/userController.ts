@@ -6,12 +6,12 @@ import { Feedback } from '../models/Feedback';
 import { Subject } from '../models/Subject';
 import { Lesson } from '../models/Lesson';
 import { config } from '../config';
-import { hashPassword, comparePassword } from '../utils/auth';
+import { hashPassword, comparePassword, generateAffiliateCode } from '../utils/auth';
 import path from 'path';
 import fs from 'fs/promises';
 
 export class UserController {
-    // Admin: Get all users
+    // Admin: Get all users (paginated)
     static async getAllUsers(req: AuthRequest, res: Response): Promise<void> {
         try {
             const caller = await User.findById(req.userId);
@@ -20,12 +20,21 @@ export class UserController {
                 return;
             }
 
-            const users = await User.find({})
-                .select('-password -refreshToken -calendar')
-                .sort({ createdAt: -1 })
-                .lean();
+            const page = Math.max(1, parseInt(req.query.page as string) || 1);
+            const limit = Math.min(200, Math.max(1, parseInt(req.query.limit as string) || 100));
+            const skip = (page - 1) * limit;
 
-            res.json(users);
+            const [users, total] = await Promise.all([
+                User.find({})
+                    .select('-password -refreshToken -calendar')
+                    .sort({ createdAt: -1 })
+                    .skip(skip)
+                    .limit(limit)
+                    .lean(),
+                User.countDocuments(),
+            ]);
+
+            res.json({ users, total, page, pages: Math.ceil(total / limit) });
         } catch (error) {
             console.error('Get all users error:', error);
             res.status(500).json({ error: 'Failed to get users' });
@@ -260,8 +269,8 @@ export class UserController {
                 return;
             }
 
-            if (newPassword.length < 6) {
-                res.status(400).json({ error: 'New password must be at least 6 characters long' });
+            if (newPassword.length < 8) {
+                res.status(400).json({ error: 'New password must be at least 8 characters long' });
                 return;
             }
 
@@ -369,19 +378,30 @@ export class UserController {
         }
     }
 
-    // Admin: Get all feedback/reports
+    // Admin: Get all feedback/reports (paginated, O(1) user lookup)
     static async getAllFeedback(req: AuthRequest, res: Response): Promise<void> {
         try {
             const caller = await User.findById(req.userId);
             if (!caller || caller.role !== 'admin') { res.status(403).json({ error: 'Admin only' }); return; }
-            const feedbacks = await Feedback.find({}).sort({ createdAt: -1 }).lean();
+
+            const page = Math.max(1, parseInt(req.query.page as string) || 1);
+            const limit = Math.min(200, Math.max(1, parseInt(req.query.limit as string) || 50));
+            const skip = (page - 1) * limit;
+
+            const [feedbacks, total] = await Promise.all([
+                Feedback.find({}).sort({ createdAt: -1 }).skip(skip).limit(limit).lean(),
+                Feedback.countDocuments(),
+            ]);
+
             const userIds = [...new Set(feedbacks.map(f => f.userId))];
             const users = await User.find({ _id: { $in: userIds } }, 'displayName email photoURL').lean();
-            const result = feedbacks.map(f => {
-                const user = users.find(u => u._id.toString() === f.userId.toString());
-                return { ...f, user: user || null };
-            });
-            res.json(result);
+            const userMap = new Map(users.map(u => [u._id.toString(), u]));
+
+            const result = feedbacks.map(f => ({
+                ...f,
+                user: userMap.get(f.userId.toString()) || null,
+            }));
+            res.json({ data: result, total, page, pages: Math.ceil(total / limit) });
         } catch (error) {
             res.status(500).json({ error: 'Failed to get feedback' });
         }
@@ -587,7 +607,7 @@ export class UserController {
 
             // Generate code if missing
             if (!user.affiliateCode) {
-                user.affiliateCode = Math.random().toString(36).substring(2, 8).toUpperCase();
+                user.affiliateCode = generateAffiliateCode();
                 await user.save();
             }
 

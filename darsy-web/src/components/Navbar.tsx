@@ -3,7 +3,7 @@
 import React, { useState, useEffect } from "react";
 import Link from "next/link";
 import { useAuth } from "@/contexts/AuthContext";
-import { User, LogIn, Compass, Newspaper, Home, CalendarDays, Menu, X, Users, MessageSquare, Share2 } from "lucide-react";
+import { User, LogIn, LayoutGrid, BookOpen, House, CalendarDays, Menu, X, Users, MessageCircle, Share2 } from "lucide-react";
 import { useTranslations, useLocale } from "next-intl";
 import { usePathname } from "next/navigation";
 import { AnimatePresence, motion } from "framer-motion";
@@ -147,10 +147,10 @@ export const Navbar = () => {
   if (isSettingsPage) return null;
 
   const navLinks = [
-    { href: "/", label: t('home'), icon: Home },
-    { href: "/explore", label: t('explore'), icon: Compass },
-    { href: "/news", label: t('news'), icon: Newspaper },
-    { href: "/profile/chat", label: t('chat_room'), icon: MessageSquare },
+    { href: "/", label: t('home'), icon: House },
+    { href: "/explore", label: t('explore'), icon: LayoutGrid },
+    { href: "/news", label: t('news'), icon: BookOpen },
+    { href: "/profile/chat", label: t('chat_room'), icon: MessageCircle },
     ...(isAuthenticated ? [
       { href: "/calendar", label: t('calendar') || "Calendar", icon: CalendarDays },
       { href: "/contributions", label: t('contributions'), icon: Share2 },
@@ -159,10 +159,10 @@ export const Navbar = () => {
 
   // Bottom tab links (5 max for mobile)
   const bottomTabs = [
-    { href: "/", label: t('home'), icon: Home },
-    { href: "/explore", label: t('explore'), icon: Compass },
-    { href: "/news", label: t('news'), icon: Newspaper },
-    { href: "/profile/chat", label: t('chat_room'), icon: MessageSquare },
+    { href: "/", label: t('home'), icon: House },
+    { href: "/explore", label: t('explore'), icon: LayoutGrid },
+    { href: "/news", label: t('news'), icon: BookOpen },
+    { href: "/profile/chat", label: t('chat_room'), icon: MessageCircle },
   ];
 
   const isTabActive = (href: string) => {

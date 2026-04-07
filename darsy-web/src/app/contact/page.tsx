@@ -1,9 +1,10 @@
 "use client";
 
-import { useState } from "react";
-import { motion } from "framer-motion";
-import { Mail, MessageSquare, User, Send, CheckCircle, MapPin, Phone } from "lucide-react";
+import { useState, useRef, useEffect } from "react";
+import { motion, AnimatePresence } from "framer-motion";
+import { Mail, MessageSquare, User, Send, CheckCircle, MapPin, Phone, ChevronDown } from "lucide-react";
 import api from "@/lib/api";
+import { CONTACT } from "@/lib/constants";
 
 const subjects = [
     "General Inquiry",
@@ -20,6 +21,18 @@ export default function ContactPage() {
     const t = useTranslations('Contact');
     const [form, setForm] = useState({ name: "", email: "", subject: subjects[0], message: "" });
     const [status, setStatus] = useState<"idle" | "sending" | "sent" | "error">("idle");
+    const [subjectOpen, setSubjectOpen] = useState(false);
+    const subjectRef = useRef<HTMLDivElement>(null);
+
+    useEffect(() => {
+        const handler = (e: MouseEvent) => {
+            if (subjectRef.current && !subjectRef.current.contains(e.target as Node)) {
+                setSubjectOpen(false);
+            }
+        };
+        document.addEventListener("mousedown", handler);
+        return () => document.removeEventListener("mousedown", handler);
+    }, []);
 
     const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
         setForm(prev => ({ ...prev, [e.target.name]: e.target.value }));
@@ -93,9 +106,9 @@ export default function ContactPage() {
                     >
                         <div className="space-y-6">
                             {[
-                                { icon: Mail, label: t('email_us'), value: "hello@darsy.io", href: "mailto:hello@darsy.io" },
-                                { icon: Phone, label: t('call_us'), value: "+213 555 000 123", href: "tel:+213555000123" },
-                                { icon: MapPin, label: t('find_us'), value: "Algiers, Algeria", href: "#" },
+                                { icon: Mail, label: t('email_us'), value: CONTACT.email, href: `mailto:${CONTACT.email}` },
+                                { icon: Phone, label: t('call_us'), value: CONTACT.phone, href: `tel:${CONTACT.phoneTel}` },
+                                { icon: MapPin, label: t('find_us'), value: CONTACT.location, href: "#" },
                             ].map((item, i) => (
                                 <a key={i} href={item.href} className="flex items-center gap-4 group">
                                     <div className="w-12 h-12 rounded-2xl bg-green/10 flex items-center justify-center text-green group-hover:bg-green group-hover:text-white transition-all">
@@ -158,16 +171,41 @@ export default function ContactPage() {
                             </div>
                         </div>
 
-                        <div className="space-y-1.5">
+                        <div className="space-y-1.5" ref={subjectRef}>
                             <label className="text-xs font-bold text-dark/60 uppercase tracking-wide">{t('subject')}</label>
-                            <select
-                                name="subject"
-                                value={form.subject}
-                                onChange={handleChange}
-                                className={inputClass}
-                            >
-                                {subjects.map(s => <option key={s} value={s}>{s}</option>)}
-                            </select>
+                            <div className="relative">
+                                <button
+                                    type="button"
+                                    onClick={() => setSubjectOpen(o => !o)}
+                                    className={`${inputClass} flex items-center justify-between text-left`}
+                                >
+                                    <span>{form.subject}</span>
+                                    <ChevronDown size={16} className={`text-muted-foreground transition-transform duration-200 ${subjectOpen ? 'rotate-180' : ''}`} />
+                                </button>
+                                <AnimatePresence>
+                                    {subjectOpen && (
+                                        <motion.ul
+                                            initial={{ opacity: 0, y: -6 }}
+                                            animate={{ opacity: 1, y: 0 }}
+                                            exit={{ opacity: 0, y: -6 }}
+                                            transition={{ duration: 0.15 }}
+                                            className="absolute left-0 right-0 top-[calc(100%+6px)] z-50 bg-white border border-green/15 rounded-2xl shadow-xl shadow-green/5 overflow-hidden"
+                                        >
+                                            {subjects.map(s => (
+                                                <li key={s}>
+                                                    <button
+                                                        type="button"
+                                                        onClick={() => { setForm(prev => ({ ...prev, subject: s })); setSubjectOpen(false); }}
+                                                        className={`w-full px-5 py-3 text-left text-sm font-medium transition-colors hover:bg-green/5 hover:text-green ${form.subject === s ? 'text-green bg-green/5 font-bold' : 'text-dark'}`}
+                                                    >
+                                                        {s}
+                                                    </button>
+                                                </li>
+                                            ))}
+                                        </motion.ul>
+                                    )}
+                                </AnimatePresence>
+                            </div>
                         </div>
 
                         <div className="space-y-1.5">

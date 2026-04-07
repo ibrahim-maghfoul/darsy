@@ -4,7 +4,7 @@
 import React from "react";
 import { useParams, useRouter } from "next/navigation";
 import { motion } from "framer-motion";
-import { ArrowLeft, Calendar, ExternalLink, Download, FileText, Share2, Heart, MessageCircle, Send, Star } from "lucide-react";
+import { ArrowLeft, Calendar, ExternalLink, Download, FileText, Share2, Heart, MessageCircle, Send, Star, Eye, Clock, ChevronRight } from "lucide-react";
 import { DownloadButton } from "@/components/DownloadButton";
 import { ResourceButton } from "@/components/ResourceButton";
 import { CookiesWindow } from "@/components/CookiesWindow";
@@ -175,17 +175,20 @@ export default function NewsDetailPage() {
     const [isSubmittingA, setIsSubmittingA] = useState(false);
 
     useEffect(() => {
+        let cancelled = false;
         Promise.all([
             fetch(`${BACKEND}/api/news/${id}`).then(r => { if (!r.ok) throw new Error('Not found'); return r.json(); }),
             fetch(`${BACKEND}/api/news/${id}/questions`).then(r => r.ok ? r.json() : [])
         ])
             .then(([articleData, qData]) => {
+                if (cancelled) return;
                 setArticle(articleData);
                 setQuestions(qData || []);
                 setUserRating(articleData.userRating || 0);
                 setLoading(false);
             })
-            .catch(() => { setError(true); setLoading(false); });
+            .catch(() => { if (!cancelled) { setError(true); setLoading(false); } });
+        return () => { cancelled = true; };
     }, [id]);
 
     useEffect(() => {
@@ -304,121 +307,167 @@ export default function NewsDetailPage() {
         );
     }
 
+    // Extract hero image from article data
+    const heroImage = article.imageUrl
+        || article.images?.[0]?.src
+        || article.content_blocks?.find((b: any) => b.type === 'image')?.src
+        || null;
+
     return (
-        <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="min-h-screen lg:pt-32 pb-32 px-[clamp(16px,5vw,48px)] bg-[#FAFBFD]">
-            <div className="max-w-4xl mx-auto">
-                {/* Nav */}
-                <div className="flex items-center justify-between mb-16">
-                    <button onClick={() => router.push("/news")}
-                        className="hidden md:flex group items-center gap-4 text-black font-black tracking-widest text-[10px] uppercase">
-                        <div className="w-12 h-12 rounded-[20px] bg-white border border-gray-100 shadow-sm flex items-center justify-center group-hover:border-green/30 group-hover:bg-green group-hover:text-white transition-all duration-500">
-                            <ArrowLeft size={20} strokeWidth={3} />
-                        </div>
-                        {t('back_to_news')}
-                    </button>
-                    <div className="flex gap-3">
+        <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="min-h-screen pb-32 bg-white">
+
+            {/* ── Hero ─────────────────────────────────────── */}
+            <div className="relative overflow-hidden" style={{ minHeight: heroImage ? '520px' : '420px' }}>
+                {/* Background: hero image or gradient */}
+                {heroImage ? (
+                    <>
+                        <img src={heroImage} alt={article.title || "Article cover"} className="absolute inset-0 w-full h-full object-cover" />
+                        <div className="absolute inset-0" style={{ background: 'linear-gradient(180deg, rgba(26,58,42,0.45) 0%, rgba(26,58,42,0.92) 70%, #1a3a2a 100%)' }} />
+                    </>
+                ) : (
+                    <div className="absolute inset-0 bg-dark" />
+                )}
+                {/* Dot texture overlay */}
+                <div className="absolute inset-0 pointer-events-none" style={{ backgroundImage: 'radial-gradient(circle, rgba(255,255,255,0.05) 1px, transparent 1px)', backgroundSize: '20px 20px' }} />
+                {/* Decorative rings */}
+                <div className="absolute -top-20 -right-20 w-64 h-64 rounded-full pointer-events-none" style={{ border: '30px solid rgba(58,170,106,0.12)' }} />
+                <div className="absolute -bottom-28 -left-28 w-80 h-80 rounded-full pointer-events-none" style={{ border: '36px solid rgba(58,170,106,0.08)' }} />
+
+                <div className="relative z-10 max-w-4xl mx-auto px-[clamp(20px,5vw,48px)] pt-36 pb-20 flex flex-col justify-end h-full">
+                    {/* Top bar: back + save */}
+                    <div className="flex items-center justify-between mb-auto pb-8">
                         <button
-                            onClick={handleSave}
-                            disabled={isSaving}
-                            className={`w-12 h-12 rounded-[20px] border shadow-sm flex items-center justify-center transition-all duration-300 ${isSaved
-                                ? 'bg-green/10 border-green/30 text-green'
-                                : 'bg-white border-gray-100 text-dark/40 hover:border-green/30 hover:text-green'
-                                }`}
+                            onClick={() => router.push("/news")}
+                            className="hidden md:flex items-center gap-2 font-bold text-sm rounded-full px-4 py-2 transition-all duration-200 backdrop-blur-md"
+                            style={{ color: 'rgba(255,255,255,0.8)', background: 'rgba(255,255,255,0.1)', border: '1px solid rgba(255,255,255,0.15)' }}
+                            onMouseEnter={e => { e.currentTarget.style.background = 'rgba(255,255,255,0.2)'; e.currentTarget.style.color = '#fff'; }}
+                            onMouseLeave={e => { e.currentTarget.style.background = 'rgba(255,255,255,0.1)'; e.currentTarget.style.color = 'rgba(255,255,255,0.8)'; }}
                         >
-                            <Heart size={20} fill={isSaved ? "currentColor" : "transparent"} />
+                            <ArrowLeft size={15} />
+                            {t('back_to_news')}
                         </button>
+                        <div className="flex items-center gap-2">
+                            <button
+                                onClick={handleSave}
+                                disabled={isSaving}
+                                className={`flex items-center gap-2 px-4 py-2 rounded-full font-bold text-sm backdrop-blur-md transition-all duration-200 active:scale-95 ${isSaved ? 'bg-red-500 text-white shadow-lg shadow-red-500/30' : 'text-white/80 hover:text-white'}`}
+                                style={isSaved ? {} : { background: 'rgba(255,255,255,0.1)', border: '1px solid rgba(255,255,255,0.15)' }}
+                            >
+                                <Heart size={14} fill={isSaved ? "currentColor" : "transparent"} />
+                                {isSaved ? 'Saved' : 'Save'}
+                            </button>
+                        </div>
                     </div>
+
+                    {/* Category + meta */}
+                    <div className="flex flex-wrap items-center gap-2 mb-5">
+                        <span className="px-4 py-1.5 rounded-full bg-green text-white text-[11px] font-black uppercase tracking-wider">
+                            {article.type || article.category}
+                        </span>
+                        {article.card_date && (
+                            <span className="flex items-center gap-1.5 px-3 py-1.5 rounded-full text-[11px] font-semibold text-white/60 backdrop-blur-sm" style={{ background: 'rgba(255,255,255,0.08)' }}>
+                                <Calendar size={11} />{article.card_date}
+                            </span>
+                        )}
+                        <span className="flex items-center gap-1.5 px-3 py-1.5 rounded-full text-[11px] font-semibold text-white/60 backdrop-blur-sm" style={{ background: 'rgba(255,255,255,0.08)' }}>
+                            <Eye size={11} />{article.viewCount || 0}
+                        </span>
+                        {(article.rating?.average || article.rating) ? (
+                            <span className="flex items-center gap-1 px-3 py-1.5 rounded-full text-[11px] font-black text-amber-300 backdrop-blur-sm" style={{ background: 'rgba(251,191,36,0.12)' }}>
+                                <Star size={11} className="fill-current" />
+                                {(article.rating?.average || article.rating || 0).toFixed(1)}
+                            </span>
+                        ) : null}
+                    </div>
+
+                    {/* Title */}
+                    <h1 className="text-3xl sm:text-4xl md:text-5xl lg:text-6xl font-black text-white leading-[1.08] tracking-tight max-w-3xl">
+                        {article.title}
+                    </h1>
                 </div>
+            </div>
 
-                {/* Header */}
-                <header className="space-y-10 mb-20">
-                    <div className="flex flex-wrap items-center justify-between gap-6">
-                        <div className="flex flex-wrap gap-4">
-                            <div className="px-6 py-2.5 rounded-2xl bg-green text-white text-[10px] font-black uppercase tracking-[0.2em] shadow-lg shadow-green/20">
-                                {article.type || article.category}
-                            </div>
-                            {article.card_date && (
-                                <div className="px-6 py-2.5 rounded-2xl bg-white border border-gray-100 text-dark/40 text-[10px] font-black uppercase tracking-[0.2em]">
-                                    <Calendar size={12} className="inline mr-2" />{article.card_date}
-                                </div>
-                            )}
-                            <div className="px-6 py-2.5 rounded-2xl bg-white border border-gray-100 text-dark/40 text-[10px] font-black uppercase tracking-[0.2em]">
-                                <Heart size={12} className="inline mr-2" />{article.viewCount || 0} views
-                            </div>
-                        </div>
+            {/* ── Article Body ────────────────────────────── */}
+            <div className="max-w-3xl mx-auto px-[clamp(20px,5vw,48px)]">
 
-                        {/* Rating Display */}
-                        <div className="flex items-center gap-1">
-                            <Star size={18} className="text-amber-400 fill-amber-400" />
-                            <span className="font-black text-dark text-lg">{(article.rating?.average || article.rating || 0).toFixed(1)}</span>
-                            <span className="text-dark/40 text-sm font-bold">({article.rating?.count || article.ratingCount || 0})</span>
-                        </div>
-                    </div>
-                    <h1 className="text-5xl md:text-7xl font-black text-dark leading-[1.05] tracking-tight">{article.title}</h1>
-                </header>
+                {/* Green accent line */}
+                <div className="h-1 w-16 rounded-full bg-green mx-auto -mt-0.5 mb-12" />
 
                 {/* Content */}
-                <div className="relative" dir="rtl">
-                    <article className="prose prose-2xl max-w-none text-right">
+                <div className="mb-16" dir="rtl">
+                    <article className="prose prose-xl max-w-none text-right prose-headings:text-dark prose-p:text-dark/75 prose-p:leading-[1.9] prose-li:text-dark/75">
                         {article.content_blocks && article.content_blocks.length > 0
                             ? article.content_blocks.map((block: any, idx: number) => renderBlock(block, idx))
                             : (article.paragraphs || []).map((p: string, idx: number) => (
-                                <p key={idx} className="mb-8">{p}</p>
+                                <p key={idx} className="mb-8 text-lg leading-[1.9]">{p}</p>
                             ))
                         }
                     </article>
                 </div>
 
-                {/* Star Rating Interaction */}
-                <section className="mt-20 p-10 rounded-[40px] bg-gradient-to-br from-white to-gray-50/50 border border-gray-100/50 shadow-xl shadow-black/[0.02] flex flex-col items-center gap-6 text-center">
-                    <div className="space-y-2">
-                        <h3 className="text-2xl font-black text-dark tracking-tight">Did you find this helpful?</h3>
-                        <p className="text-dark/40 font-medium">Your feedback helps us provide better content</p>
-                    </div>
+                {/* Divider */}
+                <div className="flex items-center gap-4 mb-12">
+                    <div className="flex-1 h-px bg-green/10" />
+                    <Star size={14} className="text-green/20" />
+                    <div className="flex-1 h-px bg-green/10" />
+                </div>
 
-                    <div className="flex gap-2">
-                        {[1, 2, 3, 4, 5].map((star) => (
-                            <button
-                                key={star}
-                                onClick={() => handleRate(star)}
-                                disabled={userRating > 0}
-                                className={`transition-all duration-300 ${userRating > 0 ? 'cursor-default' : 'hover:scale-125 active:scale-95'}`}
-                            >
-                                <Star
-                                    size={42}
-                                    strokeWidth={2.5}
-                                    className={`${star <= (userRating || (article.rating?.average || article.rating || 0))
-                                        ? 'text-amber-400 fill-amber-400'
-                                        : 'text-gray-200 hover:text-amber-200'
-                                        } transition-colors`}
-                                />
-                            </button>
-                        ))}
-                    </div>
+                {/* Star Rating */}
+                <section className="mb-12 p-10 rounded-[32px] relative overflow-hidden text-center" style={{ background: 'linear-gradient(135deg, #f0faf5 0%, #e8f5ee 50%, #f0faf5 100%)' }}>
+                    <div className="absolute inset-0 pointer-events-none" style={{ backgroundImage: 'radial-gradient(circle, rgba(58,170,106,0.08) 1px, transparent 1px)', backgroundSize: '16px 16px' }} />
+                    <div className="relative z-10">
+                        <div className="w-14 h-14 rounded-2xl bg-green/15 flex items-center justify-center text-green mx-auto mb-4">
+                            <Star size={26} className="fill-current" />
+                        </div>
+                        <h3 className="text-xl font-black text-dark tracking-tight mb-1">Did you find this helpful?</h3>
+                        <p className="text-dark/40 font-medium text-sm mb-6">Your feedback helps us provide better content</p>
 
-                    {userRating > 0 && (
-                        <motion.p initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} className="text-green font-bold text-sm tracking-wide">
-                            Thank you for rating! ⭐
-                        </motion.p>
-                    )}
+                        <div className="flex justify-center gap-3 mb-4">
+                            {[1, 2, 3, 4, 5].map((star) => (
+                                <button
+                                    key={star}
+                                    onClick={() => handleRate(star)}
+                                    disabled={userRating > 0}
+                                    className={`p-2 rounded-xl transition-all duration-200 ${userRating > 0 ? 'cursor-default' : 'hover:scale-125 hover:bg-white/60 active:scale-95'}`}
+                                >
+                                    <Star
+                                        size={36}
+                                        strokeWidth={1.8}
+                                        className={`${star <= (userRating || (article.rating?.average || article.rating || 0))
+                                            ? 'text-amber-400 fill-amber-400 drop-shadow-sm'
+                                            : 'text-green/20 hover:text-amber-300'
+                                            } transition-colors`}
+                                    />
+                                </button>
+                            ))}
+                        </div>
+                        {userRating > 0 && (
+                            <motion.p initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} className="text-green font-bold text-sm bg-white/60 inline-flex px-5 py-2 rounded-full">
+                                Thank you for rating! ⭐
+                            </motion.p>
+                        )}
+                    </div>
                 </section>
 
                 {/* Attachments */}
                 {article.attachments && article.attachments.length > 0 && (
-                    <section className="mt-24 p-6 lg:p-8 rounded-[40px] bg-white border border-gray-100 shadow-xl shadow-black/[0.01]">
-                        <div className="flex items-center gap-3 mb-8">
-                            <div className="w-10 h-10 rounded-xl bg-green/10 flex items-center justify-center text-green">
-                                <FileText size={20} />
+                    <section className="mb-12">
+                        <div className="flex items-center gap-3 mb-6">
+                            <div className="w-10 h-10 rounded-2xl bg-green/10 flex items-center justify-center text-green shrink-0">
+                                <FileText size={18} />
                             </div>
-                            <h3 className="text-2xl font-black text-dark tracking-tight">{t('official_resources')}</h3>
+                            <h3 className="text-xl font-black text-dark tracking-tight">{t('official_resources')}</h3>
                         </div>
-                        <div className="grid gap-6 grid-cols-1 sm:grid-cols-2 lg:grid-cols-3">
+                        <div className="grid gap-3 grid-cols-1 sm:grid-cols-2 lg:grid-cols-3">
                             {article.attachments.map((att: any, idx: number) => (
-                                <div key={idx} className="group p-6 rounded-[32px] bg-white border-2 border-green/60 shadow-lg shadow-green/5 hover:border-green hover:shadow-xl hover:shadow-green/10 transition-all duration-300 flex flex-col items-center gap-5 text-center justify-between">
-                                    <div className="flex-1 flex flex-col justify-center w-full">
-                                        <p className="font-black text-black text-[17px] leading-tight group-hover:text-green transition-colors mb-4 line-clamp-3">{att.label}</p>
+                                <div key={idx} className="group p-5 rounded-2xl bg-[#f6f9f7] border border-green/8 hover:border-green/25 hover:bg-white hover:shadow-xl hover:shadow-green/[0.06] transition-all duration-300 flex items-center gap-4">
+                                    <div className="w-10 h-10 rounded-xl bg-green/10 flex items-center justify-center text-green shrink-0 group-hover:bg-green group-hover:text-white transition-colors">
+                                        <Download size={18} />
                                     </div>
-                                    <ResourceButton href={att.url} text="DOWNLOAD" />
+                                    <div className="flex-1 min-w-0">
+                                        <p className="font-bold text-dark text-sm leading-tight line-clamp-2 group-hover:text-green transition-colors">{att.label}</p>
+                                    </div>
+                                    <ChevronRight size={16} className="text-dark/20 group-hover:text-green shrink-0 transition-colors" />
                                 </div>
                             ))}
                         </div>
@@ -426,48 +475,52 @@ export default function NewsDetailPage() {
                 )}
 
                 {/* Q&A Section */}
-                <section className="mt-24 p-6 lg:p-10 rounded-[40px] bg-white border border-gray-100 shadow-xl shadow-black/[0.01]">
-                    <div className="flex items-center gap-3 mb-10">
-                        <div className="w-10 h-10 rounded-xl bg-blue-50 flex items-center justify-center text-blue-500">
-                            <MessageCircle size={20} />
+                <section className="mb-12">
+                    <div className="flex items-center gap-3 mb-8">
+                        <div className="w-10 h-10 rounded-2xl bg-green/10 flex items-center justify-center text-green shrink-0">
+                            <MessageCircle size={18} />
                         </div>
-                        <h3 className="text-2xl font-black text-dark tracking-tight">{t('questions_answers')}</h3>
+                        <div>
+                            <h3 className="text-xl font-black text-dark tracking-tight">{t('questions_answers')}</h3>
+                            {questions.length > 0 && <p className="text-xs text-dark/30 font-semibold mt-0.5">{questions.length} question{questions.length > 1 ? 's' : ''}</p>}
+                        </div>
                     </div>
 
-                    {/* Ask Question Form */}
-                    <div className="mb-12">
+                    {/* Ask form */}
+                    <div className="mb-8">
                         {user ? (
-                            <form onSubmit={handleAskQuestion} className="space-y-4">
-                                <div className="flex gap-4 items-start">
+                            <form onSubmit={handleAskQuestion}>
+                                <div className="flex gap-3 items-start">
                                     <img
                                         src={getPhotoURL(user.photoURL) || `https://ui-avatars.com/api/?name=${user.displayName}&background=f3f4f6&color=111`}
                                         alt={user.displayName}
-                                        className="w-10 h-10 rounded-full border border-gray-100 object-cover shrink-0"
+                                        className="w-9 h-9 rounded-full border border-green/10 object-cover shrink-0 mt-1"
                                     />
                                     <div className="flex-1 relative">
                                         <textarea
                                             value={newQuestion}
                                             onChange={(e) => setNewQuestion(e.target.value)}
                                             placeholder={t('ask_placeholder')}
-                                            className="w-full bg-gray-50/50 border border-gray-100 rounded-3xl p-5 pr-14 text-[15px] resize-none focus:outline-none focus:border-blue-500/30 focus:bg-white transition-all min-h-[100px]"
+                                            className="w-full bg-[#f6f9f7] border border-green/8 rounded-2xl p-4 pr-14 text-sm resize-none focus:outline-none focus:border-green/25 focus:bg-white focus:shadow-lg focus:shadow-green/[0.04] transition-all min-h-[90px]"
                                             disabled={isSubmittingQ}
                                         />
                                         <button
                                             type="submit"
                                             disabled={isSubmittingQ || !newQuestion.trim()}
-                                            className="absolute bottom-4 right-4 w-10 h-10 rounded-full bg-blue-500 text-white flex items-center justify-center hover:bg-blue-600 disabled:opacity-50 disabled:hover:bg-blue-500 transition-colors shadow-lg shadow-blue-500/20"
+                                            className="absolute bottom-3 right-3 w-9 h-9 rounded-xl bg-green text-white flex items-center justify-center hover:bg-dark disabled:opacity-40 transition-all shadow-md shadow-green/20"
                                         >
-                                            <Send size={16} className="-ml-1 mt-0.5" />
+                                            <Send size={14} className="-ml-0.5 mt-0.5" />
                                         </button>
                                     </div>
                                 </div>
                             </form>
                         ) : (
-                            <div className="bg-gray-50/50 border border-gray-100 rounded-3xl p-8 text-center flex flex-col items-center gap-4">
-                                <p className="text-dark/60 font-medium">{t('login_hint')}</p>
+                            <div className="bg-[#f6f9f7] border border-green/8 rounded-2xl p-8 text-center flex flex-col items-center gap-3">
+                                <MessageCircle size={28} className="text-green/30" />
+                                <p className="text-dark/50 font-medium text-sm">{t('login_hint')}</p>
                                 <button
                                     onClick={() => router.push('/login')}
-                                    className="px-6 py-2.5 rounded-2xl bg-dark text-white text-sm font-bold shadow-lg shadow-dark/10"
+                                    className="px-5 py-2 rounded-full bg-green text-white text-sm font-bold shadow-md shadow-green/20 hover:scale-105 active:scale-95 transition-all"
                                 >
                                     {t('login_to_ask')}
                                 </button>
@@ -475,64 +528,58 @@ export default function NewsDetailPage() {
                         )}
                     </div>
 
-                    {/* Questions List */}
-                    <div className="space-y-6">
+                    {/* Questions list */}
+                    <div className="space-y-3">
                         {questions.length === 0 ? (
-                            <p className="text-center text-dark/40 py-8">{t('no_questions')}</p>
+                            <p className="text-center text-dark/30 py-8 text-sm">{t('no_questions')}</p>
                         ) : (
                             questions.map((q) => (
-                                <div key={q._id} className="p-6 rounded-3xl bg-gray-50/50 border border-gray-100 space-y-4">
-                                    {/* Question */}
-                                    <div className="flex gap-4">
+                                <div key={q._id} className="p-4 rounded-2xl bg-[#f6f9f7] border border-green/6 space-y-3 hover:border-green/15 transition-colors">
+                                    <div className="flex gap-3">
                                         <img
                                             src={getPhotoURL(q.userId?.photoURL) || `https://ui-avatars.com/api/?name=${q.userId?.displayName}&background=fff&color=111`}
                                             alt={q.userId?.displayName || "User"}
-                                            className="w-10 h-10 rounded-full border border-gray-200 object-cover shrink-0 bg-white"
+                                            className="w-8 h-8 rounded-full border border-green/10 object-cover shrink-0 bg-white"
                                         />
-                                        <div className="flex-1">
+                                        <div className="flex-1 min-w-0">
                                             <div className="flex items-baseline gap-2 mb-1">
-                                                <span className="font-bold text-dark text-[15px]">{q.userId?.displayName || "Unknown User"}</span>
-                                                <span className="text-xs text-dark/40">{new Date(q.createdAt).toLocaleDateString()}</span>
+                                                <span className="font-bold text-dark text-sm">{q.userId?.displayName || "Unknown"}</span>
+                                                <span className="text-[11px] text-dark/30">{new Date(q.createdAt).toLocaleDateString()}</span>
                                             </div>
-                                            <p className="text-dark/80 text-[15px] leading-relaxed relative right-0" dir={isArabic(q.question) ? "rtl" : "ltr"}>{q.question}</p>
+                                            <p className="text-dark/70 text-sm leading-relaxed" dir={isArabic(q.question) ? "rtl" : "ltr"}>{q.question}</p>
                                         </div>
                                     </div>
 
-                                    {/* Admin Answer */}
                                     {q.answer ? (
-                                        <div className="ml-6 md:ml-12 pl-6 py-1 border-l-2 border-green/20">
-                                            <div className="flex gap-4">
-                                                <div className="w-8 h-8 rounded-full bg-green text-white flex items-center justify-center shrink-0">
-                                                    <span className="font-bold text-[10px]">ADMIN</span>
-                                                </div>
-                                                <div className="flex-1 mt-0.5">
-                                                    <p className="text-dark/90 text-[15px] leading-relaxed relative right-0" dir={isArabic(q.answer) ? "rtl" : "ltr"}>{q.answer}</p>
-                                                </div>
+                                        <div className="ml-8 md:ml-11 pl-4 py-2.5 rounded-xl border-l-2 border-green/30 bg-white/60">
+                                            <div className="flex gap-2.5">
+                                                <div className="w-6 h-6 rounded-md bg-green text-white flex items-center justify-center shrink-0 text-[7px] font-black mt-0.5">A</div>
+                                                <p className="flex-1 text-dark/80 text-sm leading-relaxed" dir={isArabic(q.answer) ? "rtl" : "ltr"}>{q.answer}</p>
                                             </div>
                                         </div>
                                     ) : (
                                         user?.role === 'admin' && (
-                                            <div className="ml-6 md:ml-12">
+                                            <div className="ml-8 md:ml-11">
                                                 {replyingToId === q._id ? (
-                                                    <div className="space-y-3">
+                                                    <div className="space-y-2">
                                                         <textarea
                                                             value={adminAnswer}
                                                             onChange={(e) => setAdminAnswer(e.target.value)}
                                                             placeholder="Write your answer..."
-                                                            className="w-full bg-white border border-gray-200 rounded-2xl p-4 text-[14px] resize-none focus:outline-none focus:border-green/30 transition-all min-h-[80px]"
+                                                            className="w-full bg-white border border-green/15 rounded-xl p-3 text-sm resize-none focus:outline-none focus:border-green/30 transition-all min-h-[70px]"
                                                             autoFocus
                                                         />
                                                         <div className="flex gap-2">
                                                             <button
                                                                 onClick={() => handleAnswerQuestion(q._id)}
                                                                 disabled={isSubmittingA || !adminAnswer.trim()}
-                                                                className="px-4 py-1.5 rounded-xl bg-green text-white text-xs font-bold shadow-lg shadow-green/10 disabled:opacity-50"
+                                                                className="px-3.5 py-1.5 rounded-lg bg-green text-white text-xs font-bold shadow-sm disabled:opacity-40"
                                                             >
                                                                 {t('post_answer')}
                                                             </button>
                                                             <button
                                                                 onClick={() => { setReplyingToId(null); setAdminAnswer(""); }}
-                                                                className="px-4 py-1.5 rounded-xl bg-gray-100 text-dark/60 text-xs font-bold hover:bg-gray-200 transition-all"
+                                                                className="px-3.5 py-1.5 rounded-lg bg-gray-100 text-dark/50 text-xs font-bold hover:bg-gray-200 transition-colors"
                                                             >
                                                                 {t('cancel')}
                                                             </button>
@@ -541,12 +588,11 @@ export default function NewsDetailPage() {
                                                 ) : (
                                                     <button
                                                         onClick={() => setReplyingToId(q._id)}
-                                                        className="flex items-center gap-2 text-green font-bold text-xs hover:underline"
+                                                        className="flex items-center gap-1.5 text-green font-bold text-xs hover:underline"
                                                     >
-                                                        <Send size={12} className="rotate-45" /> {t('reply_btn')}
+                                                        <Send size={10} className="rotate-45" /> {t('reply_btn')}
                                                     </button>
-                                                )
-                                                }
+                                                )}
                                             </div>
                                         )
                                     )}
@@ -556,13 +602,13 @@ export default function NewsDetailPage() {
                     </div>
                 </section>
 
-                {/* Footer */}
-                <footer className="mt-32 pt-16 border-t border-gray-100 flex flex-col items-center gap-8">
-                    <p className="text-[10px] font-black uppercase tracking-[0.4em] text-dark/20 text-center">Verified by Darsy Editorial Team</p>
+                {/* Source link + footer */}
+                <footer className="pt-8 pb-4 border-t border-green/6 flex flex-col items-center gap-5">
+                    <p className="text-[10px] font-black uppercase tracking-[0.3em] text-dark/15">Verified by Darsy Editorial Team</p>
                     {article.url && (
                         <a href={article.url} target="_blank" rel="noopener noreferrer"
-                            className="group inline-flex items-center gap-4 px-10 py-5 rounded-[24px] bg-dark text-white font-black text-[11px] uppercase tracking-[0.35em] hover:scale-[1.05] transition-all duration-500 shadow-2xl shadow-dark/20">
-                            ORIGINAL SOURCE <ExternalLink size={14} strokeWidth={3} className="group-hover:translate-x-1 group-hover:-translate-y-1 transition-transform" />
+                            className="group inline-flex items-center gap-2.5 px-6 py-3 rounded-full bg-dark text-white font-bold text-xs hover:scale-105 transition-all duration-200 shadow-xl shadow-dark/15">
+                            Original Source <ExternalLink size={13} strokeWidth={2.5} className="group-hover:translate-x-0.5 group-hover:-translate-y-0.5 transition-transform" />
                         </a>
                     )}
                 </footer>

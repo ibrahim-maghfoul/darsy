@@ -25,9 +25,9 @@ export function BelieveSection() {
     return (
         <section
             ref={sectionRef}
-            className={`relative flex flex-col items-center justify-center overflow-hidden transition-all duration-700 pb-24 md:pb-0
+            className={`relative flex flex-col items-center overflow-hidden transition-all duration-700 pb-24 md:pb-0
       min-h-[80vh] md:min-h-screen
-      p-[clamp(80px,10vh,200px)_clamp(20px,6vw,80px)]
+      pt-6 px-[clamp(20px,6vw,80px)] pb-[clamp(80px,10vh,200px)]
       bg-[radial-gradient(ellipse_70%_60%_at_50%_50%,#3aaa6a_0%,#5dc88a_18%,#a8ecc4_42%,#d8f5e8_62%,#f2fbf5_80%,#ffffff_100%)]
       before:content-[''] before:absolute before:inset-0 before:pointer-events-none before:bg-[radial-gradient(ellipse_55%_40%_at_50%_50%,rgba(255,255,255,0.1),transparent_70%)]`}
         >
@@ -45,6 +45,18 @@ export function BelieveSection() {
                 </motion.div>
             ))}
 
+            {/* Pill at the top of the section */}
+            <motion.div
+                initial={{ opacity: 0, y: -8 }}
+                animate={isInView ? { opacity: 1, y: 0 } : {}}
+                transition={{ duration: 0.6, delay: 0.1 }}
+                className="relative z-10 self-center mt-2 mb-8 inline-flex items-center gap-2 px-4 py-1.5 rounded-full border border-white/40 bg-white/20 text-[12px] font-semibold text-dark/80 shadow-[0_0_12px_rgba(58,170,106,0.15)] whitespace-nowrap"
+            >
+                <span className="w-1.5 h-1.5 rounded-full bg-green animate-pulse" />
+                {t('kicker')}
+            </motion.div>
+
+            <div className="flex flex-col items-center justify-center flex-1 w-full">
             <motion.div
                 initial={{ opacity: 0, y: 28 }}
                 animate={isInView ? { opacity: 0.92, y: 0 } : {}}
@@ -53,7 +65,6 @@ export function BelieveSection() {
             >
                 <img src="/door.png" alt="Door" className="block w-[clamp(80px,35vw,280px)] h-auto mx-auto object-contain drop-shadow-2xl" />
             </motion.div>
-
             <motion.div
                 initial={{ opacity: 0, y: 28 }}
                 animate={isInView ? { opacity: 1, y: 0 } : {}}
@@ -89,6 +100,7 @@ export function BelieveSection() {
                     </Link>
                 </div>
             </motion.div>
+            </div>
 
             {/* Hidden SVG goo filter — needed for blob merge effect */}
             <svg xmlns="http://www.w3.org/2000/svg" version="1.1" style={{ position: 'absolute', width: 0, height: 0 }} aria-hidden="true">

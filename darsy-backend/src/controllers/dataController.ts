@@ -9,12 +9,19 @@ import { Contribution } from '../models/Contribution';
 import { Report } from '../models/Report';
 import { SchoolService } from '../models/SchoolService';
 import { User } from '../models/User';
+import { cache } from '../utils/cache';
+
 
 export class DataController {
-    // Get all schools
+    // Get all schools (cached — rarely changes)
     static async getSchools(_req: AuthRequest, res: Response): Promise<void> {
         try {
-            const schools = await School.find().sort({ title: 1 });
+            const CACHE_KEY = 'curriculum:schools';
+            const cached = cache.get<any[]>(CACHE_KEY);
+            if (cached) { res.json(cached); return; }
+
+            const schools = await School.find().sort({ title: 1 }).lean();
+            cache.set(CACHE_KEY, schools);
             res.json(schools);
         } catch (error) {
             console.error('Get schools error:', error);
@@ -22,11 +29,18 @@ export class DataController {
         }
     }
 
-    // Get levels by school
+    // Get levels by school (cached)
     static async getLevels(req: AuthRequest, res: Response): Promise<void> {
         try {
             const { schoolId } = req.params;
-            const levels = await Level.find({ schoolId }).sort({ title: 1 });
+            if (!schoolId) { res.status(400).json({ error: 'Invalid school ID' }); return; }
+
+            const CACHE_KEY = `curriculum:levels:${schoolId}`;
+            const cached = cache.get<any[]>(CACHE_KEY);
+            if (cached) { res.json(cached); return; }
+
+            const levels = await Level.find({ schoolId }).sort({ title: 1 }).lean();
+            cache.set(CACHE_KEY, levels);
             res.json(levels);
         } catch (error) {
             console.error('Get levels error:', error);
@@ -34,11 +48,18 @@ export class DataController {
         }
     }
 
-    // Get guidances by level
+    // Get guidances by level (cached)
     static async getGuidances(req: AuthRequest, res: Response): Promise<void> {
         try {
             const { levelId } = req.params;
-            const guidances = await Guidance.find({ levelId }).sort({ title: 1 });
+            if (!levelId) { res.status(400).json({ error: 'Invalid level ID' }); return; }
+
+            const CACHE_KEY = `curriculum:guidances:${levelId}`;
+            const cached = cache.get<any[]>(CACHE_KEY);
+            if (cached) { res.json(cached); return; }
+
+            const guidances = await Guidance.find({ levelId }).sort({ title: 1 }).lean();
+            cache.set(CACHE_KEY, guidances);
             res.json(guidances);
         } catch (error) {
             console.error('Get guidances error:', error);
@@ -46,11 +67,18 @@ export class DataController {
         }
     }
 
-    // Get subjects by guidance
+    // Get subjects by guidance (cached)
     static async getSubjects(req: AuthRequest, res: Response): Promise<void> {
         try {
             const { guidanceId } = req.params;
-            const subjects = await Subject.find({ guidanceId }).sort({ title: 1 });
+            if (!guidanceId) { res.status(400).json({ error: 'Invalid guidance ID' }); return; }
+
+            const CACHE_KEY = `curriculum:subjects:${guidanceId}`;
+            const cached = cache.get<any[]>(CACHE_KEY);
+            if (cached) { res.json(cached); return; }
+
+            const subjects = await Subject.find({ guidanceId }).sort({ title: 1 }).lean();
+            cache.set(CACHE_KEY, subjects);
             res.json(subjects);
         } catch (error) {
             console.error('Get subjects error:', error);
@@ -58,11 +86,18 @@ export class DataController {
         }
     }
 
-    // Get lessons by subject
+    // Get lessons by subject (cached)
     static async getLessons(req: AuthRequest, res: Response): Promise<void> {
         try {
             const { subjectId } = req.params;
-            const lessons = await Lesson.find({ subjectId }).sort({ title: 1 });
+            if (!subjectId) { res.status(400).json({ error: 'Invalid subject ID' }); return; }
+
+            const CACHE_KEY = `curriculum:lessons:${subjectId}`;
+            const cached = cache.get<any[]>(CACHE_KEY);
+            if (cached) { res.json(cached); return; }
+
+            const lessons = await Lesson.find({ subjectId }).sort({ title: 1 }).lean();
+            cache.set(CACHE_KEY, lessons);
             res.json(lessons);
         } catch (error) {
             console.error('Get lessons error:', error);
@@ -74,7 +109,8 @@ export class DataController {
     static async getLessonById(req: AuthRequest, res: Response): Promise<void> {
         try {
             const { lessonId } = req.params;
-            const lesson = await Lesson.findById(lessonId);
+            if (!lessonId) { res.status(400).json({ error: 'Invalid lesson ID' }); return; }
+            const lesson = await Lesson.findById(lessonId).lean();
 
             if (!lesson) {
                 res.status(404).json({ error: 'Lesson not found' });
@@ -92,6 +128,7 @@ export class DataController {
     static async createSchool(req: AuthRequest, res: Response): Promise<void> {
         try {
             const school = await School.create(req.body);
+            cache.del('curriculum:schools');
             res.status(201).json(school);
         } catch (error) {
             console.error('Create school error:', error);
@@ -103,6 +140,7 @@ export class DataController {
     static async createLevel(req: AuthRequest, res: Response): Promise<void> {
         try {
             const level = await Level.create(req.body);
+            cache.invalidatePrefix('curriculum:levels');
             res.status(201).json(level);
         } catch (error) {
             console.error('Create level error:', error);
@@ -114,6 +152,7 @@ export class DataController {
     static async createGuidance(req: AuthRequest, res: Response): Promise<void> {
         try {
             const guidance = await Guidance.create(req.body);
+            cache.invalidatePrefix('curriculum:guidances');
             res.status(201).json(guidance);
         } catch (error) {
             console.error('Create guidance error:', error);
@@ -125,6 +164,7 @@ export class DataController {
     static async createSubject(req: AuthRequest, res: Response): Promise<void> {
         try {
             const subject = await Subject.create(req.body);
+            cache.invalidatePrefix('curriculum:subjects');
             res.status(201).json(subject);
         } catch (error) {
             console.error('Create subject error:', error);
@@ -136,6 +176,7 @@ export class DataController {
     static async createLesson(req: AuthRequest, res: Response): Promise<void> {
         try {
             const lesson = await Lesson.create(req.body);
+            cache.invalidatePrefix('curriculum:lessons');
             res.status(201).json(lesson);
         } catch (error) {
             console.error('Create lesson error:', error);
@@ -198,14 +239,19 @@ export class DataController {
         res.status(410).json({ error: 'This method is deprecated. Please use the darsy-script/analyze.js utility.' });
     }
 
-    // Get Global Stats
+    // Get Global Stats (cached 2 min)
     static async getGlobalStats(_req: AuthRequest, res: Response): Promise<void> {
         try {
-            const report = await Report.findOne({ type: 'dashboard_stats' });
+            const CACHE_KEY = 'stats:global';
+            const cached = cache.get<any>(CACHE_KEY);
+            if (cached) { res.json(cached); return; }
+
+            const report = await Report.findOne({ type: 'dashboard_stats' }).lean();
             if (!report) {
                 res.status(404).json({ error: 'Global stats not found' });
                 return;
             }
+            cache.set(CACHE_KEY, report, 2 * 60_000);
             res.json(report);
         } catch (error) {
             console.error('Get global stats error:', error);
@@ -222,6 +268,7 @@ export class DataController {
                 res.status(404).json({ error: 'School not found' });
                 return;
             }
+            cache.del('curriculum:schools');
             res.json(school);
         } catch (error) {
             console.error('Update school error:', error);
@@ -237,6 +284,7 @@ export class DataController {
                 res.status(404).json({ error: 'Level not found' });
                 return;
             }
+            cache.invalidatePrefix('curriculum:levels');
             res.json(level);
         } catch (error) {
             console.error('Update level error:', error);
@@ -252,6 +300,7 @@ export class DataController {
                 res.status(404).json({ error: 'Guidance not found' });
                 return;
             }
+            cache.invalidatePrefix('curriculum:guidances');
             res.json(guidance);
         } catch (error) {
             console.error('Update guidance error:', error);
@@ -267,6 +316,7 @@ export class DataController {
                 res.status(404).json({ error: 'Subject not found' });
                 return;
             }
+            cache.invalidatePrefix('curriculum:subjects');
             res.json(subject);
         } catch (error) {
             console.error('Update subject error:', error);
@@ -282,6 +332,7 @@ export class DataController {
                 res.status(404).json({ error: 'Lesson not found' });
                 return;
             }
+            cache.invalidatePrefix('curriculum:lessons');
             res.json(lesson);
         } catch (error) {
             console.error('Update lesson error:', error);
@@ -298,6 +349,7 @@ export class DataController {
                 res.status(404).json({ error: 'School not found' });
                 return;
             }
+            cache.del('curriculum:schools');
             res.json({ message: 'School deleted successfully' });
         } catch (error) {
             console.error('Delete school error:', error);
@@ -313,6 +365,7 @@ export class DataController {
                 res.status(404).json({ error: 'Level not found' });
                 return;
             }
+            cache.invalidatePrefix('curriculum:levels');
             res.json({ message: 'Level deleted successfully' });
         } catch (error) {
             console.error('Delete level error:', error);
@@ -328,6 +381,7 @@ export class DataController {
                 res.status(404).json({ error: 'Guidance not found' });
                 return;
             }
+            cache.invalidatePrefix('curriculum:guidances');
             res.json({ message: 'Guidance deleted successfully' });
         } catch (error) {
             console.error('Delete guidance error:', error);
@@ -343,6 +397,7 @@ export class DataController {
                 res.status(404).json({ error: 'Subject not found' });
                 return;
             }
+            cache.invalidatePrefix('curriculum:subjects');
             res.json({ message: 'Subject deleted successfully' });
         } catch (error) {
             console.error('Delete subject error:', error);
@@ -358,6 +413,7 @@ export class DataController {
                 res.status(404).json({ error: 'Lesson not found' });
                 return;
             }
+            cache.invalidatePrefix('curriculum:lessons');
             res.json({ message: 'Lesson deleted successfully' });
         } catch (error) {
             console.error('Delete lesson error:', error);
@@ -448,16 +504,17 @@ export class DataController {
             ]);
 
             const userIds = summaryData.map(d => d._id);
-            const users = await User.find({ _id: { $in: userIds } }, 'displayName photoURL subscription');
-            
+            const users = await User.find({ _id: { $in: userIds } }, 'displayName photoURL subscription').lean();
+            const userMap = new Map(users.map(u => [u._id.toString(), u]));
+
             const result = summaryData.map(d => {
-                const user = users.find(u => u._id.toString() === d._id.toString());
+                const user = userMap.get(d._id.toString());
                 return {
                     userId: d._id,
                     contributions: d.count,
                     displayName: user?.displayName || 'Unknown Member',
                     photoURL: user?.photoURL || null,
-                    isPremium: user?.isPremium || false
+                    isPremium: (user as any)?.isPremium || false
                 };
             }).filter(u => u.displayName !== 'Unknown Member');
 
@@ -506,19 +563,24 @@ export class DataController {
                 .limit(20);
 
             const userIds = [...new Set(recent.map(c => c.userId))];
-            const users = await User.find({ _id: { $in: userIds } }, 'displayName photoURL subscription');
-
             const subjectIds = [...new Set(recent.map(c => c.subjectId).filter(id => id))];
             const lessonIds = [...new Set(recent.map(c => c.lessonId).filter(id => id && id !== 'contribution'))];
-            
-            const subjects = await Subject.find({ _id: { $in: subjectIds } }, 'title');
-            const lessons = await Lesson.find({ _id: { $in: lessonIds } }, 'title');
+
+            const [users, subjects, lessons] = await Promise.all([
+                User.find({ _id: { $in: userIds } }, 'displayName photoURL subscription').lean(),
+                Subject.find({ _id: { $in: subjectIds } }, 'title').lean(),
+                Lesson.find({ _id: { $in: lessonIds } }, 'title').lean(),
+            ]);
+
+            const userMap = new Map(users.map(u => [u._id.toString(), u]));
+            const subjectMap = new Map(subjects.map(s => [s._id.toString(), s]));
+            const lessonMap = new Map(lessons.map(l => [l._id.toString(), l]));
 
             const result = recent.map(c => {
-                const user = users.find(u => u._id.toString() === c.userId.toString());
-                const subject = subjects.find(s => s._id.toString() === c.subjectId?.toString());
-                const lesson = lessons.find(l => l._id.toString() === c.lessonId?.toString());
-                
+                const user = userMap.get(c.userId.toString());
+                const subject = subjectMap.get(c.subjectId?.toString() || '');
+                const lesson = lessonMap.get(c.lessonId?.toString() || '');
+
                 return {
                     ...c.toObject(),
                     subjectTitle: subject?.title || 'General',
@@ -526,7 +588,7 @@ export class DataController {
                     user: {
                         displayName: user?.displayName || 'Unknown Member',
                         photoURL: user?.photoURL || null,
-                        isPremium: user?.isPremium || false
+                        isPremium: (user as any)?.isPremium || false
                     }
                 };
             });
@@ -584,7 +646,7 @@ export class DataController {
     // Admin: Get all contributions
     static async getAllContributions(req: AuthRequest, res: Response): Promise<void> {
         try {
-            const limit = parseInt((req.query as any).limit) || 200;
+            const limit = Math.min(Math.max(1, parseInt((req.query as any).limit) || 200), 500);
             const contributions = await Contribution.find({}).sort({ createdAt: -1 }).limit(limit).lean();
             const userIds = [...new Set(contributions.map(c => c.userId))];
             const subjectIds = [...new Set(contributions.map(c => c.subjectId).filter(Boolean))];
@@ -594,11 +656,14 @@ export class DataController {
                 Subject.find({ _id: { $in: subjectIds } }, 'title').lean(),
                 Lesson.find({ _id: { $in: lessonIds } }, 'title').lean(),
             ]);
+            const userMap = new Map(users.map(u => [u._id.toString(), u]));
+            const subjectMap = new Map(subjects.map(s => [s._id.toString(), s]));
+            const lessonMap = new Map(lessons.map(l => [l._id.toString(), l]));
             const result = contributions.map(c => ({
                 ...c,
-                user: users.find(u => u._id.toString() === c.userId.toString()) || null,
-                subjectTitle: subjects.find(s => s._id.toString() === c.subjectId?.toString())?.title || '—',
-                lessonTitle: lessons.find(l => l._id.toString() === c.lessonId?.toString())?.title || '—',
+                user: userMap.get(c.userId.toString()) || null,
+                subjectTitle: subjectMap.get(c.subjectId?.toString() || '')?.title || '—',
+                lessonTitle: lessonMap.get(c.lessonId?.toString() || '')?.title || '—',
             }));
             res.json(result);
         } catch (error) {

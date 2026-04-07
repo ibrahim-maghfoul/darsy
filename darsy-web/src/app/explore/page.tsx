@@ -1,13 +1,13 @@
 "use client";
 
-import { useState, useEffect } from "react";
-import { motion, AnimatePresence } from "framer-motion";
-import { Search, BookOpen, ChevronRight, ChevronLeft, Mail, Lock, LogIn, Calculator, Atom, Globe, Microscope, Cpu, Music, Palette, Scale, Database, Code, Shield, Dumbbell, Stethoscope, TestTube, Lightbulb, Map, FileText, FlaskConical, Languages, FunctionSquare, Compass } from "lucide-react";
+import { useState, useEffect, useMemo } from "react";
+import { Search, BookOpen, ChevronRight, ChevronLeft, LogIn, Calculator, Atom, Globe, Microscope, Cpu, Music, Palette, Scale, Database, Dumbbell, Stethoscope, Lightbulb, Map, FlaskConical, Languages } from "lucide-react";
 import Link from "next/link";
-import { getSubjects } from "@/services/data";
+import { getSubjects, prefetchLessons } from "@/services/data";
 import { useAuth } from "@/contexts/AuthContext";
 import { useRouter } from "next/navigation";
 import { useTranslations, useLocale } from "next-intl";
+import "./subject-cards.css";
 
 const getSubjectIcon = (title: string) => {
     const t = title.toLowerCase();
@@ -31,7 +31,7 @@ const getSubjectIcon = (title: string) => {
 };
 
 // ---------- Guest Level Selector component ----------
-import { getSchools, getLevels, getGuidances } from "@/services/data";
+import { getSchools, getLevels, getGuidances, prefetchLevels, prefetchGuidances } from "@/services/data";
 import { GraduationCap, School, UserPlus } from "lucide-react";
 
 function GuestLevelSelector({ onSelect }: { onSelect: (guidanceId: string, title: string) => void }) {
@@ -62,14 +62,17 @@ function GuestLevelSelector({ onSelect }: { onSelect: (guidanceId: string, title
                     };
                     return priority(a.title) - priority(b.title);
                 });
+                // Prefetch levels for all schools so next step loads instantly
+                res.forEach(s => prefetchLevels(s.id));
             } else if (step === 2) {
                 res = await getLevels(selections.schoolId);
+                // Prefetch guidances for all levels
+                res.forEach(l => prefetchGuidances(l.id));
             } else if (step === 3) {
                 res = await getGuidances(selections.levelId);
-                // Auto-select if there is only one guidance (e.g. "Generale")
                 if (res.length === 1) {
                     onSelect(res[0].id, res[0].title);
-                    return; // Prevent further rendering of this step
+                    return;
                 }
             }
             setOptions(res);
@@ -92,190 +95,135 @@ function GuestLevelSelector({ onSelect }: { onSelect: (guidanceId: string, title
         }
     };
 
+    const stepIcons = [
+        <School size={26} />,
+        <GraduationCap size={26} />,
+        <BookOpen size={26} />,
+    ];
+
+    const stepLabels = [
+        t('school_title'),
+        t('level_title'),
+        t('guidance_title'),
+    ];
+
     return (
-        <div className="min-h-screen flex flex-col items-center justify-center p-6 bg-white pt-20 md:pt-32">
-            <div className="w-full max-w-2xl space-y-8">
-                {/* Premium Login Suggestion for Guests - Smaller with Lines Texture */}
+        <div className="min-h-screen flex flex-col items-center justify-center px-4 py-8 pt-24 md:pt-32 bg-[#fafbfc]">
+            <div className="w-full max-w-md space-y-4">
+
+                {/* Login banner */}
                 <div
-                    className="relative overflow-hidden bg-[#1e7a46] rounded-2xl px-4 py-3 shadow-lg shadow-green/10"
-                    style={{
-                        backgroundImage: `repeating-linear-gradient(45deg, rgba(255,255,255,0.03) 0px, rgba(255,255,255,0.03) 2px, transparent 2px, transparent 8px), linear-gradient(135deg, #1e7a46 0%, #0f4428 100%)`
-                    }}
+                    className="relative overflow-hidden rounded-2xl px-4 py-3 shadow-md"
+                    style={{ backgroundImage: `repeating-linear-gradient(45deg, rgba(255,255,255,0.03) 0px, rgba(255,255,255,0.03) 2px, transparent 2px, transparent 8px), linear-gradient(135deg, #1e7a46 0%, #0f4428 100%)` }}
                 >
                     <div className="relative z-10 flex items-center justify-between gap-3">
                         <div className="flex items-center gap-2.5 min-w-0">
-                            <UserPlus size={18} strokeWidth={1.8} className="text-white/90 shrink-0" />
+                            <UserPlus size={16} strokeWidth={2} className="text-white/80 shrink-0" />
                             <div className="min-w-0">
-                                <p className="font-bold text-white text-sm leading-tight">Save your learning progress!</p>
-                                <p className="text-white/70 text-xs leading-snug hidden sm:block">Sign in to track lessons and save favorites.</p>
+                                <p className="font-bold text-white text-xs leading-tight">Save your progress — sign in free</p>
+                                <p className="text-white/60 text-[11px] leading-snug hidden sm:block">Track lessons, earn points, save favorites.</p>
                             </div>
                         </div>
-                        <button
-                            onClick={() => router.push('/login')}
-                            className="shrink-0 px-4 py-2 bg-white text-green font-bold rounded-xl text-xs shadow-md hover:scale-[1.02] active:scale-95 transition-all flex items-center gap-1.5 whitespace-nowrap"
-                        >
-                            <LogIn size={14} />
+                        <button onClick={() => router.push('/login')} className="btn-signin">
+                            <LogIn size={13} />
                             Sign In
                         </button>
                     </div>
                 </div>
 
-                <AnimatePresence mode="wait">
-                    <motion.div
-                        key={step}
-                        initial={{ opacity: 0, x: 20 }}
-                        animate={{ opacity: 1, x: 0 }}
-                        exit={{ opacity: 0, x: -20 }}
-                        transition={{ duration: 0.3 }}
-                        className="bg-white border border-green/10 rounded-[40px] p-8 md:p-12 shadow-2xl shadow-green/5 space-y-8 text-center"
+                {/* Wizard panel */}
+                <div
+                    key={step}
+                    className="bg-white rounded-[28px] border border-green/8 shadow-xl shadow-green/5 overflow-hidden animate-slide-up"
+                >
+                    {/* Header with dot texture */}
+                    <div
+                        className="relative px-6 pt-7 pb-6 border-b border-green/6"
+                        style={{ background: 'linear-gradient(135deg, #f0faf5 0%, #e8f5ee 100%)' }}
                     >
-                        {step > 1 && (
-                            <div className="w-20 h-20 bg-green/10 rounded-3xl mx-auto flex items-center justify-center text-green mb-2">
-                                {step === 2 ? <GraduationCap size={40} /> : <BookOpen size={40} />}
+                        {/* Dot texture */}
+                        <div
+                            className="absolute inset-0 pointer-events-none"
+                            style={{ backgroundImage: 'radial-gradient(circle, rgba(58,170,106,0.15) 1px, transparent 1px)', backgroundSize: '14px 14px' }}
+                        />
+
+                        {/* Step progress */}
+                        <div className="relative z-10 flex items-center justify-center gap-2 mb-5">
+                            {[1, 2, 3].map((s) => (
+                                <div key={s} className="flex items-center gap-2">
+                                    <div className={`step-dot ${s < step ? 'step-dot-past' : s === step ? 'step-dot-active' : 'step-dot-future'}`}>
+                                        {s < step ? '✓' : s}
+                                    </div>
+                                    {s < 3 && (
+                                        <div className={`step-line ${s < step ? 'step-line-done' : 'step-line-pending'}`} />
+                                    )}
+                                </div>
+                            ))}
+                        </div>
+
+                        {/* Icon + title */}
+                        <div className="relative z-10 flex items-center gap-4">
+                            <div className="step-icon-box">
+                                {stepIcons[step - 1]}
                             </div>
+                            <div>
+                                <p className="text-[10px] font-bold text-green/50 uppercase tracking-widest mb-0.5">
+                                    Step {step} of 3
+                                </p>
+                                <h2 className="text-xl font-black text-dark tracking-tight leading-tight">
+                                    {stepLabels[step - 1]}
+                                </h2>
+                            </div>
+                        </div>
+                    </div>
+
+                    {/* Options list */}
+                    <div className="p-4 space-y-2">
+                        {loading ? (
+                            Array(3).fill(0).map((_, i) => (
+                                <div
+                                    key={i}
+                                    className="selection-skeleton"
+                                    style={{ animationDelay: `${i * 70}ms` }}
+                                />
+                            ))
+                        ) : options.length === 0 ? (
+                            <div className="py-8 text-center text-sm text-green/40 font-medium">
+                                Nothing found — check your connection.
+                            </div>
+                        ) : (
+                            options.map((item, index) => (
+                                <button
+                                    key={item.id}
+                                    onClick={() => handleSelect(item)}
+                                    className="selection-card"
+                                    style={{ animationDelay: `${index * 40}ms` }}
+                                >
+                                    <div className="selection-card-row">
+                                        <span className="selection-card-num">{String(index + 1).padStart(2, '0')}</span>
+                                        <span className="selection-card-label">{item.title}</span>
+                                        <ChevronRight size={15} className="selection-card-chevron" />
+                                    </div>
+                                </button>
+                            ))
                         )}
-                        <div className="space-y-2">
-                            <h2 className="text-3xl font-black text-dark tracking-tight">
-                                {step === 1 ? t('school_title') : step === 2 ? t('level_title') : t('guidance_title')}
-                            </h2>
-                            <p className="text-muted-foreground">{t('guest_explore_desc') || "Select your level to view courses"}</p>
-                        </div>
-                        
-                        <div className="grid gap-3 text-left">
-                            {loading ? (
-                                Array(4).fill(0).map((_, i) => (
-                                    <div key={i} className="h-20 bg-green/5 animate-pulse rounded-2xl" />
-                                ))
-                            ) : (
-                                options.map((item, index) => (
-                                    <motion.button
-                                        initial={{ opacity: 0, y: 10 }}
-                                        animate={{ opacity: 1, y: 0 }}
-                                        transition={{ delay: index * 0.05 }}
-                                        key={item.id}
-                                        onClick={() => handleSelect(item)}
-                                        className="group flex items-center justify-between p-5 rounded-2xl bg-gray-50/50 border border-transparent hover:border-green hover:bg-white hover:shadow-xl transition-all duration-300"
-                                    >
-                                        <span className="font-bold text-dark">{item.title}</span>
-                                        <ChevronRight className="text-gray-300 group-hover:text-green group-hover:translate-x-1 transition-all" />
-                                    </motion.button>
-                                ))
-                            )}
-                        </div>
-                        
-                        {step > 1 && (
-                            <button 
-                                onClick={() => setStep(step - 1)} 
-                                className="text-muted-foreground font-medium hover:text-dark transition-colors flex items-center gap-2 mx-auto"
-                            >
-                                <ChevronLeft size={16} />
-                                Back to {step === 2 ? 'school' : 'level'} selection
+                    </div>
+
+                    {/* Back / footer */}
+                    {step > 1 && (
+                        <div className="px-4 pb-4">
+                            <button onClick={() => setStep(step - 1)} className="btn-back">
+                                <ChevronLeft size={14} className="btn-back-arrow" />
+                                Back to {step === 2 ? stepLabels[0] : stepLabels[1]}
                             </button>
-                        )}
-                    </motion.div>
-                </AnimatePresence>
+                        </div>
+                    )}
+                </div>
             </div>
         </div>
     );
 }
 
-
-// ---------- LoginGate (Kept for reference but unused in main page) ----------
-function LoginGate() {
-    const { login } = useAuth();
-    const t = useTranslations('Auth');
-    const [email, setEmail] = useState("");
-    const [password, setPassword] = useState("");
-    const [loading, setLoading] = useState(false);
-    const [error, setError] = useState("");
-
-    const handleSubmit = async (e: React.FormEvent) => {
-        e.preventDefault();
-        setLoading(true);
-        setError("");
-        try {
-            await login(email, password);
-        } catch (err: any) {
-            setError(err.message);
-        } finally {
-            setLoading(false);
-        }
-    };
-
-    return (
-        <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-white via-white to-green/10 p-6 pt-4 md:pt-32">
-            <motion.div
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                className="w-full max-w-md space-y-8 bg-white p-10 rounded-[40px] border border-green/10 shadow-2xl shadow-green/5"
-            >
-                {/* Logo / Context */}
-                <div className="text-center space-y-2">
-                    <div className="w-16 h-16 bg-green/10 rounded-3xl flex items-center justify-center mx-auto mb-2">
-                        <BookOpen className="text-green" size={32} />
-                    </div>
-                    <h1 className="text-4xl font-black text-dark tracking-tight">{t('signin_title')}</h1>
-                    <p className="text-muted-foreground">{t('signin_desc')}</p>
-                </div>
-
-                {error && (
-                    <div className="p-4 bg-red-50 text-red-500 text-sm font-medium rounded-2xl border border-red-100 italic">
-                        ⚠️ {error}
-                    </div>
-                )}
-
-                <form onSubmit={handleSubmit} className="space-y-6">
-                    <div className="space-y-4">
-                        <div className="relative">
-                            <Mail className="absolute left-4 top-1/2 -translate-y-1/2 text-green" size={20} />
-                            <input
-                                type="email"
-                                placeholder={t('email')}
-                                value={email}
-                                onChange={(e) => setEmail(e.target.value)}
-                                className="w-full pl-12 pr-4 py-4 rounded-2xl bg-green/5 border border-transparent focus:border-green focus:bg-white focus:ring-4 focus:ring-green/5 outline-none transition-all font-medium"
-                                required
-                            />
-                        </div>
-                        <div className="relative">
-                            <Lock className="absolute left-4 top-1/2 -translate-y-1/2 text-green" size={20} />
-                            <input
-                                type="password"
-                                placeholder={t('password')}
-                                value={password}
-                                onChange={(e) => setPassword(e.target.value)}
-                                className="w-full pl-12 pr-4 py-4 rounded-2xl bg-green/5 border border-transparent focus:border-green focus:bg-white focus:ring-4 focus:ring-green/5 outline-none transition-all font-medium"
-                                required
-                            />
-                        </div>
-                    </div>
-
-                    <button
-                        type="submit"
-                        disabled={loading}
-                        className="w-full py-4 bg-green text-white font-bold rounded-2xl hover:shadow-xl hover:shadow-green/20 transition-all flex items-center justify-center gap-2 group active:scale-95 disabled:opacity-50"
-                    >
-                        {loading ? "..." : (
-                            <>
-                                <LogIn size={20} />
-                                {t('signin_btn')}
-                            </>
-                        )}
-                    </button>
-                </form>
-
-                <div className="relative text-center">
-                    <p className="text-muted-foreground text-sm font-medium">
-                        {t('no_account')}{" "}
-                        <Link href="/signup" className="text-green font-bold hover:underline">
-                            {t('signup_btn')}
-                        </Link>
-                    </p>
-                </div>
-            </motion.div>
-        </div>
-    );
-}
 
 // ---------- Main page ----------
 export default function ExplorePage() {
@@ -301,12 +249,10 @@ export default function ExplorePage() {
                 fetchSubjects(guidanceId);
             } else {
                 setLoading(false);
-                // We don't redirect to onboarding, we stay here to show level selection
             }
             return;
         }
 
-        // Authenticated user path
         if (user.selectedPath?.guidanceId) {
             setAnonymousPathParams(null);
             fetchSubjects(user.selectedPath.guidanceId);
@@ -326,10 +272,21 @@ export default function ExplorePage() {
 
     const fetchSubjects = async (guidanceId: string) => {
         setLoading(true);
-        const res = await getSubjects(guidanceId);
-        setSubjects(res);
-        setLoading(false);
+        try {
+            const res = await getSubjects(guidanceId);
+            setSubjects(res);
+        } catch {
+            setSubjects([]);
+        } finally {
+            setLoading(false);
+        }
     };
+
+    // Memoize filtered subjects to avoid re-filtering on every render
+    const filteredSubjects = useMemo(() =>
+        subjects.filter(s => s.title.toLowerCase().includes(searchQuery.toLowerCase())),
+        [subjects, searchQuery]
+    );
 
     // If not logged in and no path is selected yet, show selector
     if (!user && !loading && !anonymousPathParams) {
@@ -339,17 +296,8 @@ export default function ExplorePage() {
         }} />;
     }
 
-    const filteredSubjects = subjects.filter(s =>
-        s.title.toLowerCase().includes(searchQuery.toLowerCase())
-    );
-
     return (
-        <motion.div
-            initial={{ opacity: 0, y: 10 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.4 }}
-            className="min-h-screen bg-white"
-        >
+        <div className="min-h-screen bg-white animate-slide-up">
             {/* Header */}
             <header className="bg-green/5 border-b border-green/10 pt-6 md:pt-32 pb-16 px-6">
                 <div className="max-w-7xl mx-auto space-y-6">
@@ -386,10 +334,7 @@ export default function ExplorePage() {
                                         <p className="text-white/70 text-xs leading-snug hidden sm:block">Sign in to track lessons and save favorites.</p>
                                     </div>
                                 </div>
-                                <Link
-                                    href="/login"
-                                    className="shrink-0 px-4 py-2 bg-white text-green font-bold rounded-xl text-xs shadow-md hover:scale-[1.02] active:scale-95 transition-all flex items-center gap-1.5 whitespace-nowrap"
-                                >
+                                <Link href="/login" className="btn-signin">
                                     <LogIn size={14} />
                                     Sign In
                                 </Link>
@@ -402,89 +347,95 @@ export default function ExplorePage() {
             {/* Content */}
             <main className="max-w-7xl mx-auto pt-16 px-6" style={{ paddingBottom: '8rem' }}>
                 {loading ? (
-                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+                    <div className="grid grid-cols-2 md:grid-cols-2 lg:grid-cols-3 gap-4 md:gap-5">
                         {Array(6).fill(0).map((_, i) => (
-                            <div key={i} className="aspect-[4/3] bg-green/5 animate-pulse rounded-3xl" />
+                            <div
+                                key={i}
+                                className="subject-card-skeleton"
+                                style={{ animationDelay: `${i * 70}ms` }}
+                            />
                         ))}
                     </div>
                 ) : filteredSubjects.length > 0 ? (
-                    <motion.div layout className="grid grid-cols-2 md:grid-cols-2 lg:grid-cols-3 gap-4 md:gap-8">
-                        <AnimatePresence mode="popLayout">
-                            {filteredSubjects.map((subject: any) => {
-                                const subjectLessons = user?.progress?.lessons?.filter(
-                                    (l: any) => l.subjectId === (subject._id || subject.id)
-                                ) ?? [];
-                                const totalCompleted = subjectLessons.reduce(
-                                    (sum: number, l: any) => sum + (l.completedResources?.length ?? 0), 0
-                                );
-                                const totalResources = subjectLessons.reduce(
-                                    (sum: number, l: any) => sum + (l.totalResourcesCount ?? 0), 0
-                                );
-                                const progressPct = totalResources > 0
-                                    ? Math.min(100, Math.round((totalCompleted / totalResources) * 100))
-                                    : 0;
-                                const isStarted = subjectLessons.length > 0;
-                                const isComplete = totalResources > 0 && progressPct === 100;
+                    <div className="grid grid-cols-2 md:grid-cols-2 lg:grid-cols-3 gap-4 md:gap-5">
+                        {filteredSubjects.map((subject: any, index: number) => {
+                            const subjectLessons = user?.progress?.lessons?.filter(
+                                (l: any) => l.subjectId === (subject._id || subject.id)
+                            ) ?? [];
+                            const totalCompleted = subjectLessons.reduce(
+                                (sum: number, l: any) => sum + (l.completedResources?.length ?? 0), 0
+                            );
+                            const totalResources = subjectLessons.reduce(
+                                (sum: number, l: any) => sum + (l.totalResourcesCount ?? 0), 0
+                            );
+                            const progressPct = totalResources > 0
+                                ? Math.min(100, Math.round((totalCompleted / totalResources) * 100))
+                                : 0;
+                            const isStarted = subjectLessons.length > 0;
+                            const isComplete = totalResources > 0 && progressPct === 100;
 
-                                // Link cannot be directly animated with AnimatePresence without motion(), use motion(Link) or wrap it in a motion.div
-                                const MotionLink = motion.create(Link);
+                            const radius = 17;
+                            const circumference = 2 * Math.PI * radius;
+                            const strokeOffset = circumference - (progressPct / 100) * circumference;
 
-                                return (
-                                    <MotionLink
-                                        href={`/explore/subject/${subject.id}`}
-                                        key={subject.id}
-                                        layout
-                                        initial={{ opacity: 0, y: 20 }}
-                                        animate={{ opacity: 1, y: 0 }}
-                                        exit={{ opacity: 0, y: -20 }}
-                                        transition={{ type: "spring", stiffness: 400, damping: 30 }}
-                                        className={`group relative bg-white rounded-2xl md:rounded-3xl p-4 md:p-6 hover:shadow-2xl hover:shadow-green/10 transition-all overflow-hidden flex flex-col gap-3 md:gap-4 border-2 ${isComplete
-                                            ? 'border-green bg-green/5'
-                                            : isStarted
-                                                ? 'border-green/60 hover:border-green'
-                                                : 'border-green/20 hover:border-green'
-                                            }`}
-                                    >
-                                    <div className="space-y-4 flex-1">
-                                        <div className={`w-12 h-12 rounded-2xl flex items-center justify-center group-hover:scale-110 transition-transform ${isComplete ? 'bg-green text-white shadow-lg shadow-green/30' : 'bg-green/10 text-green'}`}>
+                            return (
+                                <Link
+                                    href={`/explore/subject/${subject.id}`}
+                                    key={subject.id}
+                                    className={`subject-card ${isComplete ? 'subject-card-done' : ''}`}
+                                    style={{ animationDelay: `${index * 40}ms` }}
+                                    onMouseEnter={() => prefetchLessons(subject.id)}
+                                >
+                                    {/* Icon header area */}
+                                    <div className="subject-card-icon-area">
+
+                                        <div className="subject-card-icon">
                                             {getSubjectIcon(subject.title)}
                                         </div>
-                                        <div className="space-y-1 pr-12">
-                                            <h3 className="text-xl font-bold text-dark">{subject.title}</h3>
-                                            <p className="text-muted-foreground line-clamp-2 text-sm">{subject.description}</p>
-                                        </div>
+
+                                        {isStarted ? (
+                                            <div className="subject-card-ring">
+                                                <svg className="w-full h-full -rotate-90" viewBox="0 0 40 40">
+                                                    <circle cx="20" cy="20" r={radius} fill="none" stroke="rgba(58,170,106,0.12)" strokeWidth="2.5" />
+                                                    <circle
+                                                        cx="20" cy="20" r={radius} fill="none"
+                                                        stroke={isComplete ? '#3aaa6a' : 'rgba(58,170,106,0.65)'}
+                                                        strokeWidth="2.5" strokeLinecap="round"
+                                                        strokeDasharray={circumference}
+                                                        strokeDashoffset={strokeOffset}
+                                                        style={{ transition: 'stroke-dashoffset 0.6s ease' }}
+                                                    />
+                                                </svg>
+                                                <span className={`absolute inset-0 flex items-center justify-center text-[9px] font-black ${isComplete ? 'text-green' : 'text-gray-500'}`}>
+                                                    {isComplete ? '✓' : `${progressPct}%`}
+                                                </span>
+                                            </div>
+                                        ) : (
+                                            <div className="subject-card-arrow">
+                                                {isAr ? <ChevronLeft size={14} /> : <ChevronRight size={14} />}
+                                            </div>
+                                        )}
                                     </div>
 
-                                    {isStarted && (
-                                        <div className="space-y-1.5">
-                                            <div className="flex items-center justify-between text-xs font-semibold">
-                                                <span className="text-green">
+                                    {/* Content body */}
+                                    <div className="subject-card-body">
+                                        <h3 className="subject-card-title">{subject.title}</h3>
+
+                                        {isStarted && (
+                                            <div className="subject-card-footer">
+                                                <span className="subject-card-stat">
                                                     {totalCompleted}/{totalResources} resources
                                                 </span>
-                                                <span className={`font-bold ${isComplete ? 'text-green' : 'text-green/70'}`}>
-                                                    {progressPct}%
-                                                </span>
+                                                {isComplete && (
+                                                    <span className="subject-card-badge">Done</span>
+                                                )}
                                             </div>
-                                            <div className="h-1.5 w-full bg-green/10 rounded-full overflow-hidden">
-                                                <div
-                                                    className={`h-full rounded-full transition-all duration-500 ${isComplete ? 'bg-green shadow-sm shadow-green/40' : 'bg-green/60'}`}
-                                                    style={{ width: `${progressPct}%` }}
-                                                />
-                                            </div>
-                                        </div>
-                                    )}
-
-                                    <div className={`absolute ${isAr ? 'left-6' : 'right-6'} top-6 w-10 h-10 rounded-full border flex items-center justify-center transition-all ${isComplete
-                                        ? 'bg-green border-green text-white'
-                                        : 'border-green/10 text-green group-hover:bg-green group-hover:text-white group-hover:border-green'
-                                        }`}>
-                                        {isAr ? <ChevronLeft size={20} /> : <ChevronRight size={20} />}
+                                        )}
                                     </div>
-                                    </MotionLink>
-                                );
-                            })}
-                        </AnimatePresence>
-                    </motion.div>
+                                </Link>
+                            );
+                        })}
+                    </div>
                 ) : (
                     <div className="text-center py-24 space-y-4">
                         <div className="w-20 h-20 bg-green/10 text-green rounded-full flex items-center justify-center mx-auto mb-6">
@@ -495,6 +446,6 @@ export default function ExplorePage() {
                 )}
                 <div style={{ height: '4rem' }} />
             </main>
-        </motion.div>
+        </div>
     );
 }

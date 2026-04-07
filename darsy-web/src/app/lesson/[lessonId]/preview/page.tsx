@@ -49,7 +49,7 @@ export default function PreviewPage() {
                     resourceId: safeResourceId,
                     additionalTimeSpent: timerRef.current - lastSavedTimerRef.current,
                     completionPercentage: 0
-                }).catch(console.error);
+                });
             }
         };
     }, [isTimerRunning, lessonId, user, url, docId]);

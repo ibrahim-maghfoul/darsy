@@ -22,4 +22,10 @@ const ContributionSchema = new Schema<IContribution>({
     timestamps: true
 });
 
+ContributionSchema.index({ status: 1 });
+ContributionSchema.index({ subjectId: 1, userId: 1 });
+ContributionSchema.index({ createdAt: -1 }); // sort by recent
+ContributionSchema.index({ status: 1, createdAt: -1 }); // filter approved + sort
+ContributionSchema.index({ lessonId: 1 }); // used in contribution filtering
+
 export const Contribution = mongoose.model<IContribution>('Contribution', ContributionSchema);

@@ -30,5 +30,7 @@ const InstructorCourseSchema = new Schema<IInstructorCourse>({
 
 // Index for querying by instructor
 InstructorCourseSchema.index({ instructorId: 1, createdAt: -1 });
+// Indexes for filtering by guidance/subject (used in listInstructors, getInstructorCourses)
+InstructorCourseSchema.index({ guidanceId: 1, subjectId: 1 });
 
 export const InstructorCourse = mongoose.model<IInstructorCourse>('InstructorCourse', InstructorCourseSchema);

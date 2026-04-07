@@ -201,6 +201,12 @@ UserSchema.pre('save', function(next) {
 // Indexes for better query performance
 UserSchema.index({ 'progress.lessons.lessonId': 1 });
 UserSchema.index({ 'progress.lessons.subjectId': 1 });
+UserSchema.index({ role: 1 });
+UserSchema.index({ 'selectedPath.guidanceId': 1 });
+UserSchema.index({ 'subscription.plan': 1 });
+UserSchema.index({ createdAt: -1 });
+UserSchema.index({ points: -1 });
+UserSchema.index({ affiliateCode: 1 }, { sparse: true });
 
 // Virtual: isPremium is true when plan is 'premium' or 'pro'
 UserSchema.virtual('isPremium').get(function (this: IUser) {

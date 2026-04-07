@@ -2,7 +2,7 @@ import { Response } from 'express';
 import { AuthRequest } from '../middleware/auth';
 import { body, validationResult } from 'express-validator';
 import { User } from '../models/User';
-import { hashPassword, comparePassword, generateAccessToken, generateRefreshToken } from '../utils/auth';
+import { hashPassword, comparePassword, generateAccessToken, generateRefreshToken, hashRefreshToken, generateAffiliateCode } from '../utils/auth';
 import { config } from '../config';
 
 export class AuthController {
@@ -49,7 +49,7 @@ export class AuthController {
             const hashedPassword = await hashPassword(password);
 
             // Generate unique affiliate code
-            const affiliateCode = Math.random().toString(36).substring(2, 8).toUpperCase();
+            const affiliateCode = generateAffiliateCode();
 
             const user = await User.create({
                 email,
@@ -85,7 +85,7 @@ export class AuthController {
             const accessToken = generateAccessToken(user._id.toString());
             const refreshToken = generateRefreshToken(user._id.toString());
 
-            user.refreshToken = refreshToken;
+            user.refreshToken = hashRefreshToken(refreshToken);
             await user.save();
 
             res.cookie('token', accessToken, {
@@ -149,7 +149,7 @@ export class AuthController {
             }
 
             if (!user.password) {
-                res.status(401).json({ error: 'Invalid credentials or please login with Google' });
+                res.status(401).json({ error: 'Invalid credentials' });
                 return;
             }
 
@@ -162,7 +162,7 @@ export class AuthController {
             const accessToken = generateAccessToken(user._id.toString());
             const refreshToken = generateRefreshToken(user._id.toString());
 
-            user.refreshToken = refreshToken;
+            user.refreshToken = hashRefreshToken(refreshToken);
             await user.save();
 
             const maxAge = rememberMe ? 15 * 24 * 60 * 60 * 1000 : config.cookie.maxAge;
@@ -262,7 +262,7 @@ export class AuthController {
             if (!user) {
                 isNewUser = true;
                 const hashedPassword = await hashPassword(Math.random().toString(36));
-                const affiliateCode = Math.random().toString(36).substring(2, 8).toUpperCase();
+                const affiliateCode = generateAffiliateCode();
                 user = await User.create({
                     email,
                     password: hashedPassword,
@@ -296,7 +296,7 @@ export class AuthController {
             const accessToken = generateAccessToken(user._id.toString());
             const refreshToken = generateRefreshToken(user._id.toString());
 
-            user.refreshToken = refreshToken;
+            user.refreshToken = hashRefreshToken(refreshToken);
             await user.save();
 
             res.cookie('token', accessToken, {

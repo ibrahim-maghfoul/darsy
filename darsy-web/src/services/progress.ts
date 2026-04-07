@@ -1,31 +1,46 @@
 import api from "@/lib/api";
 
-export const trackResourceView = async (params: {
+/**
+ * Debounce helper — only fires after `delay` ms of inactivity per key.
+ * Used to batch rapid progress updates into single API calls.
+ */
+const debounceTimers = new Map<string, ReturnType<typeof setTimeout>>();
+function debouncedCall<T>(key: string, fn: () => Promise<T>, delay: number): void {
+    const existing = debounceTimers.get(key);
+    if (existing) clearTimeout(existing);
+    debounceTimers.set(key, setTimeout(() => {
+        debounceTimers.delete(key);
+        fn().catch(console.error);
+    }, delay));
+}
+
+/** Track a resource view — fire-and-forget, no debounce needed (one-time per view) */
+export const trackResourceView = (params: {
     lessonId: string;
     subjectId: string;
     resourceId: string;
     resourceType: string;
 }) => {
-    try {
-        await api.post('/progress/track-view', params);
-    } catch (error) {
-        console.error("Error tracking view:", error);
-    }
+    // Use sendBeacon-style: don't block UI, don't await
+    api.post('/progress/track-view', params).catch(() => {});
 };
 
-export const updateResourceProgress = async (params: {
+/**
+ * Update resource progress — debounced by 3s per resource.
+ * Rapid timer ticks won't flood the server; only the last update is sent.
+ */
+export const updateResourceProgress = (params: {
     lessonId: string;
+    subjectId?: string;
     resourceId: string;
     additionalTimeSpent: number;
     completionPercentage: number;
 }) => {
-    try {
-        await api.post('/progress/update-progress', params);
-    } catch (error) {
-        console.error("Error updating progress:", error);
-    }
+    const key = `progress:${params.lessonId}:${params.resourceId}`;
+    debouncedCall(key, () => api.post('/progress/update-progress', params), 3000);
 };
 
+/** Mark resource complete — immediate but fire-and-forget */
 export const markResourceComplete = async (params: {
     lessonId: string;
     subjectId: string;

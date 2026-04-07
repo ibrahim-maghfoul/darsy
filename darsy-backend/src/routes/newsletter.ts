@@ -1,5 +1,6 @@
 import { Router, Request, Response } from 'express';
 import { Newsletter } from '../models/Newsletter';
+import { authMiddleware, adminMiddleware } from '../middleware/auth';
 
 const router = Router();
 
@@ -30,8 +31,8 @@ router.post('/subscribe', async (req: Request, res: Response) => {
     }
 });
 
-// GET /api/newsletter/subscribers (admin use)
-router.get('/subscribers', async (_req: Request, res: Response) => {
+// GET /api/newsletter/subscribers (admin only)
+router.get('/subscribers', authMiddleware, adminMiddleware, async (_req: Request, res: Response) => {
     try {
         const count = await Newsletter.countDocuments();
         res.json({ count });

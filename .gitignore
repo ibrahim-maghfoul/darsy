@@ -22,6 +22,11 @@
 **/uploads/
 !**/uploads/.gitkeep
 
+# Python
+**/.venv/
+**/__pycache__/
+**/*.pyc
+
 # OS and IDE
 .DS_Store
 Thumbs.db

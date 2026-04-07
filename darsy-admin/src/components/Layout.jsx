@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import Sidebar from './Sidebar';
-import { Menu, Bell, Search } from 'lucide-react';
+import { Menu, Bell } from 'lucide-react';
 
 const Layout = ({ children, activeTab, setActiveTab }) => {
     const [isSidebarOpen, setIsSidebarOpen] = useState(false);

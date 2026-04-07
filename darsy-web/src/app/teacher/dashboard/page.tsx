@@ -159,7 +159,7 @@ export default function TeacherDashboardPage() {
                             <div className="w-14 h-14 rounded-xl bg-green/10 flex items-center justify-center overflow-hidden shrink-0">
                                 {(profile.userId as any)?.photoURL ? (
                                     <Image
-                                        src={getPhotoURL((profile.userId as any).photoURL)}
+                                        src={getPhotoURL((profile.userId as any).photoURL) || ''}
                                         alt="" width={56} height={56}
                                         className="object-cover w-full h-full"
                                     />

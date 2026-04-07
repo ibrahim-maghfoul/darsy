@@ -176,15 +176,16 @@ export default function ChatPage() {
         // 2. Connect to Socket.IO
         // Use the same base URL as API but without /api
         const baseURL = process.env.NEXT_PUBLIC_API_URL?.replace('/api', '') || 'http://localhost:5000';
+        const token = typeof window !== 'undefined' ? localStorage.getItem('token') : null;
         const socket = io(baseURL, {
-            withCredentials: true
+            withCredentials: true,
+            auth: { token },
         });
 
         socketRef.current = socket;
 
         socket.on("connect", () => {
             setIsConnecting(false);
-            console.log("Connected to chat server");
             // Join specific room with user details
             socket.emit("join_room", {
                 guidance,
@@ -227,7 +228,6 @@ export default function ChatPage() {
 
         socket.on("disconnect", () => {
             setIsConnecting(true);
-            console.log("Disconnected from chat server");
         });
 
         return () => {

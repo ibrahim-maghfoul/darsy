@@ -20,4 +20,7 @@ const FeedbackSchema = new Schema<IFeedback>({
     timestamps: true
 });
 
+FeedbackSchema.index({ status: 1 });
+FeedbackSchema.index({ status: 1, createdAt: -1 }); // admin listing: filter by status + sort
+
 export const Feedback = mongoose.model<IFeedback>('Feedback', FeedbackSchema);

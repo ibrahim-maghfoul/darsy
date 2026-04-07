@@ -133,7 +133,7 @@ function Dashboard() {
                 apiFetch('/teacher/verifications?status=pending'),
                 fetch(`${API}/news?limit=5`).then(r => r.json()),
                 apiFetch('/data/contributions/recent'),
-                apiFetch('/user/all'),
+                apiFetch('/user/all?limit=1'),
             ]);
 
             const [stats, sch, instrApps, teacherVers, news, contribs, users] = results;
@@ -148,8 +148,8 @@ function Dashboard() {
             }
             if (contribs.status === 'fulfilled') setRecentContributions(Array.isArray(contribs.value) ? contribs.value.slice(0, 5) : []);
             if (users.status === 'fulfilled') {
-                const usersArr = Array.isArray(users.value) ? users.value : users.value?.users || [];
-                setTotalUsers(usersArr.length);
+                const val = users.value;
+                setTotalUsers(val?.total ?? (Array.isArray(val) ? val.length : val?.users?.length || 0));
             }
         } catch (err) {
             console.error('Dashboard fetch error:', err);

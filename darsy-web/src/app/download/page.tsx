@@ -23,19 +23,17 @@ export default function DownloadPage() {
                 transition={{ duration: 0.7, ease: [0.22, 1, 0.36, 1] }}
                 className="relative z-10 text-center max-w-2xl mx-auto"
             >
-                {/* App icon */}
+                {/* Section pill */}
                 <motion.div
-                    initial={{ scale: 0.7, opacity: 0 }}
-                    animate={{ scale: 1, opacity: 1 }}
-                    transition={{ duration: 0.6, delay: 0.1 }}
-                    className="w-24 h-24 mx-auto mb-8 rounded-[28px] bg-gradient-to-br from-[#3aaa6a] to-[#1a7a46] flex items-center justify-center shadow-[0_20px_60px_rgba(58,170,106,0.35)]"
+                    initial={{ opacity: 0, y: -8 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ duration: 0.5, delay: 0.1 }}
+                    className="flex justify-center mb-8"
                 >
-                    <svg viewBox="0 0 40 40" fill="none" className="w-12 h-12">
-                        <path d="M10 8h20v24H10z" rx="3" fill="white" fillOpacity="0.15" />
-                        <rect x="10" y="8" width="20" height="24" rx="3" stroke="white" strokeWidth="1.5" fill="none" />
-                        <path d="M15 20h10M15 24h7" stroke="white" strokeWidth="2" strokeLinecap="round" />
-                        <circle cx="20" cy="14" r="2" fill="white" fillOpacity="0.7" />
-                    </svg>
+                    <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full border border-green/30 bg-green/5 text-[12px] font-semibold text-green/80 shadow-[0_0_12px_rgba(58,170,106,0.15)]">
+                        <span className="w-1.5 h-1.5 rounded-full bg-green animate-pulse" />
+                        {t('pill') ?? 'Application Mobile'}
+                    </div>
                 </motion.div>
 
                 <h1 className="text-[clamp(32px,5vw,60px)] font-bold text-dark leading-[1.08] tracking-[-0.04em] mb-4">

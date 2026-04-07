@@ -20,6 +20,27 @@ const INTRO_ORIGIN = ["top right", "bottom right", "top left", "bottom left"] as
 const INTRO_ROT = ["rotateZ(-90deg)", "rotateZ(90deg)", "rotateZ(90deg)", "rotateZ(-90deg)"] as const;
 const DIAG_OFFSETS: [number, number][] = [[-40, -40], [-40, 40], [40, -40], [40, 40]];
 
+// Inject keyframes once into <head> instead of re-rendering inline <style> every frame
+const CHAT_STYLE_ID = "chat-feature-keyframes";
+function ensureChatKeyframes() {
+    if (typeof document === "undefined" || document.getElementById(CHAT_STYLE_ID)) return;
+    const s = document.createElement("style");
+    s.id = CHAT_STYLE_ID;
+    s.textContent = `
+        @keyframes glow{0%,100%{opacity:1}50%{opacity:0.4}}
+        @keyframes ripple{0%{transform:scale(1);opacity:0.9}100%{transform:scale(3.67);opacity:0}}
+        @keyframes typingBounce{0%,80%,100%{transform:translateY(0)}40%{transform:translateY(-5px)}}
+        @keyframes borderFlow{0%{stroke-dashoffset:1000}100%{stroke-dashoffset:0}}
+        @keyframes fadeSlideUp{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:translateY(0)}}
+        .glow-dot{animation:glow 1.8s ease-in-out infinite}
+        .ripple-dot{animation:ripple 1.8s ease-out infinite;transform-box:fill-box;transform-origin:center}
+        .card-border-anim{stroke-dasharray:200 800;animation:borderFlow 15s linear infinite}
+        .chat-msgs{overflow-y:scroll;scrollbar-width:none;max-height:200px}
+        .chat-msgs::-webkit-scrollbar{display:none}
+    `;
+    document.head.appendChild(s);
+}
+
 // ─── Module-level constants (visual only) ───────────────────────────────────
 const GRAD_A_TOP = { bg2: "#22c55e" };
 const GRAD_A_BOT = { bg2: "#16a34a" };
@@ -829,37 +850,26 @@ export const ChatFeatureSection = () => {
         }),
         [settled, phase2, phase2DxLeft, phase2DxRight]);
 
-    const chatRoomProps = {
-        phase2: true, // Always active for mobile display
-        roomTitle: t("room_title"),
-        roomStatus: t("room_status"),
-        messages: [
-            { id: 1, name: t("msg1_name"), color: "#22c55e", img: "https://i.pravatar.cc/150?u=sara", text: t("msg1_text"), time: "17:20" },
-            { id: 2, name: t("msg2_name"), color: "#16a34a", img: "https://i.pravatar.cc/150?u=ahmed", text: t("msg2_text"), time: "17:21" },
-            { id: 3, name: t("msg3_name"), color: "#15803d", img: "https://i.pravatar.cc/150?u=karim", text: t("msg3_text"), time: "17:21" },
-            { id: 4, name: t("msg4_name"), color: "#22c55e", img: "https://i.pravatar.cc/150?u=yassine", text: t("msg4_text"), time: "17:22" },
-        ],
-        liveMessages: [
-            { id: 101, name: t("msg101_name"), color: "#16a34a", img: "https://i.pravatar.cc/150?u=ines", text: t("msg101_text"), time: "17:23" },
-            { id: 102, name: t("msg102_name"), color: "#15803d", img: "https://i.pravatar.cc/150?u=sami", text: t("msg102_text"), time: "17:24" },
-            { id: 103, name: t("msg103_name"), color: "#22c55e", img: "https://i.pravatar.cc/150?u=laila", text: t("msg103_text"), time: "17:25" },
-        ],
-    };
+    const roomTitle = t("room_title");
+    const roomStatus = t("room_status");
+
+    const messages = useMemo(() => [
+        { id: 1, name: t("msg1_name"), color: "#22c55e", img: "https://i.pravatar.cc/150?u=sara", text: t("msg1_text"), time: "17:20" },
+        { id: 2, name: t("msg2_name"), color: "#16a34a", img: "https://i.pravatar.cc/150?u=ahmed", text: t("msg2_text"), time: "17:21" },
+        { id: 3, name: t("msg3_name"), color: "#15803d", img: "https://i.pravatar.cc/150?u=karim", text: t("msg3_text"), time: "17:21" },
+        { id: 4, name: t("msg4_name"), color: "#22c55e", img: "https://i.pravatar.cc/150?u=yassine", text: t("msg4_text"), time: "17:22" },
+    ], [t]);
+
+    const liveMessages = useMemo(() => [
+        { id: 101, name: t("msg101_name"), color: "#16a34a", img: "https://i.pravatar.cc/150?u=ines", text: t("msg101_text"), time: "17:23" },
+        { id: 102, name: t("msg102_name"), color: "#15803d", img: "https://i.pravatar.cc/150?u=sami", text: t("msg102_text"), time: "17:24" },
+        { id: 103, name: t("msg103_name"), color: "#22c55e", img: "https://i.pravatar.cc/150?u=laila", text: t("msg103_text"), time: "17:25" },
+    ], [t]);
+
+    useEffect(() => { ensureChatKeyframes(); }, []);
 
     return (
-        <div ref={sectionRef} dir="ltr" className="relative w-full min-h-[90vh] bg-[radial-gradient(circle_at_center,_#dcfce7_0%,_#ffffff_100%)] overflow-hidden flex flex-col items-center justify-center py-16 md:py-24 gap-10 md:gap-14">
-            <style>{`
-                @keyframes glow{0%,100%{opacity:1}50%{opacity:0.4}}
-                @keyframes ripple{0%{transform:scale(1);opacity:0.9}100%{transform:scale(3.67);opacity:0}}
-                @keyframes typingBounce{0%,80%,100%{transform:translateY(0)}40%{transform:translateY(-5px)}}
-                @keyframes borderFlow{0%{stroke-dashoffset:1000}100%{stroke-dashoffset:0}}
-                @keyframes fadeSlideUp{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:translateY(0)}}
-                .glow-dot{animation:glow 1.8s ease-in-out infinite}
-                .ripple-dot{animation:ripple 1.8s ease-out infinite;transform-box:fill-box;transform-origin:center}
-                .card-border-anim{stroke-dasharray:200 800;animation:borderFlow 15s linear infinite}
-                .chat-msgs{overflow-y:scroll;scrollbar-width:none;max-height:200px}
-                .chat-msgs::-webkit-scrollbar{display:none}
-            `}</style>
+        <div ref={sectionRef} dir="ltr" className="relative w-full min-h-[90vh] overflow-hidden flex flex-col items-center justify-center py-16 md:py-24 gap-10 md:gap-14" style={{ background: 'linear-gradient(45deg, #ffffff 20%, #bbf7d0 50%, #ffffff 80%)' }}>
             <div style={{ position: "absolute", width: 0, height: 0, overflow: "hidden" }}>
                 <svg>
                     <defs>
@@ -902,9 +912,10 @@ export const ChatFeatureSection = () => {
 
             {/* ─── Shared section header ─── */}
             <div className="text-center px-4 w-full max-w-2xl mx-auto">
-                <span className="inline-block text-xs font-black uppercase tracking-widest text-green mb-3 px-4 py-1.5 bg-green/10 rounded-full">
+                <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full border border-green/30 bg-green/5 text-[12px] font-semibold text-green/80 shadow-[0_0_12px_rgba(58,170,106,0.15)] mb-3">
+                    <span className="w-1.5 h-1.5 rounded-full bg-green animate-pulse" />
                     {t("chat_a_title")}
-                </span>
+                </div>
                 <h2 className="text-[clamp(28px,5vw,52px)] font-bold text-dark leading-tight mb-3">
                     {t("chat_b_title")}
                 </h2>
@@ -916,10 +927,10 @@ export const ChatFeatureSection = () => {
             {/* ─── Mobile layout: animated chat preview ─── */}
             <div className="md:hidden flex flex-col items-center gap-8 px-4 w-full">
                 <MobileChatPreview
-                    roomTitle={chatRoomProps.roomTitle}
-                    roomStatus={chatRoomProps.roomStatus}
-                    messages={chatRoomProps.messages}
-                    liveMessages={chatRoomProps.liveMessages}
+                    roomTitle={roomTitle}
+                    roomStatus={roomStatus}
+                    messages={messages}
+                    liveMessages={liveMessages}
                 />
             </div>
 
@@ -952,19 +963,10 @@ export const ChatFeatureSection = () => {
                     <>
                         <ChatRoomUI
                             phase2={phase2}
-                            roomTitle={t("room_title")}
-                            roomStatus={t("room_status")}
-                            messages={[
-                                { id: 1, name: t("msg1_name"), color: "#22c55e", img: "https://i.pravatar.cc/150?u=sara", text: t("msg1_text"), time: "17:20" },
-                                { id: 2, name: t("msg2_name"), color: "#16a34a", img: "https://i.pravatar.cc/150?u=ahmed", text: t("msg2_text"), time: "17:21" },
-                                { id: 3, name: t("msg3_name"), color: "#15803d", img: "https://i.pravatar.cc/150?u=karim", text: t("msg3_text"), time: "17:21" },
-                                { id: 4, name: t("msg4_name"), color: "#22c55e", img: "https://i.pravatar.cc/150?u=yassine", text: t("msg4_text"), time: "17:22" },
-                            ]}
-                            liveMessages={[
-                                { id: 101, name: t("msg101_name"), color: "#16a34a", img: "https://i.pravatar.cc/150?u=ines", text: t("msg101_text"), time: "17:23" },
-                                { id: 102, name: t("msg102_name"), color: "#15803d", img: "https://i.pravatar.cc/150?u=sami", text: t("msg102_text"), time: "17:24" },
-                                { id: 103, name: t("msg103_name"), color: "#22c55e", img: "https://i.pravatar.cc/150?u=laila", text: t("msg103_text"), time: "17:25" },
-                            ]}
+                            roomTitle={roomTitle}
+                            roomStatus={roomStatus}
+                            messages={messages}
+                            liveMessages={liveMessages}
                         />
                         <div style={{ position: "absolute", inset: 0, zIndex: 50, pointerEvents: "none", overflow: "visible" }}>
                             <OrbCanvas dots={dots} canvasW={canvasW} canvasH={canvasH} active={phase2} />

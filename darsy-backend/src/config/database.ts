@@ -5,13 +5,19 @@ export const connectDatabase = async (): Promise<void> => {
     try {
         const uri = config.mongodb.uri;
         console.log(`🔌 Attempting to connect to MongoDB...`);
-        // Log masked URI for debugging
         const maskedUri = uri.replace(/:([^:@]+)@/, ':****@');
         console.log(`📝 Connection String: ${maskedUri}`);
 
         const options = {
             autoIndex: true,
             serverSelectionTimeoutMS: 5000,
+            // Connection pool: allow up to 10 concurrent connections
+            maxPoolSize: 10,
+            minPoolSize: 2,
+            // Socket timeout: don't wait forever on slow queries
+            socketTimeoutMS: 30000,
+            // Heartbeat: detect primary changes faster
+            heartbeatFrequencyMS: 10000,
         };
 
         await mongoose.connect(uri, options);
@@ -28,7 +34,6 @@ export const connectDatabase = async (): Promise<void> => {
 
     } catch (error) {
         console.error('❌ MongoDB connection failed:', error);
-        // Don't exit process in dev mode so we can see the error
         if (process.env.NODE_ENV === 'production') {
             process.exit(1);
         }

@@ -111,7 +111,7 @@ export default function TeacherProfilePage() {
                         <div className="w-20 h-20 rounded-2xl bg-green/10 flex items-center justify-center overflow-hidden shrink-0">
                             {profile.photoURL || (profile.userId as any)?.photoURL ? (
                                 <Image
-                                    src={getPhotoURL(profile.photoURL || (profile.userId as any)?.photoURL)}
+                                    src={getPhotoURL(profile.photoURL || (profile.userId as any)?.photoURL) || ''}
                                     alt={profile.fullName}
                                     width={80} height={80}
                                     className="object-cover w-full h-full"
@@ -256,7 +256,7 @@ export default function TeacherProfilePage() {
                                     <div className="w-8 h-8 rounded-lg bg-green/10 flex items-center justify-center shrink-0">
                                         {(r.userId as any)?.photoURL ? (
                                             <Image
-                                                src={getPhotoURL((r.userId as any).photoURL)}
+                                                src={getPhotoURL((r.userId as any).photoURL) || ''}
                                                 alt="" width={32} height={32}
                                                 className="rounded-lg object-cover w-full h-full"
                                             />

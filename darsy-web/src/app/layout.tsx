@@ -11,11 +11,13 @@ import { getMessages, getLocale } from 'next-intl/server';
 import { LanguageSwitcher } from "@/components/LanguageSwitcher";
 import CookieBanner from "@/components/CookieBanner";
 import { GoogleOAuthProvider } from '@react-oauth/google';
+import { PageTransition } from "@/components/PageTransition";
 
 const cairo = Cairo({
   variable: "--font-cairo",
   subsets: ["arabic", "latin"],
   weight: ["300", "400", "500", "700", "900"],
+  display: "swap", // Prevent FOIT — show fallback font immediately
 });
 
 export const metadata: Metadata = {
@@ -34,6 +36,9 @@ export default async function RootLayout({
   return (
     <html lang={locale} dir={locale === 'ar' ? 'rtl' : 'ltr'}>
       <head>
+        {/* Preconnect + preload Material Icons to reduce render-blocking */}
+        <link rel="preconnect" href="https://fonts.googleapis.com" />
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
         <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@24,400,0,0&icon_names=android" />
         <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200&icon_names=ios" />
       </head>
@@ -43,7 +48,7 @@ export default async function RootLayout({
             <AuthProvider>
               <SnackbarProvider>
                 <Navbar />
-                <main>{children}</main>
+                <main><PageTransition>{children}</PageTransition></main>
                 <LanguageSwitcher />
                 <Footer />
                 <CookieBanner />

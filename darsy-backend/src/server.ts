@@ -25,7 +25,9 @@ import chatRoutes from './routes/chat';
 import calendarRoutes from './routes/calendar';
 import teacherRoutes from './routes/teacher';
 import instructorRoutes from './routes/instructor';
+import posterRoutes from './routes/poster';
 import { handleChatConnection } from './sockets/chat';
+import { verifyAccessToken } from './utils/auth';
 
 const app: Application = express();
 const server = http.createServer(app);
@@ -36,6 +38,19 @@ const io = new Server(server, {
         origin: config.cors.origin,
         methods: ['GET', 'POST'],
         credentials: true
+    }
+});
+
+// Socket.io auth middleware — verify JWT before allowing connection
+io.use((socket, next) => {
+    const token = socket.handshake.auth?.token ||
+                  socket.handshake.headers?.authorization?.replace('Bearer ', '');
+    if (!token) return next(new Error('Authentication required'));
+    try {
+        verifyAccessToken(token);
+        next();
+    } catch {
+        next(new Error('Invalid token'));
     }
 });
 
@@ -88,12 +103,13 @@ if (config.nodeEnv === 'development') {
     app.use(morgan('combined'));
 }
 
-// Static files
-app.use('/data/images', express.static(path.join(process.cwd(), 'data/images')));
-app.use('/data/resources', express.static(path.join(process.cwd(), 'data/resources')));
-app.use('/data/videos', express.static(path.join(process.cwd(), 'data/videos')));
-app.use('/data/documents', express.static(path.join(process.cwd(), 'data/documents')));
-app.use('/data/verifications', express.static(path.join(process.cwd(), 'data/verifications')));
+// Static files — with aggressive caching (assets are content-addressed or rarely change)
+const staticOpts = { maxAge: '7d', etag: true, lastModified: true };
+app.use('/data/images', express.static(path.join(process.cwd(), 'data/images'), staticOpts));
+app.use('/data/resources', express.static(path.join(process.cwd(), 'data/resources'), staticOpts));
+app.use('/data/videos', express.static(path.join(process.cwd(), 'data/videos'), staticOpts));
+app.use('/data/documents', express.static(path.join(process.cwd(), 'data/documents'), staticOpts));
+app.use('/data/verifications', express.static(path.join(process.cwd(), 'data/verifications'), staticOpts));
 
 // Health check endpoint
 app.get('/health', (_req: Request, res: Response) => {
@@ -112,6 +128,7 @@ app.use('/api/chat', chatRoutes);
 app.use('/api/calendar', calendarRoutes);
 app.use('/api/teacher', teacherRoutes);
 app.use('/api/instructor', instructorRoutes);
+app.use('/api/poster', posterRoutes);
 
 // 404 handler
 app.use((_req: Request, res: Response) => {

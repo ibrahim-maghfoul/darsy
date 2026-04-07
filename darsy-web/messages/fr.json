@@ -10,7 +10,7 @@
         "welcome": "Bienvenue",
         "signin": "Connexion",
         "getStarted": "Démarrer",
-        "chat_room": "Salle de Chat",
+        "chat_room": "Chat",
         "me": "Moi"
     },
     "Hero": {
@@ -67,6 +67,7 @@
         "text": "Fait confiance par les plus grandes institutions éducatives du monde"
     },
     "Believe": {
+        "kicker": "Application Mobile",
         "title1": "Apprenez n'importe où,",
         "title2": "N'importe quand",
         "desc": "Téléchargez notre application mobile pour accéder aux supports, suivre vos progrès et participer aux cours en direct.",
@@ -103,6 +104,7 @@
         "feature3_desc": "Obtenez de l'aide de mentors et d'étudiants brillants dans un environnement sûr."
     },
     "Works": {
+        "kicker": "Comment ça Marche",
         "item1_label": "Apprendre,",
         "item1_desc": "Accès à des matériaux d'étude de haute qualité, PDF et leçons vidéo.",
         "item2_label": "Suivre,",
@@ -113,6 +115,7 @@
         "item4_desc": "Participez aux cours premium en direct et réussissez vos examens avec des mentors experts."
     },
     "Team": {
+        "kicker": "L'Équipe Darsy",
         "title1": "Notre Équipe",
         "title_highlight": "de",
         "title2": "Rêve",
@@ -130,6 +133,33 @@
         "member5_desc": "Accompagne les apprenants tout au long de leur parcours pour assurer leur succès.",
         "member6_role": "Gestionnaire Communautaire",
         "member6_desc": "Anime une communauté dynamique d'étudiants, de mentors et d'éducateurs sur Darsy."
+    },
+    "PlatformFeatures": {
+        "kicker": "Fonctionnalités",
+        "title1": "Tout ce dont vous avez besoin pour ",
+        "title_highlight": "réussir",
+        "card_status": {
+            "expand": "Développer",
+            "enjoy": "Profitez !",
+            "tap_to_collapse": "appuyer pour réduire"
+        },
+        "cards": {
+            "ctr":  { "front": "Explorer",          "back_title": "Toutes les fonctions", "back_desc": "Cliquez pour développer." },
+            "i1":   { "front": "Analytique",        "back_title": "Votre progrès",        "back_desc": "Suivez chaque victoire." },
+            "i2":   { "front": "Messages",          "back_title": "Boîte de réception",   "back_desc": "Chattez avec vos mentors." },
+            "i3":   { "front": "Assistance",        "back_title": "Aide 24/7",            "back_desc": "Nous sommes toujours là." },
+            "i4":   { "front": "Cours",             "back_title": "Bibliothèque complète","back_desc": "1 200+ leçons." },
+            "oTOP": { "front": "Premium",           "back_title": "Débloquer plus",       "back_desc": "Ressources exclusives." },
+            "oRA":  { "front": "Sessions en direct","back_title": "Rejoindre en direct",  "back_desc": "Interaction en temps réel." },
+            "oBOT": { "front": "Mode hors ligne",   "back_title": "Sauvegarder les données","back_desc": "Apprenez n'importe où." },
+            "oLA":  { "front": "Communauté",        "back_title": "Discussion",           "back_desc": "Parlez avec vos pairs." },
+            "oTL":  { "front": "Démarrage rapide",  "back_title": "Raccourcis",           "back_desc": "Lancez tout rapidement." },
+            "oLM":  { "front": "Sécurité",          "back_title": "Protégé",              "back_desc": "Vos données sont en sécurité." },
+            "oBL":  { "front": "Langues",           "back_title": "International",        "back_desc": "20+ langues." },
+            "oTR":  { "front": "Notifications",     "back_title": "Alertes",              "back_desc": "Ne manquez rien." },
+            "oRM":  { "front": "Classement",        "back_title": "Palmarès",             "back_desc": "Concourez et progressez." },
+            "oBR":  { "front": "Certificats",       "back_title": "Vos certificats",      "back_desc": "Téléchargez et partagez." }
+        }
     },
     "Footer": {
         "desc": "Apprenez les compétences qui comptent vraiment — ensemble.",
@@ -163,6 +193,7 @@
         "cookies": "Cookies"
     },
     "Download": {
+        "pill": "Application Mobile",
         "title": "Obtenez l'",
         "title_highlight": "App Darsy",
         "desc": "Accédez à vos cours, suivez vos progrès et restez informé — tout depuis votre téléphone.",
@@ -424,11 +455,14 @@
         "videos": "Vidéos",
         "exercises": "Exercices",
         "exams": "Examens",
-        "resources": "Ressources"
+        "resources": "Ressources",
+        "lessons": "leçons",
+        "completed": "Terminé",
+        "in_progress": "En cours"
     },
     "Profile": {
         "settings": "Paramètres",
-        "chat_room": "Espace de discussion",
+        "chat_room": "Salle de discussion",
         "forever": "Pour toujours",
         "lessons_started": "Leçons commencées",
         "time_learned": "Temps appris",

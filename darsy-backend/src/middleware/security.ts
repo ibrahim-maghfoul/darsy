@@ -39,7 +39,12 @@ export const sanitizeInputs = (req: Request, _res: Response, next: NextFunction)
  */
 function stripHtml(value: any): any {
     if (typeof value === 'string') {
-        return value.replace(/<[^>]*>/g, '').trim();
+        return value
+            .replace(/<[^>]*>?/g, '')         // strip HTML tags
+            .replace(/&lt;.*?&gt;/gi, '')     // strip encoded tags
+            .replace(/on\w+\s*=/gi, '')       // strip event handlers
+            .replace(/javascript\s*:/gi, '')  // strip javascript: URIs
+            .trim();
     }
     if (Array.isArray(value)) {
         return value.map(stripHtml);

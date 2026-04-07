@@ -1,14 +1,12 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo, useRef } from 'react';
 import { useAuth } from '../context/AuthContext';
 import {
     ChevronRight, Plus, Edit3, Trash2, Loader2, BookOpen, Save,
-    X, FileText, Video, Dumbbell, GraduationCap, ArrowLeft, FolderOpen,
-    ExternalLink, BookMarked, Eye
+    X, FileText, Video, Dumbbell, GraduationCap, ArrowLeft, FolderOpen
 } from 'lucide-react';
 
 const API = import.meta.env.VITE_API_URL || 'http://localhost:5000/api';
 
-// Auto-generate a string ID from a title
 const makeId = (title) =>
     title.toLowerCase().replace(/\s+/g, '-').replace(/[^a-z0-9-]/g, '').replace(/-+/g, '-').replace(/(^-|-$)/g, '')
     + '-' + Math.random().toString(36).slice(2, 7);
@@ -22,7 +20,9 @@ const RESOURCE_TABS = [
 
 function CurriculumPage() {
     const { token } = useAuth();
-    const hdrs = { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' };
+    // Memoize headers to avoid re-creating on every render
+    const hdrs = useMemo(() => ({ Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' }), [token]);
+    const abortRef = useRef(null);
 
     // Drill-down path: each entry = { type, id, title }
     // types: school, level, guidance, subject
@@ -36,8 +36,12 @@ function CurriculumPage() {
     const [lessonView, setLessonView] = useState(null);   // full lesson object (editing)
     const [saving, setSaving] = useState(false);
 
-    // Fetch items for current path depth
+    // Fetch items for current path depth — aborts previous request on rapid navigation
     const fetchItems = async (p = path) => {
+        if (abortRef.current) abortRef.current.abort();
+        const controller = new AbortController();
+        abortRef.current = controller;
+
         setLoading(true);
         try {
             const depth = p.length;
@@ -47,13 +51,15 @@ function CurriculumPage() {
             else if (depth === 2) url = `/data/guidances/${p[1].id}`;
             else if (depth === 3) url = `/data/subjects/${p[2].id}`;
             else if (depth === 4) url = `/data/lessons/${p[3].id}`;
-            const res = await fetch(`${API}${url}`, { headers: hdrs });
+            const res = await fetch(`${API}${url}`, { headers: hdrs, signal: controller.signal });
             const data = await res.json();
-            setItems(Array.isArray(data) ? data : []);
+            if (!controller.signal.aborted) {
+                setItems(Array.isArray(data) ? data : []);
+            }
         } catch (e) {
-            console.error(e);
+            if (e.name !== 'AbortError') console.error(e);
         } finally {
-            setLoading(false);
+            if (!controller.signal.aborted) setLoading(false);
         }
     };
 
@@ -641,364 +647,5 @@ function CrudModal({ title, type, form, setForm, saving, onSave, onClose, isEdit
     );
 }
 
-// ─── Courses Tab ──────────────────────────────────────────────────────────────
-function CoursesTab() {
-    const { token } = useAuth();
-    const hdrs = { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' };
-
-    const [guidances, setGuidances] = useState([]);
-    const [subjects, setSubjects] = useState([]);
-    const [courses, setCourses] = useState([]);
-    const [loading, setLoading] = useState(false);
-    const [loadingGuidances, setLoadingGuidances] = useState(true);
-
-    const [selGuidance, setSelGuidance] = useState('');
-    const [selSubject, setSelSubject] = useState('');
-    const [search, setSearch] = useState('');
-
-    const [editModal, setEditModal] = useState(null); // course object
-    const [editForm, setEditForm] = useState({ title: '', description: '' });
-    const [saving, setSaving] = useState(false);
-    const [viewModal, setViewModal] = useState(null);
-
-    // Load all guidances upfront for the filter
-    useEffect(() => {
-        const loadGuidances = async () => {
-            setLoadingGuidances(true);
-            try {
-                const schoolsRes = await fetch(`${API}/data/schools`, { headers: hdrs });
-                const schools = await schoolsRes.json();
-                const allGuidances = [];
-                for (const school of (Array.isArray(schools) ? schools : [])) {
-                    const levelsRes = await fetch(`${API}/data/levels/${school._id}`, { headers: hdrs });
-                    const levels = await levelsRes.json();
-                    for (const level of (Array.isArray(levels) ? levels : [])) {
-                        const guidRes = await fetch(`${API}/data/guidances/${level._id}`, { headers: hdrs });
-                        const guids = await guidRes.json();
-                        for (const g of (Array.isArray(guids) ? guids : [])) {
-                            allGuidances.push({ ...g, schoolTitle: school.title, levelTitle: level.title });
-                        }
-                    }
-                }
-                setGuidances(allGuidances);
-            } finally {
-                setLoadingGuidances(false);
-            }
-        };
-        loadGuidances();
-    }, []);
-
-    // Load subjects when guidance changes
-    useEffect(() => {
-        if (!selGuidance) { setSubjects([]); setSelSubject(''); return; }
-        fetch(`${API}/data/subjects/${selGuidance}`, { headers: hdrs })
-            .then(r => r.json())
-            .then(d => { setSubjects(Array.isArray(d) ? d : []); setSelSubject(''); });
-    }, [selGuidance]);
-
-    // Load courses when filter changes
-    useEffect(() => {
-        const params = new URLSearchParams();
-        if (selGuidance) params.set('guidanceId', selGuidance);
-        if (selSubject) params.set('subjectId', selSubject);
-        setLoading(true);
-        fetch(`${API}/instructor/admin/courses?${params}`, { headers: hdrs })
-            .then(r => r.json())
-            .then(d => setCourses(Array.isArray(d) ? d : []))
-            .catch(console.error)
-            .finally(() => setLoading(false));
-    }, [selGuidance, selSubject]);
-
-    const openEdit = (course) => {
-        setEditForm({ title: course.title, description: course.description || '' });
-        setEditModal(course);
-    };
-
-    const handleSave = async () => {
-        setSaving(true);
-        try {
-            const res = await fetch(`${API}/instructor/admin/courses/${editModal._id}`, {
-                method: 'PUT', headers: hdrs, body: JSON.stringify(editForm),
-            });
-            if (res.ok) {
-                const updated = await res.json();
-                setCourses(prev => prev.map(c => c._id === updated._id ? updated : c));
-                setEditModal(null);
-            }
-        } finally {
-            setSaving(false);
-        }
-    };
-
-    const handleDelete = async (id) => {
-        if (!window.confirm('Delete this course permanently?')) return;
-        const res = await fetch(`${API}/instructor/admin/courses/${id}`, { method: 'DELETE', headers: hdrs });
-        if (res.ok) setCourses(prev => prev.filter(c => c._id !== id));
-    };
-
-    const visible = courses.filter(c =>
-        !search || c.title?.toLowerCase().includes(search.toLowerCase())
-        || c.instructorId?.displayName?.toLowerCase().includes(search.toLowerCase())
-    );
-
-    const selGuidanceObj = guidances.find(g => g._id === selGuidance);
-
-    return (
-        <div>
-            {/* Filters row */}
-            <div style={{ display: 'flex', gap: 10, marginBottom: 16, flexWrap: 'wrap', alignItems: 'center' }}>
-                <div style={{ flex: '1 1 200px', minWidth: 160 }}>
-                    <select
-                        className="form-input"
-                        value={selGuidance}
-                        onChange={e => setSelGuidance(e.target.value)}
-                        disabled={loadingGuidances}
-                    >
-                        <option value="">{loadingGuidances ? 'Loading guidances…' : 'All Guidances'}</option>
-                        {guidances.map(g => (
-                            <option key={g._id} value={g._id}>
-                                {g.schoolTitle} › {g.levelTitle} › {g.title}
-                            </option>
-                        ))}
-                    </select>
-                </div>
-                {selGuidance && (
-                    <div style={{ flex: '1 1 160px', minWidth: 140 }}>
-                        <select
-                            className="form-input"
-                            value={selSubject}
-                            onChange={e => setSelSubject(e.target.value)}
-                        >
-                            <option value="">All Subjects</option>
-                            {subjects.map(s => (
-                                <option key={s._id} value={s._id}>{s.title}</option>
-                            ))}
-                        </select>
-                    </div>
-                )}
-                <div style={{ flex: '2 1 200px' }}>
-                    <input
-                        className="form-input"
-                        placeholder="Search by title or instructor…"
-                        value={search}
-                        onChange={e => setSearch(e.target.value)}
-                    />
-                </div>
-                <div style={{ fontSize: '0.8rem', color: 'var(--text-secondary)', whiteSpace: 'nowrap' }}>
-                    {visible.length} course{visible.length !== 1 ? 's' : ''}
-                </div>
-            </div>
-
-            {/* Table */}
-            <div className="card" style={{ padding: 0, overflow: 'hidden' }}>
-                {loading ? (
-                    <div style={{ padding: '3rem', textAlign: 'center', color: 'var(--text-secondary)' }}>
-                        <Loader2 size={24} className="spin" style={{ color: 'var(--green)' }} />
-                        <div style={{ marginTop: 8, fontSize: '0.85rem' }}>Loading courses…</div>
-                    </div>
-                ) : visible.length === 0 ? (
-                    <div style={{ padding: '3rem', textAlign: 'center', color: 'var(--text-secondary)', fontSize: '0.85rem' }}>
-                        <BookMarked size={36} style={{ color: 'var(--border)', marginBottom: 10 }} />
-                        <div>No courses found{selGuidance ? ' for this guidance' : ''}.</div>
-                    </div>
-                ) : (
-                    <table className="data-table">
-                        <thead>
-                            <tr>
-                                <th>Course</th>
-                                <th>Instructor</th>
-                                <th>Guidance / Subject</th>
-                                <th>Type</th>
-                                <th>Views</th>
-                                <th>Downloads</th>
-                                <th>Date</th>
-                                <th>Actions</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            {visible.map(c => (
-                                <tr key={c._id}>
-                                    <td>
-                                        <div style={{ fontWeight: 600, fontSize: '0.82rem', maxWidth: 200, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-                                            {c.title}
-                                        </div>
-                                        {c.description && (
-                                            <div style={{ fontSize: '0.7rem', color: 'var(--text-secondary)', maxWidth: 200, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-                                                {c.description}
-                                            </div>
-                                        )}
-                                    </td>
-                                    <td>
-                                        <div style={{ fontWeight: 600, fontSize: '0.8rem' }}>
-                                            {c.instructorId?.displayName || '—'}
-                                        </div>
-                                        <div style={{ fontSize: '0.7rem', color: 'var(--text-secondary)' }}>
-                                            {c.instructorId?.email || ''}
-                                        </div>
-                                    </td>
-                                    <td style={{ fontSize: '0.78rem', color: 'var(--text-secondary)' }}>
-                                        <div>{guidances.find(g => g._id === c.guidanceId)?.title || c.guidanceId}</div>
-                                        <div style={{ fontSize: '0.7rem' }}>{subjects.find(s => s._id === c.subjectId)?.title || c.subjectId}</div>
-                                    </td>
-                                    <td>
-                                        {c.videoUrl && <span className="badge badge-blue"><Video size={11} /> Video</span>}
-                                        {c.pdfUrl && <span className="badge badge-red"><FileText size={11} /> PDF</span>}
-                                        {!c.videoUrl && !c.pdfUrl && <span style={{ color: 'var(--text-secondary)', fontSize: '0.78rem' }}>—</span>}
-                                    </td>
-                                    <td style={{ fontSize: '0.82rem' }}>{c.viewCount || 0}</td>
-                                    <td style={{ fontSize: '0.82rem' }}>{c.downloadCount || 0}</td>
-                                    <td style={{ fontSize: '0.78rem', color: 'var(--text-secondary)' }}>
-                                        {c.createdAt ? new Date(c.createdAt).toLocaleDateString() : '—'}
-                                    </td>
-                                    <td>
-                                        <div style={{ display: 'flex', gap: 4 }}>
-                                            <button className="btn-icon-only" title="View" onClick={() => setViewModal(c)}>
-                                                <Eye size={14} />
-                                            </button>
-                                            <button className="btn-icon-only" title="Edit" onClick={() => openEdit(c)}>
-                                                <Edit3 size={14} />
-                                            </button>
-                                            <button className="btn-icon-only" title="Delete" style={{ color: '#dc2626' }} onClick={() => handleDelete(c._id)}>
-                                                <Trash2 size={14} />
-                                            </button>
-                                        </div>
-                                    </td>
-                                </tr>
-                            ))}
-                        </tbody>
-                    </table>
-                )}
-            </div>
-
-            {/* View Modal */}
-            {viewModal && (
-                <div className="modal-overlay" onClick={() => setViewModal(null)}>
-                    <div className="modal-content" onClick={e => e.stopPropagation()}>
-                        <div className="modal-header">
-                            <h3>Course Details</h3>
-                            <button className="btn-icon-only" onClick={() => setViewModal(null)}><X size={16} /></button>
-                        </div>
-                        <div className="modal-body">
-                            <div style={{ display: 'grid', gap: 14, fontSize: '0.85rem' }}>
-                                <div>
-                                    <div className="form-label">Title</div>
-                                    <div style={{ fontWeight: 700, fontSize: '0.95rem' }}>{viewModal.title}</div>
-                                </div>
-                                {viewModal.description && (
-                                    <div>
-                                        <div className="form-label">Description</div>
-                                        <div style={{ lineHeight: 1.6 }}>{viewModal.description}</div>
-                                    </div>
-                                )}
-                                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
-                                    <div>
-                                        <div className="form-label">Instructor</div>
-                                        <div style={{ fontWeight: 600 }}>{viewModal.instructorId?.displayName || '—'}</div>
-                                        <div style={{ color: 'var(--text-secondary)', fontSize: '0.78rem' }}>{viewModal.instructorId?.email || ''}</div>
-                                    </div>
-                                    <div>
-                                        <div className="form-label">Stats</div>
-                                        <div>{viewModal.viewCount || 0} views · {viewModal.downloadCount || 0} downloads</div>
-                                    </div>
-                                </div>
-                                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
-                                    <div>
-                                        <div className="form-label">Guidance ID</div>
-                                        <div style={{ fontSize: '0.78rem', wordBreak: 'break-all' }}>{viewModal.guidanceId}</div>
-                                    </div>
-                                    <div>
-                                        <div className="form-label">Subject ID</div>
-                                        <div style={{ fontSize: '0.78rem', wordBreak: 'break-all' }}>{viewModal.subjectId}</div>
-                                    </div>
-                                </div>
-                                {(viewModal.videoUrl || viewModal.pdfUrl) && (
-                                    <div>
-                                        <div className="form-label">File</div>
-                                        <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap', marginTop: 4 }}>
-                                            {viewModal.videoUrl && (
-                                                <a
-                                                    href={`${API.replace('/api', '')}/${viewModal.videoUrl}`}
-                                                    target="_blank" rel="noopener noreferrer"
-                                                    className="btn btn-sm btn-outline"
-                                                    style={{ display: 'inline-flex', alignItems: 'center', gap: 5 }}
-                                                >
-                                                    <Video size={13} /> Watch Video <ExternalLink size={11} />
-                                                </a>
-                                            )}
-                                            {viewModal.pdfUrl && (
-                                                <a
-                                                    href={`${API.replace('/api', '')}/${viewModal.pdfUrl}`}
-                                                    target="_blank" rel="noopener noreferrer"
-                                                    className="btn btn-sm btn-outline"
-                                                    style={{ display: 'inline-flex', alignItems: 'center', gap: 5 }}
-                                                >
-                                                    <FileText size={13} /> Open PDF <ExternalLink size={11} />
-                                                </a>
-                                            )}
-                                        </div>
-                                    </div>
-                                )}
-                            </div>
-                        </div>
-                        <div className="modal-footer">
-                            <button className="btn btn-sm btn-outline" onClick={() => { setViewModal(null); openEdit(viewModal); }}>
-                                <Edit3 size={13} /> Edit
-                            </button>
-                            <button className="btn btn-sm btn-danger" onClick={() => { handleDelete(viewModal._id); setViewModal(null); }}>
-                                <Trash2 size={13} /> Delete
-                            </button>
-                        </div>
-                    </div>
-                </div>
-            )}
-
-            {/* Edit Modal */}
-            {editModal && (
-                <div className="modal-overlay" onClick={() => setEditModal(null)}>
-                    <div className="modal-content" style={{ maxWidth: 460 }} onClick={e => e.stopPropagation()}>
-                        <div className="modal-header">
-                            <h3>Edit Course</h3>
-                            <button className="btn-icon-only" onClick={() => setEditModal(null)}><X size={16} /></button>
-                        </div>
-                        <div className="modal-body">
-                            <div style={{ display: 'grid', gap: 14 }}>
-                                <div>
-                                    <label className="form-label">Title *</label>
-                                    <input
-                                        className="form-input"
-                                        value={editForm.title}
-                                        onChange={e => setEditForm(p => ({ ...p, title: e.target.value }))}
-                                        autoFocus
-                                    />
-                                </div>
-                                <div>
-                                    <label className="form-label">Description</label>
-                                    <textarea
-                                        className="form-input"
-                                        rows={3}
-                                        value={editForm.description}
-                                        onChange={e => setEditForm(p => ({ ...p, description: e.target.value }))}
-                                    />
-                                </div>
-                            </div>
-                        </div>
-                        <div className="modal-footer">
-                            <button className="btn btn-outline btn-sm" onClick={() => setEditModal(null)}>Cancel</button>
-                            <button
-                                className="btn btn-sm"
-                                style={{ background: 'var(--green)', color: 'white', border: 'none' }}
-                                onClick={handleSave}
-                                disabled={saving || !editForm.title?.trim()}
-                            >
-                                {saving ? <Loader2 size={14} className="spin" /> : <Save size={14} />}
-                                {saving ? 'Saving…' : 'Save Changes'}
-                            </button>
-                        </div>
-                    </div>
-                </div>
-            )}
-        </div>
-    );
-}
 
 export default CurriculumPage;

@@ -71,9 +71,9 @@ export default function ProfilePage() {
 
     const fetchLastVisitedLesson = async () => {
         if (!user?.progress?.lessons?.length) return;
-        const sorted = [...user.progress.lessons].sort(
-            (a: any, b: any) => new Date(b.lastAccessed).getTime() - new Date(a.lastAccessed).getTime()
-        );
+        const sorted = [...user.progress.lessons]
+            .filter((l: any) => l.lastAccessed)
+            .sort((a: any, b: any) => new Date(b.lastAccessed).getTime() - new Date(a.lastAccessed).getTime());
         const latest = sorted[0];
         if (!latest?.lessonId) return;
         const lesson = await getLessonById(latest.lessonId);
@@ -468,16 +468,8 @@ export default function ProfilePage() {
 
                     {/* Continue Learning Card */}
                     {lastLesson && (
-                        <div className="space-y-4">
-                            <div className="flex items-center gap-3">
-                                <div className="w-8 h-8 rounded-xl bg-green/10 text-green flex items-center justify-center flex-shrink-0">
-                                    <Book size={18} />
-                                </div>
-                                <div>
-                                    <h2 className="text-lg font-bold text-dark">{t("last_visited")}</h2>
-                                    <p className="text-xs text-muted-foreground">{t("last_visited_desc")}</p>
-                                </div>
-                            </div>
+                        <div className="space-y-3">
+                            <h2 className="text-2xl font-black text-dark">{t("last_visited")}</h2>
                             {(() => {
                                 const lessons = lastLesson;
                                 const prog = lastLesson.progress;
@@ -486,32 +478,46 @@ export default function ProfilePage() {
                                 const progressPct = totalResources > 0 ? Math.min(100, Math.round((completedCount / totalResources) * 100)) : 0;
                                 const lastDate = prog?.lastAccessed ? new Date(prog.lastAccessed).toLocaleDateString(locale, { month: 'short', day: 'numeric' }) : '';
                                 return (
-                                    <Link
-                                        href={`/lesson/${prog.lessonId}`}
-                                        className="group flex flex-col sm:flex-row items-start sm:items-center gap-6 p-6 rounded-3xl border-2 border-green/20 bg-gradient-to-r from-green/5 to-white hover:border-green hover:shadow-xl hover:shadow-green/10 transition-all"
-                                    >
-                                        <div className="w-14 h-14 rounded-2xl bg-green/10 text-green flex items-center justify-center flex-shrink-0 group-hover:scale-110 transition-transform">
-                                            <Book size={28} />
-                                        </div>
-                                        <div className="flex-1 min-w-0 space-y-2">
-                                            <div className="flex items-center gap-2">
-                                                <span className="text-xs font-bold uppercase tracking-widest text-green bg-green/10 px-2 py-0.5 rounded-full">{t("continue_learning")}</span>
-                                                {lastDate && <span className="text-xs text-muted-foreground">{lastDate}</span>}
-                                            </div>
-                                            <h3 className="font-bold text-lg text-dark line-clamp-1">{lessons.title}</h3>
-                                            {totalResources > 0 && (
-                                                <div className="space-y-1">
-                                                    <div className="flex items-center justify-between text-xs font-semibold">
-                                                        <span className="text-muted-foreground">{completedCount}/{totalResources} completed</span>
-                                                        <span className="text-green font-bold">{progressPct}%</span>
-                                                    </div>
-                                                    <div className="h-1.5 w-full bg-green/10 rounded-full overflow-hidden">
-                                                        <div className="h-full bg-green rounded-full transition-all" style={{ width: `${progressPct}%` }} />
-                                                    </div>
+                                    <Link href={`/lesson/${prog.lessonId}`} className="continue-card group">
+                                        {/* Icon header with dot texture */}
+                                        <div
+                                            className="relative overflow-hidden px-5 pt-5 pb-4 flex items-center justify-between gap-3"
+                                            style={{ background: 'linear-gradient(135deg, #f0faf5 0%, #e8f5ee 100%)' }}
+                                        >
+                                            <div
+                                                className="absolute inset-0 pointer-events-none"
+                                                style={{ backgroundImage: 'radial-gradient(circle, rgba(58,170,106,0.15) 1px, transparent 1px)', backgroundSize: '14px 14px' }}
+                                            />
+                                            <div className="relative z-10 flex items-center gap-3 min-w-0">
+                                                <div
+                                                    className="w-11 h-11 rounded-[14px] flex items-center justify-center flex-shrink-0 text-green group-hover:scale-105 transition-transform"
+                                                    style={{ background: 'rgba(58,170,106,0.1)' }}
+                                                >
+                                                    <Book size={22} />
                                                 </div>
-                                            )}
+                                                <div className="min-w-0">
+                                                    <p className="text-[10px] font-black uppercase tracking-widest mb-0.5" style={{ color: 'rgba(58,170,106,0.5)' }}>{t("continue_learning")}</p>
+                                                    <h3 className="font-bold text-dark text-base leading-tight line-clamp-1">{lessons.title}</h3>
+                                                </div>
+                                            </div>
+                                            <div className="relative z-10 flex items-center gap-1.5 flex-shrink-0">
+                                                {lastDate && <span className="text-[11px] font-semibold hidden sm:block" style={{ color: 'rgba(58,170,106,0.4)' }}>{lastDate}</span>}
+                                                <ChevronRight size={15} className={`text-green/25 group-hover:text-green transition-colors ${isAr ? 'rotate-180' : ''}`} />
+                                            </div>
                                         </div>
-                                        <ChevronRight size={22} className={`text-green/30 group-hover:text-green flex-shrink-0 transition-colors ${isAr ? 'rotate-180' : ''}`} />
+                                        {/* Progress footer */}
+                                        {totalResources > 0 && (
+                                            <div className="px-5 py-3 flex items-center gap-3">
+                                                <div className="flex-1 h-[3px] rounded-full overflow-hidden" style={{ background: 'rgba(58,170,106,0.08)' }}>
+                                                    <div
+                                                        className="h-full rounded-full"
+                                                        style={{ width: `${progressPct}%`, background: 'linear-gradient(90deg, #3aaa6a, #5dc98a)', transition: 'width 0.7s cubic-bezier(0.34, 1.2, 0.64, 1)' }}
+                                                    />
+                                                </div>
+                                                <span className="text-[11px] font-bold whitespace-nowrap" style={{ color: 'rgba(58,170,106,0.5)' }}>{completedCount}/{totalResources}</span>
+                                                {progressPct > 0 && <span className="text-[11px] font-black text-green">{progressPct}%</span>}
+                                            </div>
+                                        )}
                                     </Link>
                                 );
                             })()}
@@ -519,153 +525,147 @@ export default function ProfilePage() {
                     )}
 
                     {/* Services Grid */}
-                    <div className="space-y-6 pt-8 border-t border-gray-100">
-                        <div className="flex items-center gap-3">
-                            <div className="w-10 h-10 rounded-2xl bg-green/10 text-green flex items-center justify-center flex-shrink-0">
-                                <LayoutGrid size={24} />
-                            </div>
-                            <div>
-                                <h2 className="text-2xl font-bold text-dark">Services</h2>
-                                <p className="text-sm text-muted-foreground">Access useful tools and services quickly.</p>
-                            </div>
+                    <div className="space-y-6 pt-10 border-t border-green/8">
+                        <div>
+                            <h2 className="text-2xl font-black text-dark">Services</h2>
+                            <p className="text-sm mt-1" style={{ color: 'rgba(26,58,42,0.4)' }}>Access useful tools and services quickly.</p>
                         </div>
 
-                        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-3">
+                        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3">
 
                             {/* 1. Points System */}
-                            <div className="group p-5 rounded-[28px] bg-white border border-gray-100 hover:border-amber-200 hover:shadow-lg hover:shadow-amber-500/5 transition-all flex flex-col gap-3">
-                                <div className="w-11 h-11 rounded-2xl bg-amber-50 text-amber-500 flex items-center justify-center group-hover:scale-110 transition-transform">
+                            <div className="svc-card">
+                                <div className="svc-icon" style={{ background: 'rgba(251,191,36,0.1)', color: '#f59e0b' }}>
                                     <Star size={22} className="fill-amber-400" />
                                 </div>
                                 <div>
-                                    <h4 className="font-bold text-dark text-sm">
-                                        {(user?.points || 0).toLocaleString()}
-                                        <span className="text-xs font-bold text-amber-500 ml-1">pts</span>
+                                    <h4 className="font-bold text-dark text-sm leading-tight">
+                                        {(user?.points || 0).toLocaleString()}<span className="text-[11px] text-amber-500 ml-1">pts</span>
                                     </h4>
-                                    <p className="text-xs text-dark/40">Points System</p>
+                                    <p className="text-xs mt-1" style={{ color: 'rgba(26,58,42,0.38)' }}>Points System</p>
                                 </div>
                             </div>
 
                             {/* 2. Calendar */}
-                            <Link href="/calendar" className="group p-5 rounded-[28px] bg-white border border-gray-100 hover:border-blue-200 hover:shadow-lg hover:shadow-blue-500/5 transition-all flex flex-col gap-3">
-                                <div className="w-11 h-11 rounded-2xl bg-blue-50 text-blue-500 flex items-center justify-center group-hover:scale-110 transition-transform">
+                            <Link href="/calendar" className="svc-card">
+                                <div className="svc-icon" style={{ background: 'rgba(59,130,246,0.1)', color: '#3b82f6' }}>
                                     <CalendarDays size={22} />
                                 </div>
                                 <div>
-                                    <h4 className="font-bold text-dark text-sm">Calendar</h4>
-                                    <p className="text-xs text-dark/40">Schedule & events</p>
+                                    <h4 className="font-bold text-dark text-sm leading-tight">Calendar</h4>
+                                    <p className="text-xs mt-1" style={{ color: 'rgba(26,58,42,0.38)' }}>Schedule & events</p>
                                 </div>
                             </Link>
 
                             {/* 3. Contributions Hub */}
-                            <Link href="/contributions" className="group p-5 rounded-[28px] bg-white border border-gray-100 hover:border-purple-200 hover:shadow-lg hover:shadow-purple-500/5 transition-all flex flex-col gap-3">
-                                <div className="w-11 h-11 rounded-2xl bg-purple-50 text-purple-500 flex items-center justify-center group-hover:scale-110 transition-transform">
+                            <Link href="/contributions" className="svc-card">
+                                <div className="svc-icon" style={{ background: 'rgba(168,85,247,0.1)', color: '#a855f7' }}>
                                     <Sparkles size={22} />
                                 </div>
                                 <div>
-                                    <h4 className="font-bold text-dark text-sm">Contributions Hub</h4>
-                                    <p className="text-xs text-dark/40">Help the community</p>
+                                    <h4 className="font-bold text-dark text-sm leading-tight">Contributions</h4>
+                                    <p className="text-xs mt-1" style={{ color: 'rgba(26,58,42,0.38)' }}>Help the community</p>
                                 </div>
                             </Link>
 
-                            {/* 4. Instructor Program card */}
+                            {/* 4. Instructor Program */}
                             {user?.role === 'instructor' ? (
-                                <Link href="/instructor-dashboard" className="group p-5 rounded-[28px] bg-white border border-gray-100 hover:border-green/40 hover:shadow-lg hover:shadow-green/5 transition-all flex flex-col gap-3">
-                                    <div className="w-11 h-11 rounded-2xl bg-green/10 text-green flex items-center justify-center group-hover:scale-110 transition-transform">
+                                <Link href="/instructor-dashboard" className="svc-card">
+                                    <div className="svc-icon" style={{ background: 'rgba(58,170,106,0.1)', color: '#3aaa6a' }}>
                                         <GraduationCap size={22} />
                                     </div>
                                     <div>
-                                        <h4 className="font-bold text-dark text-sm">Instructor Dashboard</h4>
-                                        <p className="text-xs text-dark/40">Upload & manage courses</p>
+                                        <h4 className="font-bold text-dark text-sm leading-tight">Instructor</h4>
+                                        <p className="text-xs mt-1" style={{ color: 'rgba(26,58,42,0.38)' }}>Upload & manage</p>
                                     </div>
                                 </Link>
                             ) : profileCompletion < 100 ? (
-                                <div className="p-5 rounded-[28px] bg-gray-50 border border-dashed border-gray-200 opacity-60 flex flex-col gap-3 cursor-not-allowed relative">
-                                    <div className="w-11 h-11 rounded-2xl bg-gray-100 text-gray-300 flex items-center justify-center">
+                                <div className="svc-card opacity-60 relative" style={{ cursor: 'not-allowed' }}>
+                                    <div className="svc-icon" style={{ background: 'rgba(0,0,0,0.04)', color: 'rgba(0,0,0,0.2)' }}>
                                         <GraduationCap size={22} />
                                     </div>
                                     <div>
-                                        <h4 className="font-bold text-dark/40 text-sm">Instructor Program</h4>
-                                        <p className="text-xs text-dark/25">Complete profile ({profileCompletion}%)</p>
+                                        <h4 className="text-sm leading-tight" style={{ fontWeight: 700, color: 'rgba(26,58,42,0.35)' }}>Instructor</h4>
+                                        <p className="text-xs mt-1" style={{ color: 'rgba(26,58,42,0.25)' }}>Complete profile ({profileCompletion}%)</p>
                                     </div>
                                     <Link href="/settings" className="absolute inset-0" />
                                 </div>
                             ) : (
-                                <Link href="/apply-instructor" className="group p-5 rounded-[28px] bg-white border border-gray-100 hover:border-green/40 hover:shadow-lg hover:shadow-green/5 transition-all flex flex-col gap-3">
-                                    <div className="w-11 h-11 rounded-2xl bg-green/10 text-green flex items-center justify-center group-hover:scale-110 transition-transform">
+                                <Link href="/apply-instructor" className="svc-card">
+                                    <div className="svc-icon" style={{ background: 'rgba(58,170,106,0.1)', color: '#3aaa6a' }}>
                                         <GraduationCap size={22} />
                                     </div>
                                     <div>
-                                        <h4 className="font-bold text-dark text-sm">Instructor Program</h4>
-                                        <p className="text-xs text-dark/40">Upload courses & teach online</p>
+                                        <h4 className="font-bold text-dark text-sm leading-tight">Instructor</h4>
+                                        <p className="text-xs mt-1" style={{ color: 'rgba(26,58,42,0.38)' }}>Upload & teach online</p>
                                     </div>
                                 </Link>
                             )}
 
-                            {/* 5. School Teacher Program card */}
+                            {/* 5. Teacher Program */}
                             {user?.role === 'teacher' ? (
-                                <Link href="/teacher/dashboard" className="group p-5 rounded-[28px] bg-white border border-gray-100 hover:border-indigo-200 hover:shadow-lg hover:shadow-indigo-500/5 transition-all flex flex-col gap-3">
-                                    <div className="w-11 h-11 rounded-2xl bg-indigo-50 text-indigo-500 flex items-center justify-center group-hover:scale-110 transition-transform">
+                                <Link href="/teacher/dashboard" className="svc-card">
+                                    <div className="svc-icon" style={{ background: 'rgba(99,102,241,0.1)', color: '#6366f1' }}>
                                         <MessageSquare size={22} />
                                     </div>
                                     <div>
-                                        <h4 className="font-bold text-dark text-sm">Teacher Dashboard</h4>
-                                        <p className="text-xs text-dark/40">Manage class chat rooms</p>
+                                        <h4 className="font-bold text-dark text-sm leading-tight">Teacher</h4>
+                                        <p className="text-xs mt-1" style={{ color: 'rgba(26,58,42,0.38)' }}>Manage chat rooms</p>
                                     </div>
                                 </Link>
                             ) : profileCompletion < 100 ? (
-                                <div className="p-5 rounded-[28px] bg-gray-50 border border-dashed border-gray-200 opacity-60 flex flex-col gap-3 cursor-not-allowed relative">
-                                    <div className="w-11 h-11 rounded-2xl bg-gray-100 text-gray-300 flex items-center justify-center">
+                                <div className="svc-card opacity-60 relative" style={{ cursor: 'not-allowed' }}>
+                                    <div className="svc-icon" style={{ background: 'rgba(0,0,0,0.04)', color: 'rgba(0,0,0,0.2)' }}>
                                         <MessageSquare size={22} />
                                     </div>
                                     <div>
-                                        <h4 className="font-bold text-dark/40 text-sm">Teacher Program</h4>
-                                        <p className="text-xs text-dark/25">Complete profile ({profileCompletion}%)</p>
+                                        <h4 className="text-sm leading-tight" style={{ fontWeight: 700, color: 'rgba(26,58,42,0.35)' }}>Teacher</h4>
+                                        <p className="text-xs mt-1" style={{ color: 'rgba(26,58,42,0.25)' }}>Complete profile ({profileCompletion}%)</p>
                                     </div>
                                     <Link href="/settings" className="absolute inset-0" />
                                 </div>
                             ) : (
-                                <Link href="/apply-teacher" className="group p-5 rounded-[28px] bg-white border border-gray-100 hover:border-indigo-200 hover:shadow-lg hover:shadow-indigo-500/5 transition-all flex flex-col gap-3">
-                                    <div className="w-11 h-11 rounded-2xl bg-indigo-50 text-indigo-500 flex items-center justify-center group-hover:scale-110 transition-transform">
+                                <Link href="/apply-teacher" className="svc-card">
+                                    <div className="svc-icon" style={{ background: 'rgba(99,102,241,0.1)', color: '#6366f1' }}>
                                         <MessageSquare size={22} />
                                     </div>
                                     <div>
-                                        <h4 className="font-bold text-dark text-sm">Teacher Program</h4>
-                                        <p className="text-xs text-dark/40">Class chat rooms for schools</p>
+                                        <h4 className="font-bold text-dark text-sm leading-tight">Teacher</h4>
+                                        <p className="text-xs mt-1" style={{ color: 'rgba(26,58,42,0.38)' }}>Class chat rooms</p>
                                     </div>
                                 </Link>
                             )}
 
                             {/* 6. Favorite Courses */}
-                            <Link href="/favorites/courses" className="group p-5 rounded-[28px] bg-white border border-gray-100 hover:border-red-200 hover:shadow-lg hover:shadow-red-500/5 transition-all flex flex-col gap-3">
-                                <div className="w-11 h-11 rounded-2xl bg-red-50 text-red-500 flex items-center justify-center group-hover:scale-110 transition-transform">
+                            <Link href="/favorites/courses" className="svc-card">
+                                <div className="svc-icon" style={{ background: 'rgba(239,68,68,0.1)', color: '#ef4444' }}>
                                     <Heart size={22} />
                                 </div>
                                 <div>
-                                    <h4 className="font-bold text-dark text-sm">Favorite Courses</h4>
-                                    <p className="text-xs text-dark/40">Your saved lessons</p>
+                                    <h4 className="font-bold text-dark text-sm leading-tight">Favorites</h4>
+                                    <p className="text-xs mt-1" style={{ color: 'rgba(26,58,42,0.38)' }}>Your saved lessons</p>
                                 </div>
                             </Link>
 
                             {/* 7. Saved News */}
-                            <Link href="/favorites/news" className="group p-5 rounded-[28px] bg-white border border-gray-100 hover:border-sky-200 hover:shadow-lg hover:shadow-sky-500/5 transition-all flex flex-col gap-3">
-                                <div className="w-11 h-11 rounded-2xl bg-sky-50 text-sky-500 flex items-center justify-center group-hover:scale-110 transition-transform">
+                            <Link href="/favorites/news" className="svc-card">
+                                <div className="svc-icon" style={{ background: 'rgba(14,165,233,0.1)', color: '#0ea5e9' }}>
                                     <Newspaper size={22} />
                                 </div>
                                 <div>
-                                    <h4 className="font-bold text-dark text-sm">Saved News</h4>
-                                    <p className="text-xs text-dark/40">Bookmarked articles</p>
+                                    <h4 className="font-bold text-dark text-sm leading-tight">Saved News</h4>
+                                    <p className="text-xs mt-1" style={{ color: 'rgba(26,58,42,0.38)' }}>Bookmarked articles</p>
                                 </div>
                             </Link>
 
                             {/* 8. Grades Calculator */}
-                            <Link href="/grades-calculator" className="group p-5 rounded-[28px] bg-white border border-gray-100 hover:border-amber-200 hover:shadow-lg hover:shadow-amber-500/5 transition-all flex flex-col gap-3">
-                                <div className="w-11 h-11 rounded-2xl bg-amber-50 text-amber-500 flex items-center justify-center group-hover:scale-110 transition-transform">
+                            <Link href="/grades-calculator" className="svc-card">
+                                <div className="svc-icon" style={{ background: 'rgba(251,191,36,0.1)', color: '#f59e0b' }}>
                                     <Calculator size={22} />
                                 </div>
                                 <div>
-                                    <h4 className="font-bold text-dark text-sm">Grades Calculator</h4>
-                                    <p className="text-xs text-dark/40">Calculate your GPA</p>
+                                    <h4 className="font-bold text-dark text-sm leading-tight">Grades Calc</h4>
+                                    <p className="text-xs mt-1" style={{ color: 'rgba(26,58,42,0.38)' }}>Calculate your GPA</p>
                                 </div>
                             </Link>
 
@@ -682,14 +682,14 @@ export default function ProfilePage() {
                                         showSnackbar("Failed to get your invite link", "error");
                                     }
                                 }}
-                                className="group p-5 rounded-[28px] bg-white border border-gray-100 hover:border-green/40 hover:shadow-lg hover:shadow-green/5 transition-all flex flex-col text-left gap-3"
+                                className="svc-card"
                             >
-                                <div className="w-11 h-11 rounded-2xl bg-green/10 text-green flex items-center justify-center group-hover:scale-110 transition-transform">
+                                <div className="svc-icon" style={{ background: 'rgba(58,170,106,0.1)', color: '#3aaa6a' }}>
                                     <UserPlus size={22} />
                                 </div>
                                 <div>
-                                    <h4 className="font-bold text-dark text-sm">Invite Friends</h4>
-                                    <p className="text-xs text-dark/40">Earn +100 pts/signup</p>
+                                    <h4 className="font-bold text-dark text-sm leading-tight">Invite Friends</h4>
+                                    <p className="text-xs mt-1" style={{ color: 'rgba(26,58,42,0.38)' }}>+100 pts/signup</p>
                                 </div>
                             </button>
 
@@ -702,25 +702,25 @@ export default function ProfilePage() {
                                         showSnackbar("Sharing not supported on this browser", "info");
                                     }
                                 }}
-                                className="group p-5 rounded-[28px] bg-white border border-gray-100 hover:border-blue-200 hover:shadow-lg hover:shadow-blue-500/5 transition-all flex flex-col text-left gap-3"
+                                className="svc-card"
                             >
-                                <div className="w-11 h-11 rounded-2xl bg-blue-50 text-blue-500 flex items-center justify-center group-hover:scale-110 transition-transform">
+                                <div className="svc-icon" style={{ background: 'rgba(59,130,246,0.1)', color: '#3b82f6' }}>
                                     <Share2 size={22} />
                                 </div>
                                 <div>
-                                    <h4 className="font-bold text-dark text-sm">Share Darsy</h4>
-                                    <p className="text-xs text-dark/40">Spread the word</p>
+                                    <h4 className="font-bold text-dark text-sm leading-tight">Share Darsy</h4>
+                                    <p className="text-xs mt-1" style={{ color: 'rgba(26,58,42,0.38)' }}>Spread the word</p>
                                 </div>
                             </button>
 
                             {/* 11. Report Issue */}
-                            <Link href="/report" className="group p-5 rounded-[28px] bg-white border border-gray-100 hover:border-red-200 hover:shadow-lg hover:shadow-red-500/5 transition-all flex flex-col gap-3">
-                                <div className="w-11 h-11 rounded-2xl bg-red-50 text-red-500 flex items-center justify-center group-hover:scale-110 transition-transform">
+                            <Link href="/report" className="svc-card">
+                                <div className="svc-icon" style={{ background: 'rgba(239,68,68,0.1)', color: '#ef4444' }}>
                                     <ShieldAlert size={22} />
                                 </div>
                                 <div>
-                                    <h4 className="font-bold text-dark text-sm">Report Issue</h4>
-                                    <p className="text-xs text-dark/40">Help us improve</p>
+                                    <h4 className="font-bold text-dark text-sm leading-tight">Report Issue</h4>
+                                    <p className="text-xs mt-1" style={{ color: 'rgba(26,58,42,0.38)' }}>Help us improve</p>
                                 </div>
                             </Link>
 
@@ -729,68 +729,86 @@ export default function ProfilePage() {
 
                     {/* Instructor Card — shown if user has approved application */}
                     {approvedApplication && (
-                        <div className="space-y-6 pt-8 border-t border-gray-100">
-                            <div className="bg-gradient-to-br from-green/10 to-green/5 rounded-2xl border border-green/20 p-8">
-                                <div className="flex items-start justify-between mb-4">
-                                    <div>
-                                        <div className="inline-flex items-center gap-2 mb-3">
-                                            <GraduationCap className="text-green" size={20} />
-                                            <span className="px-3 py-1 bg-green/20 text-green text-xs font-bold rounded-lg">
-                                                {t('approved_instructor') || 'Approved Instructor'}
-                                            </span>
-                                        </div>
-                                        <h3 className="text-2xl font-bold text-dark mb-2">
-                                            {t('instructor_approved') || 'You\'re an Approved Instructor!'}
-                                        </h3>
-                                        <p className="text-dark/60 text-sm">
-                                            {t('instructor_approved_desc') || 'You can now upload courses and share your expertise with students.'}
-                                        </p>
-                                    </div>
-                                    <CheckCircle className="text-green flex-shrink-0" size={28} />
-                                </div>
-
-                                <div className="bg-white rounded-xl p-4 mb-4 space-y-2">
-                                    <div>
-                                        <p className="text-xs text-dark/60 mb-1">{t('specialist') || 'Specialist'}</p>
-                                        <p className="font-semibold text-dark">{approvedApplication.specialist}</p>
-                                    </div>
-                                    <div>
-                                        <p className="text-xs text-dark/60 mb-1">{t('target_course') || 'Target Course'}</p>
-                                        <p className="font-semibold text-dark">{instructorNames.subject || approvedApplication.targetSubjectId}</p>
-                                    </div>
-                                    {instructorNames.guidance && (
+                        <div className="pt-8 border-t border-green/6">
+                            <div
+                                className="relative overflow-hidden rounded-[22px] p-6 md:p-8"
+                                style={{ backgroundImage: `repeating-linear-gradient(45deg, rgba(255,255,255,0.03) 0px, rgba(255,255,255,0.03) 2px, transparent 2px, transparent 8px), linear-gradient(135deg, #1e7a46 0%, #0f4428 100%)` }}
+                            >
+                                {/* Dot texture */}
+                                <div
+                                    className="absolute inset-0 pointer-events-none"
+                                    style={{ backgroundImage: 'radial-gradient(circle, rgba(255,255,255,0.18) 1px, transparent 1px)', backgroundSize: '18px 18px', opacity: 0.35 }}
+                                />
+                                <div className="relative z-10">
+                                    <div className="flex items-start justify-between gap-4 mb-5">
                                         <div>
-                                            <p className="text-xs text-dark/60 mb-1">{t('guidance') || 'Guidance'}</p>
-                                            <p className="font-semibold text-dark">{instructorNames.guidance}</p>
+                                            <div className="inline-flex items-center gap-2 mb-3">
+                                                <span className="px-3 py-1 bg-white/15 text-white text-[11px] font-bold rounded-full tracking-wide">
+                                                    ✓ {t('approved_instructor') || 'Approved Instructor'}
+                                                </span>
+                                            </div>
+                                            <h3 className="text-xl font-black text-white leading-tight mb-1">
+                                                {t('instructor_approved') || "You're an Approved Instructor!"}
+                                            </h3>
+                                            <p className="text-sm" style={{ color: 'rgba(255,255,255,0.55)' }}>
+                                                {t('instructor_approved_desc') || 'Upload courses and share your expertise.'}
+                                            </p>
                                         </div>
-                                    )}
-                                </div>
+                                        <div className="w-12 h-12 rounded-[16px] flex items-center justify-center flex-shrink-0" style={{ background: 'rgba(255,255,255,0.12)' }}>
+                                            <GraduationCap className="text-white" size={24} />
+                                        </div>
+                                    </div>
 
-                                <div className="grid grid-cols-2 gap-3">
-                                    <Link
-                                        href="/instructor-dashboard"
-                                        className="px-4 py-2.5 bg-green text-white rounded-xl font-semibold hover:bg-green/80 transition-all text-center text-sm"
-                                    >
-                                        {t('instructor_dashboard') || 'Dashboard'}
-                                    </Link>
-                                    <Link
-                                        href="/instructors"
-                                        className="px-4 py-2.5 border border-green text-green rounded-xl font-semibold hover:bg-green/10 transition-all text-center text-sm"
-                                    >
-                                        {t('view_profile') || 'View Profile'}
-                                    </Link>
+                                    <div className="rounded-[16px] p-4 mb-5 space-y-2.5" style={{ background: 'rgba(255,255,255,0.08)', border: '1px solid rgba(255,255,255,0.12)' }}>
+                                        <div className="flex items-center gap-3">
+                                            <span className="text-[10px] font-black uppercase tracking-wider min-w-[72px]" style={{ color: 'rgba(255,255,255,0.4)' }}>{t('specialist') || 'Specialist'}</span>
+                                            <span className="font-semibold text-white text-sm">{approvedApplication.specialist}</span>
+                                        </div>
+                                        <div className="flex items-center gap-3">
+                                            <span className="text-[10px] font-black uppercase tracking-wider min-w-[72px]" style={{ color: 'rgba(255,255,255,0.4)' }}>{t('target_course') || 'Course'}</span>
+                                            <span className="font-semibold text-white text-sm">{instructorNames.subject || approvedApplication.targetSubjectId}</span>
+                                        </div>
+                                        {instructorNames.guidance && (
+                                            <div className="flex items-center gap-3">
+                                                <span className="text-[10px] font-black uppercase tracking-wider min-w-[72px]" style={{ color: 'rgba(255,255,255,0.4)' }}>{t('guidance') || 'Track'}</span>
+                                                <span className="font-semibold text-white text-sm">{instructorNames.guidance}</span>
+                                            </div>
+                                        )}
+                                    </div>
+
+                                    <div className="flex gap-3">
+                                        <Link
+                                            href="/instructor-dashboard"
+                                            className="flex-1 py-2.5 bg-white text-green font-bold rounded-[14px] text-sm text-center hover:scale-[1.02] active:scale-95 transition-transform shadow-md"
+                                        >
+                                            {t('instructor_dashboard') || 'Dashboard'}
+                                        </Link>
+                                        <Link
+                                            href="/instructors"
+                                            className="flex-1 py-2.5 font-bold rounded-[14px] text-sm text-center text-white transition-colors"
+                                            style={{ background: 'rgba(255,255,255,0.1)', border: '1px solid rgba(255,255,255,0.15)' }}
+                                            onMouseEnter={e => (e.currentTarget.style.background = 'rgba(255,255,255,0.18)')}
+                                            onMouseLeave={e => (e.currentTarget.style.background = 'rgba(255,255,255,0.1)')}
+                                        >
+                                            {t('view_profile') || 'View Profile'}
+                                        </Link>
+                                    </div>
                                 </div>
                             </div>
                         </div>
                     )}
 
-                    <div className="pt-8 border-t border-gray-100 flex justify-center">
+                    <div className="pt-8 border-t border-green/6 flex flex-col items-center gap-3">
+                        <p className="text-[10px] font-black uppercase tracking-widest" style={{ color: 'rgba(26,58,42,0.25)' }}>Account</p>
                         <button
                             onClick={logout}
-                            className="px-12 py-4 bg-white border border-red-100 text-red-500 font-bold rounded-3xl hover:bg-red-50 transition-all flex items-center gap-3 shadow-xl shadow-red-500/5 group"
+                            className="group flex items-center gap-2.5 px-7 py-2.5 rounded-full border bg-white font-bold text-sm transition-all"
+                            style={{ borderColor: 'rgba(239,68,68,0.2)', color: 'rgba(239,68,68,0.7)' }}
+                            onMouseEnter={e => { (e.currentTarget as HTMLButtonElement).style.background = 'rgba(239,68,68,0.04)'; (e.currentTarget as HTMLButtonElement).style.borderColor = 'rgba(239,68,68,0.35)'; (e.currentTarget as HTMLButtonElement).style.color = '#ef4444'; }}
+                            onMouseLeave={e => { (e.currentTarget as HTMLButtonElement).style.background = '#fff'; (e.currentTarget as HTMLButtonElement).style.borderColor = 'rgba(239,68,68,0.2)'; (e.currentTarget as HTMLButtonElement).style.color = 'rgba(239,68,68,0.7)'; }}
                         >
-                            <LogOut size={24} className="group-hover:-translate-x-1 transition-transform" />
-                            <span className="text-lg">{tc("sign_out")}</span>
+                            <LogOut size={15} className="group-hover:-translate-x-0.5 transition-transform" />
+                            {tc("sign_out")}
                         </button>
                     </div>
                 </div>

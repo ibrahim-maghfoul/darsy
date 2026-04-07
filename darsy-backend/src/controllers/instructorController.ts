@@ -1,4 +1,5 @@
 import { Response } from 'express';
+import mongoose from 'mongoose';
 import { AuthRequest } from '../middleware/auth';
 import { body, validationResult } from 'express-validator';
 import { User } from '../models/User';
@@ -164,9 +165,11 @@ export class InstructorController {
             if (guidanceId) filter.guidanceId = guidanceId;
             if (subjectId) filter.subjectId = subjectId;
 
+            const limit = Math.min(Math.max(1, parseInt(req.query.limit as string) || 100), 500);
             const courses = await InstructorCourse.find(filter)
                 .populate('instructorId', 'displayName email photoURL')
                 .sort({ createdAt: -1 })
+                .limit(limit)
                 .lean();
 
             res.json(courses);
@@ -322,22 +325,33 @@ export class InstructorController {
         }
     }
 
-    /** Get all ratings for an instructor (public) */
+    /** Get all ratings for an instructor (public, paginated) */
     static async getRatings(req: AuthRequest, res: Response): Promise<void> {
         try {
             const { instructorId } = req.params;
+            const page = Math.max(1, parseInt(req.query.page as string) || 1);
+            const limit = Math.min(100, Math.max(1, parseInt(req.query.limit as string) || 20));
+            const skip = (page - 1) * limit;
 
-            const ratings = await InstructorRating.find({ instructorId })
-                .populate('userId', 'displayName photoURL')
-                .sort({ createdAt: -1 })
-                .lean();
+            // Get aggregate stats in parallel with paginated ratings
+            const [ratings, statsResult] = await Promise.all([
+                InstructorRating.find({ instructorId })
+                    .populate('userId', 'displayName photoURL')
+                    .sort({ createdAt: -1 })
+                    .skip(skip)
+                    .limit(limit)
+                    .lean(),
+                InstructorRating.aggregate([
+                    { $match: { instructorId: new mongoose.Types.ObjectId(instructorId) } },
+                    { $group: { _id: null, avg: { $avg: '$rating' }, count: { $sum: 1 } } },
+                ]),
+            ]);
 
-            const total = ratings.length;
-            const avg = total > 0
-                ? Math.round((ratings.reduce((sum, r) => sum + r.rating, 0) / total) * 10) / 10
-                : 0;
+            const stats = statsResult[0];
+            const total = stats?.count || 0;
+            const avg = stats ? Math.round(stats.avg * 10) / 10 : 0;
 
-            res.json({ ratings, averageRating: avg, totalRatings: total });
+            res.json({ ratings, averageRating: avg, totalRatings: total, page, pages: Math.ceil(total / limit) });
         } catch (error) {
             res.status(500).json({ error: 'Failed to fetch ratings' });
         }
@@ -345,37 +359,50 @@ export class InstructorController {
 
     // ─── INSTRUCTOR PROFILES & BROWSE ───
 
-    /** List all approved instructors (public browse) */
+    /** List all approved instructors (public browse) — single aggregation, no N+1 */
     static async listInstructors(req: AuthRequest, res: Response): Promise<void> {
         try {
             const { guidanceId, subjectId } = req.query;
+
+            // Build course match filter
+            const courseMatch: any = {};
+            if (guidanceId) courseMatch.guidanceId = guidanceId as string;
+            if (subjectId) courseMatch.subjectId = subjectId as string;
 
             const users = await User.find({ role: 'instructor' })
                 .select('_id displayName photoURL coverPhotoURL')
                 .lean();
 
-            const instructorDetails = await Promise.all(users.map(async (user) => {
-                const courseFilter: any = { instructorId: user._id };
-                if (guidanceId) courseFilter.guidanceId = guidanceId;
-                if (subjectId) courseFilter.subjectId = subjectId;
+            if (users.length === 0) { res.json([]); return; }
 
-                const [courseCount, ratingData] = await Promise.all([
-                    InstructorCourse.countDocuments(courseFilter),
-                    InstructorRating.aggregate([
-                        { $match: { instructorId: user._id } },
-                        { $group: { _id: null, avg: { $avg: '$rating' }, count: { $sum: 1 } } },
-                    ]),
-                ]);
+            const userIds = users.map(u => u._id);
 
+            // Batch: count courses per instructor
+            const [courseCounts, ratingStats] = await Promise.all([
+                InstructorCourse.aggregate([
+                    { $match: { instructorId: { $in: userIds }, ...courseMatch } },
+                    { $group: { _id: '$instructorId', count: { $sum: 1 } } },
+                ]),
+                InstructorRating.aggregate([
+                    { $match: { instructorId: { $in: userIds } } },
+                    { $group: { _id: '$instructorId', avg: { $avg: '$rating' }, count: { $sum: 1 } } },
+                ]),
+            ]);
+
+            const courseMap = new Map(courseCounts.map((c: any) => [String(c._id), c.count]));
+            const ratingMap = new Map(ratingStats.map((r: any) => [String(r._id), r]));
+
+            const result = users.map(user => {
+                const r = ratingMap.get(String(user._id));
                 return {
                     ...user,
-                    courseCount,
-                    averageRating: ratingData[0] ? Math.round(ratingData[0].avg * 10) / 10 : 0,
-                    totalRatings: ratingData[0]?.count || 0,
+                    courseCount: courseMap.get(String(user._id)) || 0,
+                    averageRating: r ? Math.round(r.avg * 10) / 10 : 0,
+                    totalRatings: r?.count || 0,
                 };
-            }));
+            });
 
-            res.json(instructorDetails);
+            res.json(result);
         } catch (error) {
             res.status(500).json({ error: 'Failed to fetch instructors' });
         }

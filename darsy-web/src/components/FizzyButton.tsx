@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
-import './FizzyButton.scss';
+import './FizzyButton.css';
 import { Check } from 'lucide-react';
 
 interface FizzyButtonProps {

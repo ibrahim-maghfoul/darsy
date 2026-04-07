@@ -5,6 +5,7 @@ import { Facebook, Twitter, Instagram, Youtube, Send, Loader2, CheckCircle } fro
 import Link from "next/link";
 
 import { useTranslations } from "next-intl";
+import { SOCIALS } from "@/lib/constants";
 
 export function Footer() {
     const t = useTranslations('Footer');
@@ -59,10 +60,10 @@ export function Footer() {
                             {t.rich('desc', { br: () => <br /> })}
                         </p>
                         <div className="flex gap-2">
-                            <a href="https://twitter.com/darsyio" target="_blank" rel="noopener noreferrer" className="w-[32px] h-[32px] rounded-full border border-white/10 flex items-center justify-center text-white/40 hover:bg-green hover:text-white hover:border-green transition-all"><Twitter size={12} /></a>
-                            <a href="https://instagram.com/darsyio" target="_blank" rel="noopener noreferrer" className="w-[32px] h-[32px] rounded-full border border-white/10 flex items-center justify-center text-white/40 hover:bg-green hover:text-white hover:border-green transition-all"><Instagram size={12} /></a>
-                            <a href="https://facebook.com/darsyio" target="_blank" rel="noopener noreferrer" className="w-[32px] h-[32px] rounded-full border border-white/10 flex items-center justify-center text-white/40 hover:bg-green hover:text-white hover:border-green transition-all"><Facebook size={12} /></a>
-                            <a href="https://youtube.com/@darsyio" target="_blank" rel="noopener noreferrer" className="w-[32px] h-[32px] rounded-full border border-white/10 flex items-center justify-center text-white/40 hover:bg-green hover:text-white hover:border-green transition-all"><Youtube size={12} /></a>
+                            <a href={SOCIALS.twitter} target="_blank" rel="noopener noreferrer" className="w-[32px] h-[32px] rounded-full border border-white/10 flex items-center justify-center text-white/40 hover:bg-green hover:text-white hover:border-green transition-all"><Twitter size={12} /></a>
+                            <a href={SOCIALS.instagram} target="_blank" rel="noopener noreferrer" className="w-[32px] h-[32px] rounded-full border border-white/10 flex items-center justify-center text-white/40 hover:bg-green hover:text-white hover:border-green transition-all"><Instagram size={12} /></a>
+                            <a href={SOCIALS.facebook} target="_blank" rel="noopener noreferrer" className="w-[32px] h-[32px] rounded-full border border-white/10 flex items-center justify-center text-white/40 hover:bg-green hover:text-white hover:border-green transition-all"><Facebook size={12} /></a>
+                            <a href={SOCIALS.youtube} target="_blank" rel="noopener noreferrer" className="w-[32px] h-[32px] rounded-full border border-white/10 flex items-center justify-center text-white/40 hover:bg-green hover:text-white hover:border-green transition-all"><Youtube size={12} /></a>
                         </div>
                     </div>
 
@@ -91,24 +92,31 @@ export function Footer() {
                         <p className="text-[12px] leading-relaxed text-white/40">
                             {t('loop_desc')}
                         </p>
-                        <form onSubmit={handleSubscribe} className="flex bg-white/5 border border-white/10 rounded-xl overflow-hidden focus-within:border-green transition-colors mt-1">
-                            <input
-                                type="email"
-                                value={email}
-                                onChange={e => setEmail(e.target.value)}
-                                placeholder={t('subscribe_placeholder')}
-                                disabled={subStatus === "loading" || subStatus === "success"}
-                                className="flex-1 bg-transparent border-none outline-none p-3 text-sm text-white placeholder:text-white/20 disabled:opacity-50"
+                        <div className="relative mt-1 rounded-xl overflow-hidden" style={{ border: '1px solid rgba(58,170,106,0.25)', background: 'rgba(58,170,106,0.07)' }}>
+                            {/* Dot texture */}
+                            <div
+                                className="absolute inset-0 pointer-events-none"
+                                style={{ backgroundImage: 'radial-gradient(circle, rgba(58,170,106,0.18) 1px, transparent 1px)', backgroundSize: '12px 12px' }}
                             />
-                            <button
-                                type="submit"
-                                disabled={subStatus === "loading" || subStatus === "success"}
-                                className="bg-green hover:bg-[#2a9a5a] text-white px-5 font-bold transition-colors disabled:opacity-60 flex items-center"
-                                aria-label="Subscribe"
-                            >
-                                {subStatus === "loading" ? <Loader2 size={16} className="animate-spin" /> : subStatus === "success" ? <CheckCircle size={16} /> : <Send size={16} />}
-                            </button>
-                        </form>
+                            <form onSubmit={handleSubscribe} className="relative flex focus-within:ring-1 focus-within:ring-green/40 rounded-xl transition-all">
+                                <input
+                                    type="email"
+                                    value={email}
+                                    onChange={e => setEmail(e.target.value)}
+                                    placeholder={t('subscribe_placeholder')}
+                                    disabled={subStatus === "loading" || subStatus === "success"}
+                                    className="flex-1 bg-transparent border-none outline-none p-3 text-sm text-white placeholder:text-white/25 disabled:opacity-50"
+                                />
+                                <button
+                                    type="submit"
+                                    disabled={subStatus === "loading" || subStatus === "success"}
+                                    className="bg-green hover:bg-[#2a9a5a] text-white px-5 font-bold transition-colors disabled:opacity-60 flex items-center rounded-r-xl"
+                                    aria-label="Subscribe"
+                                >
+                                    {subStatus === "loading" ? <Loader2 size={16} className="animate-spin" /> : subStatus === "success" ? <CheckCircle size={16} /> : <Send size={16} />}
+                                </button>
+                            </form>
+                        </div>
                         {subStatus === "success" && <p className="text-[11px] text-green">✓ {t('subscribe_success')}</p>}
                         {subStatus === "error" && <p className="text-[11px] text-red-400">{t('subscribe_error')}</p>}
                     </div>

@@ -67,6 +67,7 @@
         "text": "Trusted by leading educational institutions worldwide"
     },
     "Believe": {
+        "kicker": "Mobile App",
         "title1": "Learn anywhere,",
         "title2": "Anytime",
         "desc": "Download our mobile app to access materials, track progress, and join live classes on the go.",
@@ -103,6 +104,7 @@
         "feature3_desc": "Get help from mentors and top students in a safe, moderated environment."
     },
     "Works": {
+        "kicker": "How It Works",
         "item1_label": "Learn,",
         "item1_desc": "Access high-quality study materials, PDFs, and video lessons.",
         "item2_label": "Track,",
@@ -113,6 +115,7 @@
         "item4_desc": "Join premium live classes and ace your exams with expert mentors."
     },
     "Team": {
+        "kicker": "Meet the Team",
         "title1": "Our",
         "title_highlight": "Dream",
         "title2": "Team",
@@ -130,6 +133,33 @@
         "member5_desc": "Supports learners throughout their journey, ensuring every student thrives.",
         "member6_role": "Community Manager",
         "member6_desc": "Fosters a vibrant community of students, mentors, and educators on Darsy."
+    },
+    "PlatformFeatures": {
+        "kicker": "Platform Features",
+        "title1": "Everything you need to ",
+        "title_highlight": "succeed",
+        "card_status": {
+            "expand": "Expand",
+            "enjoy": "Enjoy!",
+            "tap_to_collapse": "tap to collapse"
+        },
+        "cards": {
+            "ctr":  { "front": "Explore",        "back_title": "All Features",   "back_desc": "Click to expand." },
+            "i1":   { "front": "Analytics",      "back_title": "Your Progress",  "back_desc": "Track every win." },
+            "i2":   { "front": "Messages",       "back_title": "Inbox",          "back_desc": "Chat with mentors." },
+            "i3":   { "front": "Support",        "back_title": "24/7 Help",      "back_desc": "We are always here." },
+            "i4":   { "front": "Courses",        "back_title": "Full Library",   "back_desc": "1,200+ lessons." },
+            "oTOP": { "front": "Premium",        "back_title": "Unlock More",    "back_desc": "Exclusive resources." },
+            "oRA":  { "front": "Live Sessions",  "back_title": "Join Live",      "back_desc": "Real-time interaction." },
+            "oBOT": { "front": "Offline Mode",   "back_title": "Save Data",      "back_desc": "Learn anywhere." },
+            "oLA":  { "front": "Community",      "back_title": "Discussion",     "back_desc": "Talk with peers." },
+            "oTL":  { "front": "Quick Start",    "back_title": "Shortcuts",      "back_desc": "Launch anything fast." },
+            "oLM":  { "front": "Security",       "back_title": "Protected",      "back_desc": "Your data is safe." },
+            "oBL":  { "front": "Languages",      "back_title": "Worldwide",      "back_desc": "20+ languages." },
+            "oTR":  { "front": "Notifications",  "back_title": "Alerts",         "back_desc": "Never miss a beat." },
+            "oRM":  { "front": "Leaderboard",    "back_title": "Rankings",       "back_desc": "Compete & rise." },
+            "oBR":  { "front": "Certificates",   "back_title": "Your Certs",     "back_desc": "Download & share." }
+        }
     },
     "Footer": {
         "desc": "Learn the skills that actually matter — together.",
@@ -163,6 +193,7 @@
         "cookies": "Cookies"
     },
     "Download": {
+        "pill": "Mobile Application",
         "title": "Get the ",
         "title_highlight": "Darsy App",
         "desc": "Access your courses, track progress, and stay up to date — all from your phone.",
@@ -425,7 +456,10 @@
         "videos": "Videos",
         "exercises": "Exercises",
         "exams": "Exams",
-        "resources": "Resources"
+        "resources": "Resources",
+        "lessons": "lessons",
+        "completed": "Done",
+        "in_progress": "In progress"
     },
     "Profile": {
         "settings": "Settings",

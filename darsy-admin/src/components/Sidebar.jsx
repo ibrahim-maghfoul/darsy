@@ -1,7 +1,7 @@
 import {
     BarChart2, Upload, FileText, Settings, Database, X, Wrench, Newspaper,
     GraduationCap, ShieldCheck, Users, MessageSquare, BookOpen, Calendar,
-    Heart, Star, Video, Flag, Menu, LogOut, ChevronDown
+    Heart, Star, Video, Flag, Menu, LogOut, ChevronDown, Image as ImageIcon
 } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import { useState } from 'react';
@@ -31,6 +31,7 @@ const SECTIONS = [
     { id: 'database', label: 'Firebase View', icon: Database },
     { id: 'mongo-sync', label: 'Sync to Mongo', icon: Database },
     { id: 'tools', label: 'YouTube Tool', icon: Wrench },
+    { id: 'poster-generator', label: 'Poster Generator', icon: ImageIcon },
     { id: 'calendar', label: 'Global Events', icon: Calendar },
 
     { type: 'label', text: 'System' },

@@ -223,31 +223,33 @@ export default function ContributionsPage() {
                                 Connecting members through knowledge sharing.
                             </motion.p>
 
-                            {/* Contribution status badge */}
-                            {contributionStatus && !contributionStatus.isPremium && (
-                                <motion.div
-                                    initial={{ opacity: 0, y: 8 }}
-                                    animate={{ opacity: 1, y: 0 }}
-                                    transition={{ delay: 0.15 }}
-                                    className={`mt-3 inline-flex items-center gap-2 px-4 py-2 rounded-full text-sm font-bold border ${
-                                        contributionStatus.remaining === 0
-                                            ? 'bg-red-50 border-red-200 text-red-600'
-                                            : contributionStatus.remaining !== null && contributionStatus.remaining <= 5
-                                            ? 'bg-amber-50 border-amber-200 text-amber-700'
-                                            : 'bg-green/5 border-green/20 text-green'
-                                    }`}
-                                >
-                                    <span className={`w-2 h-2 rounded-full ${contributionStatus.remaining === 0 ? 'bg-red-500' : 'bg-green'}`} />
-                                    {contributionStatus.remaining === 0
-                                        ? 'Monthly limit reached (0 / 30 left)'
-                                        : `${contributionStatus.remaining} / 30 contributions remaining this month`}
-                                </motion.div>
-                            )}
-                            {contributionStatus?.isPremium && (
-                                <div className="mt-3 inline-flex items-center gap-2 px-4 py-2 rounded-full text-sm font-bold bg-amber-50 border border-amber-200 text-amber-700">
-                                    ✦ Premium — Unlimited contributions
-                                </div>
-                            )}
+                            {/* Contribution status badge — fixed height to prevent ring jump */}
+                            <div className="mt-3 min-h-[44px] flex items-start">
+                                {contributionStatus && !contributionStatus.isPremium && (
+                                    <motion.div
+                                        initial={{ opacity: 0, y: 8 }}
+                                        animate={{ opacity: 1, y: 0 }}
+                                        transition={{ delay: 0.15 }}
+                                        className={`inline-flex items-center gap-2 px-4 py-2 rounded-full text-sm font-bold border ${
+                                            contributionStatus.remaining === 0
+                                                ? 'bg-red-50 border-red-200 text-red-600'
+                                                : contributionStatus.remaining !== null && contributionStatus.remaining <= 5
+                                                ? 'bg-amber-50 border-amber-200 text-amber-700'
+                                                : 'bg-green/5 border-green/20 text-green'
+                                        }`}
+                                    >
+                                        <span className={`w-2 h-2 rounded-full ${contributionStatus.remaining === 0 ? 'bg-red-500' : 'bg-green'}`} />
+                                        {contributionStatus.remaining === 0
+                                            ? 'Monthly limit reached (0 / 30 left)'
+                                            : `${contributionStatus.remaining} / 30 contributions remaining this month`}
+                                    </motion.div>
+                                )}
+                                {contributionStatus?.isPremium && (
+                                    <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full text-sm font-bold bg-amber-50 border border-amber-200 text-amber-700">
+                                        ✦ Premium — Unlimited contributions
+                                    </div>
+                                )}
+                            </div>
                         </div>
 
                         <motion.div

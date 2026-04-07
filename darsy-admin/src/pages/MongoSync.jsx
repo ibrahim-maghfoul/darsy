@@ -22,8 +22,6 @@ const MongoSync = () => {
     );
     const [logs, setLogs] = useState([]);
     const [progress, setProgress] = useState({});
-    const [jsonFile, setJsonFile] = useState(null);
-
     const headers = { Authorization: `Bearer ${token}` };
 
     const addLog = (message, type = 'info') => {

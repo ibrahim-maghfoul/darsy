@@ -33,11 +33,16 @@ export default function NewsletterCTA({ ft }: NewsletterCTAProps) {
 
     return (
         <div className="bg-green py-12 px-8 md:px-16 rounded-[40px] text-center space-y-6 relative overflow-hidden max-w-4xl mx-auto">
-            {/* Circled Transparent Texture */}
-            <div className="absolute inset-0 opacity-20 pointer-events-none">
-                <div className="absolute -top-24 -left-24 w-64 h-64 rounded-full border-[32px] border-white/30" />
-                <div className="absolute -bottom-32 -right-32 w-96 h-96 rounded-full border-[48px] border-white/20" />
-                <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[500px] h-[500px] rounded-full border border-white/10" />
+            {/* Dot texture */}
+            <div
+                className="absolute inset-0 pointer-events-none"
+                style={{ backgroundImage: 'radial-gradient(circle, rgba(255,255,255,0.22) 1px, transparent 1px)', backgroundSize: '18px 18px', opacity: 0.5 }}
+            />
+            {/* Circled transparent accents */}
+            <div className="absolute inset-0 pointer-events-none overflow-hidden">
+                <div className="absolute -top-16 -right-16 w-56 h-56 rounded-full" style={{ border: '30px solid rgba(255,255,255,0.22)' }} />
+                <div className="absolute -bottom-24 -left-24 w-72 h-72 rounded-full" style={{ border: '40px solid rgba(255,255,255,0.18)' }} />
+                <div className="absolute top-1/2 -translate-y-1/2 -left-32 w-48 h-48 rounded-full" style={{ border: '20px solid rgba(255,255,255,0.10)' }} />
             </div>
 
             <div className="relative z-10 space-y-2">

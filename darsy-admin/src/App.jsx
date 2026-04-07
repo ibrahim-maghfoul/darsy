@@ -1,24 +1,34 @@
-import React, { useState } from 'react';
+import React, { useState, lazy, Suspense } from 'react';
 import Layout from './components/Layout';
-import Dashboard from './pages/Dashboard';
-import BatchUpload from './pages/BatchUpload';
-import Lessons from './pages/Lessons';
-import FirebaseUpload from './pages/FirebaseUpload';
-import YouTubeConverter from './pages/YouTubeConverter';
-import NewsManager from './pages/NewsManager';
-import MongoSync from './pages/MongoSync';
-import TeacherApplications from './pages/TeacherApplications';
-import TeacherVerifications from './pages/TeacherVerifications';
-import UsersPage from './pages/UsersPage';
-import InstructorCourses from './pages/InstructorCourses';
-import ServicesPage from './pages/ServicesPage';
-import ChatRoomsPage from './pages/ChatRoomsPage';
-import ContributionsPage from './pages/ContributionsPage';
-import FeedbackPage from './pages/FeedbackPage';
-import CalendarPage from './pages/CalendarPage';
 import { AuthProvider } from './context/AuthContext';
 import ProtectedRoute from './components/ProtectedRoute';
 import './index.css';
+
+// Lazy-load all pages — only the active tab's code is downloaded
+const Dashboard = lazy(() => import('./pages/Dashboard'));
+const UsersPage = lazy(() => import('./pages/UsersPage'));
+const TeacherApplications = lazy(() => import('./pages/TeacherApplications'));
+const TeacherVerifications = lazy(() => import('./pages/TeacherVerifications'));
+const InstructorCourses = lazy(() => import('./pages/InstructorCourses'));
+const Lessons = lazy(() => import('./pages/Lessons'));
+const NewsManager = lazy(() => import('./pages/NewsManager'));
+const ServicesPage = lazy(() => import('./pages/ServicesPage'));
+const ChatRoomsPage = lazy(() => import('./pages/ChatRoomsPage'));
+const ContributionsPage = lazy(() => import('./pages/ContributionsPage'));
+const FeedbackPage = lazy(() => import('./pages/FeedbackPage'));
+const BatchUpload = lazy(() => import('./pages/BatchUpload'));
+const FirebaseUpload = lazy(() => import('./pages/FirebaseUpload'));
+const MongoSync = lazy(() => import('./pages/MongoSync'));
+const YouTubeConverter = lazy(() => import('./pages/YouTubeConverter'));
+const CalendarPage = lazy(() => import('./pages/CalendarPage'));
+const PosterGenerator = lazy(() => import('./pages/PosterGenerator'));
+
+const PageLoader = () => (
+  <div style={{ padding: '3rem', textAlign: 'center', color: 'var(--text-secondary)' }}>
+    <div className="spin" style={{ width: 24, height: 24, border: '3px solid var(--border)', borderTopColor: 'var(--green)', borderRadius: '50%', margin: '0 auto 8px' }} />
+    Loading...
+  </div>
+);
 
 const MainApp = () => {
   const [activeTab, setActiveTab] = useState('dashboard');
@@ -57,6 +67,8 @@ const MainApp = () => {
         return <YouTubeConverter />;
       case 'calendar':
         return <CalendarPage />;
+      case 'poster-generator':
+        return <PosterGenerator />;
       case 'settings':
         return (
           <div className="card">
@@ -73,7 +85,9 @@ const MainApp = () => {
 
   return (
     <Layout activeTab={activeTab} setActiveTab={setActiveTab}>
-      {renderContent()}
+      <Suspense fallback={<PageLoader />}>
+        {renderContent()}
+      </Suspense>
     </Layout>
   );
 };

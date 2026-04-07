@@ -455,8 +455,17 @@ export function HeroSection() {
     return (
         <div
             id="hero-scene-container"
-            className="relative flex flex-col items-stretch overflow-visible min-h-[600px]"
+            className="relative flex flex-col items-stretch overflow-visible min-h-[600px] bg-green/[0.03]"
         >
+            {/* Checker texture overlay — matches PlatformFeatures "Quick Start" card */}
+            <div
+                aria-hidden="true"
+                style={{
+                    position: 'absolute', inset: 0, pointerEvents: 'none', zIndex: 0, opacity: 0.03,
+                    backgroundImage: `linear-gradient(45deg, #3aaa6a 25%, transparent 25%, transparent 75%, #3aaa6a 75%)`,
+                    backgroundSize: '10px 10px',
+                }}
+            />
             <style>{BLOB_CSS}</style>
 
             {/* Canvas for line animation */}
@@ -466,7 +475,7 @@ export function HeroSection() {
             />
 
             {/* Badge */}
-            <div className="relative z-[3] flex justify-center pt-10 md:pt-12">
+            <div className="relative z-[3] flex justify-center pt-10 md:pt-12 opacity-0 animate-[fadeSlideUp_0.6s_ease-out_0.1s_forwards]">
                 <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full border border-green/30 bg-green/5 text-[12px] font-semibold text-green/80 shadow-[0_0_12px_rgba(58,170,106,0.15)]">
                     <span className="w-1.5 h-1.5 rounded-full bg-green animate-pulse" />
                     {t('badge') ?? 'AI-Powered Education Platform'}
@@ -475,16 +484,16 @@ export function HeroSection() {
 
             {/* Title */}
             <div className="relative z-[3] pt-4 text-center pb-0 hero px-4">
-                <h1 className="text-[clamp(28px,5.5vw,52px)] md:text-[clamp(36px,5.5vw,52px)] font-bold text-dark leading-[1.1] tracking-[-0.04em] max-w-[680px] mx-auto hero-title whitespace-pre-wrap">
+                <h1 className="text-[clamp(28px,5.5vw,52px)] md:text-[clamp(36px,5.5vw,52px)] font-bold text-dark leading-[1.1] tracking-[-0.04em] max-w-[680px] mx-auto hero-title whitespace-pre-wrap opacity-0 animate-[fadeSlideUp_0.6s_ease-out_0.25s_forwards]">
                     {t('title1')} <em className="not-italic text-green">{t('title_highlight')}</em>{t('title2')}
                 </h1>
-                <p className="mt-3 text-dark/55 text-sm md:text-base max-w-[480px] mx-auto leading-relaxed">
+                <p className="mt-3 text-dark/55 text-sm md:text-base max-w-[480px] mx-auto leading-relaxed opacity-0 animate-[fadeSlideUp_0.6s_ease-out_0.4s_forwards]">
                     {t('subtitle') ?? 'Access free courses, track your progress, and prepare for your exams with Darsy.'}
                 </p>
             </div>
 
             {/* Desktop cards + Diagram */}
-            <div className="hidden md:grid relative z-[3] flex-1 grid-cols-[minmax(0,1fr)_auto_minmax(0,1fr)] items-stretch px-0 pt-3 pb-4 min-h-0">
+            <div className="hidden md:grid relative z-[3] flex-1 grid-cols-[minmax(0,1fr)_auto_minmax(0,1fr)] items-stretch px-0 pt-3 pb-4 min-h-0 opacity-0 animate-[fadeSlideUp_0.7s_ease-out_0.55s_forwards]">
                 <div className="flex flex-col justify-between items-end px-[clamp(8px,2vw,36px)] py-1 min-w-0 overflow-hidden">
                     {[cardsData[0], cardsData[3]].map(card => (
                         <DesktopCard key={card.id} card={card}
@@ -505,7 +514,7 @@ export function HeroSection() {
             </div>
 
             {/* Mobile cards + Diagram */}
-            <div className="md:hidden relative z-[3] flex flex-col items-stretch pt-3 pb-6 gap-3 px-4">
+            <div className="md:hidden relative z-[3] flex flex-col items-stretch pt-3 pb-6 gap-3 px-4 opacity-0 animate-[fadeSlideUp_0.7s_ease-out_0.55s_forwards]">
                 <div className="w-full flex justify-center mb-2"><Diagram/></div>
                 <MobileCardList cards={cardsData}/>
             </div>

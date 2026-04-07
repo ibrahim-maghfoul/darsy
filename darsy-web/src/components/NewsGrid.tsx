@@ -1,9 +1,10 @@
 'use client';
 
 import React from 'react';
-import { motion } from 'framer-motion';
+import { motion, AnimatePresence } from 'framer-motion';
 import NewsCard from '@/components/NewsCard';
 import { useTranslations } from 'next-intl';
+import { BookOpen, GraduationCap, Users, LayoutGrid } from 'lucide-react';
 
 interface NewsItem {
     id: string;
@@ -27,6 +28,13 @@ const itemVariants = {
 
 const ITEMS_PER_PAGE = 9;
 
+const TAB_ICONS: Record<string, React.ElementType> = {
+    All: LayoutGrid,
+    Bac: GraduationCap,
+    Etudiant: BookOpen,
+    College: Users,
+};
+
 export default function NewsGrid({ items }: { items: NewsItem[] }) {
     const t = useTranslations('News');
     const [activeTab, setActiveTab] = React.useState('All');
@@ -42,9 +50,16 @@ export default function NewsGrid({ items }: { items: NewsItem[] }) {
         return tab;
     };
 
+    const tabCounts = React.useMemo(() => {
+        const counts: Record<string, number> = { All: items.length };
+        tabs.forEach(tab => {
+            if (tab !== 'All') counts[tab] = items.filter(i => i.category === tab).length;
+        });
+        return counts;
+    }, [items]);
+
     const filteredItems = React.useMemo(() => {
         if (activeTab === 'All') return items;
-        // The scraping sets category to "Bac", "Etudiant", "College"
         return items.filter((item) => item.category === activeTab);
     }, [activeTab, items]);
 
@@ -55,7 +70,6 @@ export default function NewsGrid({ items }: { items: NewsItem[] }) {
         return filteredItems.slice(start, start + ITEMS_PER_PAGE);
     }, [currentPage, filteredItems]);
 
-    // Reset pagination when tab changes
     React.useEffect(() => {
         setCurrentPage(1);
     }, [activeTab]);
@@ -68,19 +82,46 @@ export default function NewsGrid({ items }: { items: NewsItem[] }) {
     return (
         <div className="space-y-10">
             {/* Tabs Navigation */}
-            <div className="flex flex-wrap items-center justify-center gap-2 mb-10">
-                {tabs.map((tab) => (
-                    <button
-                        key={tab}
-                        onClick={() => setActiveTab(tab)}
-                        className={`px-8 py-3 rounded-full font-bold text-sm transition-all duration-300 ${activeTab === tab
-                            ? 'bg-green text-white shadow-lg shadow-green/30 scale-105'
-                            : 'bg-white text-dark/60 border border-gray-100 hover:bg-gray-50 hover:text-dark'
-                            }`}
-                    >
-                        {getTabLabel(tab)}
-                    </button>
-                ))}
+            <div className="flex items-center justify-center mb-10">
+                <div className="flex items-center bg-white rounded-[20px] p-1.5 shadow-lg shadow-black/[0.04] border border-green/8">
+                    {tabs.map((tab) => {
+                        const Icon = TAB_ICONS[tab];
+                        const isActive = activeTab === tab;
+                        const count = tabCounts[tab] || 0;
+                        return (
+                            <button
+                                key={tab}
+                                onClick={() => setActiveTab(tab)}
+                                className={`relative flex items-center gap-2 px-5 py-2.5 rounded-[14px] font-bold text-[13px] transition-all duration-200 whitespace-nowrap ${
+                                    isActive
+                                        ? 'text-white'
+                                        : 'text-dark/40 hover:text-dark/70 hover:bg-green/[0.04]'
+                                }`}
+                            >
+                                {isActive && (
+                                    <motion.div
+                                        layoutId="news-tab-bg"
+                                        className="absolute inset-0 bg-green rounded-[14px] shadow-lg shadow-green/25"
+                                        transition={{ type: 'spring', stiffness: 400, damping: 28 }}
+                                    />
+                                )}
+                                <span className="relative z-10 flex items-center gap-2">
+                                    <Icon size={15} />
+                                    {getTabLabel(tab)}
+                                    <span
+                                        className={`text-[10px] px-1.5 py-0.5 rounded-full font-black min-w-[20px] text-center transition-colors ${
+                                            isActive
+                                                ? 'bg-white/25 text-white'
+                                                : 'bg-green/8 text-dark/30'
+                                        }`}
+                                    >
+                                        {count}
+                                    </span>
+                                </span>
+                            </button>
+                        );
+                    })}
+                </div>
             </div>
 
             {/* Grid */}
@@ -106,44 +147,44 @@ export default function NewsGrid({ items }: { items: NewsItem[] }) {
                 ))}
             </motion.div>
 
+            {/* Empty state */}
+            {currentItems.length === 0 && (
+                <div className="text-center py-16">
+                    <p className="text-dark/30 font-bold text-lg">No articles in this category</p>
+                </div>
+            )}
+
             {/* Pagination */}
             {totalPages > 1 && (
                 <div dir="ltr" className="flex justify-center items-center gap-2 py-8 flex-wrap">
-                    {/* Prev */}
                     <button
                         onClick={() => goTo(Math.max(1, currentPage - 1))}
                         disabled={currentPage === 1}
-                        className="px-4 py-2 rounded-full font-bold bg-white text-dark border border-gray-200 hover:bg-gray-50 focus:outline-none disabled:opacity-50 disabled:cursor-not-allowed transition-all"
+                        className="w-10 h-10 rounded-full font-bold bg-white text-dark border border-green/10 hover:border-green/30 hover:bg-green/5 focus:outline-none disabled:opacity-30 disabled:cursor-not-allowed transition-all shadow-sm"
                     >
                         ←
                     </button>
 
-                    {/* Smart page buttons */}
                     {(() => {
                         const pages: (number | 'dot')[] = [];
                         const addPage = (p: number) => { if (!pages.includes(p)) pages.push(p); };
 
-                        // First 3
                         for (let i = 1; i <= Math.min(3, totalPages); i++) addPage(i);
-
-                        // Current window
                         if (currentPage > 4) pages.push('dot');
                         for (let i = Math.max(4, currentPage - 1); i <= Math.min(totalPages - 1, currentPage + 1); i++) addPage(i);
-
-                        // Last page
                         if (currentPage < totalPages - 2) pages.push('dot');
                         if (totalPages > 3) addPage(totalPages);
 
                         return pages.map((p, idx) =>
                             p === 'dot' ? (
-                                <span key={`dot-${idx}`} className="w-10 h-10 flex items-center justify-center text-dark/30 font-bold text-lg select-none">…</span>
+                                <span key={`dot-${idx}`} className="w-10 h-10 flex items-center justify-center text-dark/20 font-bold text-lg select-none">…</span>
                             ) : (
                                 <button
                                     key={p}
                                     onClick={() => goTo(p as number)}
                                     className={`w-10 h-10 rounded-full font-bold transition-all focus:outline-none ${currentPage === p
-                                        ? 'bg-green text-white scale-110 shadow-md shadow-green/30'
-                                        : 'bg-white text-dark border border-gray-200 hover:bg-gray-50'
+                                        ? 'bg-green text-white scale-110 shadow-lg shadow-green/30'
+                                        : 'bg-white text-dark border border-green/10 hover:border-green/30 hover:bg-green/5 shadow-sm'
                                         }`}
                                 >
                                     {p}
@@ -152,11 +193,10 @@ export default function NewsGrid({ items }: { items: NewsItem[] }) {
                         );
                     })()}
 
-                    {/* Next */}
                     <button
                         onClick={() => goTo(Math.min(totalPages, currentPage + 1))}
                         disabled={currentPage === totalPages}
-                        className="px-4 py-2 rounded-full font-bold bg-white text-dark border border-gray-200 hover:bg-gray-50 focus:outline-none disabled:opacity-50 disabled:cursor-not-allowed transition-all"
+                        className="w-10 h-10 rounded-full font-bold bg-white text-dark border border-green/10 hover:border-green/30 hover:bg-green/5 focus:outline-none disabled:opacity-30 disabled:cursor-not-allowed transition-all shadow-sm"
                     >
                         →
                     </button>

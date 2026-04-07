@@ -20,5 +20,7 @@ const InstructorRatingSchema = new Schema<IInstructorRating>({
 
 // One rating per user per instructor
 InstructorRatingSchema.index({ userId: 1, instructorId: 1 }, { unique: true });
+// Index for fetching all ratings for an instructor (used in getRatings, aggregation)
+InstructorRatingSchema.index({ instructorId: 1, createdAt: -1 });
 
 export const InstructorRating = mongoose.model<IInstructorRating>('InstructorRating', InstructorRatingSchema);

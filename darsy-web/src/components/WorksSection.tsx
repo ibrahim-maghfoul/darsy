@@ -73,6 +73,12 @@ export function WorksSection() {
             </div>
 
             <div className="max-w-[780px] w-full relative z-2 text-left">
+                <div className="mb-8">
+                    <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full border border-green/30 bg-green/5 text-[12px] font-semibold text-green/80 shadow-[0_0_12px_rgba(58,170,106,0.15)]">
+                        <span className="w-1.5 h-1.5 rounded-full bg-green animate-pulse" />
+                        {t('kicker')}
+                    </div>
+                </div>
                 <div className="flex flex-col gap-0">
                     {items.map((item, i) => (
                         <div

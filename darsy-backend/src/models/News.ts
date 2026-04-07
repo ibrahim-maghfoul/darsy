@@ -69,7 +69,10 @@ const NewsSchema = new Schema<INews>({
     timestamps: true,
 });
 
-// Text index for search
+// Indexes for query performance
 NewsSchema.index({ title: 'text', description: 'text' });
+NewsSchema.index({ category: 1 });
+NewsSchema.index({ date: -1 });
+NewsSchema.index({ viewCount: -1 });
 
 export const News = mongoose.model<INews>('News', NewsSchema);

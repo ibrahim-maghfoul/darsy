@@ -547,8 +547,7 @@ export default function ProgressCharts({
   const [replayKey, setReplayKey] = useState(0);
   const locale = useLocale();
 
-  const handleReplay = () => setReplayKey((k) => k + 1);
-  void handleReplay; // suppress unused warning, kept for external use
+  void setReplayKey; // replayKey available for future chart replay feature
 
   // Dummy study time data for visualization when no real data exist
   const DUMMY_HOURS = [1.2, 2.5, 0.8, 3.1, 1.7, 4.0, 2.3];

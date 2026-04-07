@@ -132,6 +132,27 @@ const ServiceCard = memo(function ServiceCard({ course, index, isInView, height 
 const DESKTOP_H: Record<number, number> = { 1: 480, 2: 240, 3: 120 };
 const MOBILE_H: Record<number, number> = { 1: 280, 2: 200, 3: 90 };
 
+// Module-level — avoids recreating on every render
+const COURSES = [
+    {
+        id: 1,
+        Icon: WorkflowIcon,
+        img: "https://i.pravatar.cc/400?img=47",
+        className: "course-card-1 flex-[4] bg-gradient-to-br from-[#9ef0b8] via-[#5cd68a] via-[#2aaa62] to-[#0f4428] shadow-[0_8px_40px_rgba(42,170,98,0.3)]",
+    },
+    {
+        id: 2,
+        Icon: AIIcon,
+        img: "https://i.pravatar.cc/200?img=33",
+        className: "course-card-2 flex-[2] bg-gradient-to-br from-[#52d4a0] via-[#1e9e72] via-[#0d6048] to-[#051e16] shadow-[0_8px_40px_rgba(13,96,72,0.35)] !p-[24px_22px]",
+    },
+    {
+        id: 3,
+        Icon: null as any,
+        className: "course-card-3 flex-[1] bg-gradient-to-br from-[#2a4a3c] via-[#1a3028] to-[#0d1e18] shadow-[0_8px_40px_rgba(0,0,0,0.4)] !p-[18px_16px] rounded-[22px]",
+    },
+];
+
 export function CoursesSection() {
     const gridRef = useRef<HTMLDivElement>(null);
     const isInView = useInView(gridRef, { once: true, amount: 0.08 });
@@ -146,30 +167,13 @@ export function CoursesSection() {
         return () => mq.removeEventListener('change', handler);
     }, []);
 
-    const courses = [
-        {
-            id: 1,
-            Icon: WorkflowIcon,
-            img: "https://i.pravatar.cc/400?img=47",
-            className: "course-card-1 flex-[4] bg-gradient-to-br from-[#9ef0b8] via-[#5cd68a] via-[#2aaa62] to-[#0f4428] shadow-[0_8px_40px_rgba(42,170,98,0.3)]",
-        },
-        {
-            id: 2,
-            Icon: AIIcon,
-            img: "https://i.pravatar.cc/200?img=33",
-            className: "course-card-2 flex-[2] bg-gradient-to-br from-[#52d4a0] via-[#1e9e72] via-[#0d6048] to-[#051e16] shadow-[0_8px_40px_rgba(13,96,72,0.35)] !p-[24px_22px]",
-        },
-        {
-            id: 3,
-            Icon: null,
-            className: "course-card-3 flex-[1] bg-gradient-to-br from-[#2a4a3c] via-[#1a3028] to-[#0d1e18] shadow-[0_8px_40px_rgba(0,0,0,0.4)] !p-[18px_16px] rounded-[22px]",
-        },
-    ];
-
     return (
         <section className="bg-[#f0f5f0] p-[100px_clamp(24px,6vw,80px)_120px] relative overflow-hidden">
             <div className="max-w-[680px] mx-auto mb-16 relative">
-                <div className="inline-block text-[11px] font-bold tracking-[0.14em] uppercase text-green mb-3.5">{t('kicker')}</div>
+                <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full border border-green/30 bg-green/5 text-[12px] font-semibold text-green/80 shadow-[0_0_12px_rgba(58,170,106,0.15)] mb-4">
+                    <span className="w-1.5 h-1.5 rounded-full bg-green animate-pulse" />
+                    {t('kicker')}
+                </div>
                 <h2 className="text-[clamp(32px,5vw,62px)] font-bold text-dark leading-[1.08] tracking-[-0.04em] mb-3.5">
                     {t('title1')} <em className="not-italic text-green">{t('title_highlight')}</em>
                 </h2>
@@ -179,7 +183,7 @@ export function CoursesSection() {
             </div>
 
             <div ref={gridRef} className="flex flex-col md:flex-row gap-5 max-w-[1200px] mx-auto relative items-start">
-                {courses.map((course, i) => (
+                {COURSES.map((course, i) => (
                     <ServiceCard
                         key={course.id}
                         course={course}

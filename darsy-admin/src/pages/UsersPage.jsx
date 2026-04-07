@@ -42,9 +42,10 @@ function UsersPage() {
     const fetchUsers = async () => {
         setLoading(true);
         try {
-            const res = await fetch(`${API}/user/all`, { headers });
+            const res = await fetch(`${API}/user/all?limit=200`, { headers });
             const data = await res.json();
-            setUsers(Array.isArray(data) ? data : []);
+            // Support both paginated { users, total } and legacy array response
+            setUsers(Array.isArray(data) ? data : (data.users || []));
         } catch (err) {
             console.error('Error fetching users:', err);
         } finally {
