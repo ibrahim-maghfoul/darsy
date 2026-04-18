@@ -1,19 +1,38 @@
 import React, { useState } from 'react';
+import { useLocation } from 'react-router-dom';
 import Sidebar from './Sidebar';
 import { Menu, Bell } from 'lucide-react';
 
-const Layout = ({ children, activeTab, setActiveTab }) => {
+const PAGE_TITLES = {
+    '/':                      'Dashboard',
+    '/users':                 'Users',
+    '/instructor-apps':       'Instructor Applications',
+    '/teacher-verifications': 'Teacher Verifications',
+    '/instructor-courses':    'Courses Review',
+    '/content':               'Curriculum',
+    '/news':                  'News',
+    '/services':              'Services',
+    '/chat-rooms':            'Chat Rooms',
+    '/contributions':         'Contributions',
+    '/feedback':              'Reports & Feedback',
+    '/upload':                'Batch Upload',
+    '/database':              'Firebase View',
+    '/mongo-sync':            'Sync to Mongo',
+    '/tools':                 'YouTube Tool',
+    '/calendar':              'Global Events',
+    '/content-creator':       'Content Creator',
+    '/settings':              'Settings',
+};
+
+const Layout = ({ children }) => {
+    const location = useLocation();
     const [isSidebarOpen, setIsSidebarOpen] = useState(false);
-    const toggleSidebar = () => setIsSidebarOpen(!isSidebarOpen);
+    const toggleSidebar = () => setIsSidebarOpen(o => !o);
+    const pageTitle = PAGE_TITLES[location.pathname] || 'Darsy Admin';
 
     return (
         <div style={{ display: 'flex', minHeight: '100vh' }}>
-            <Sidebar
-                isOpen={isSidebarOpen}
-                toggleSidebar={toggleSidebar}
-                activeTab={activeTab}
-                setActiveTab={setActiveTab}
-            />
+            <Sidebar isOpen={isSidebarOpen} toggleSidebar={toggleSidebar} />
 
             <div style={{
                 flex: 1,
@@ -23,7 +42,6 @@ const Layout = ({ children, activeTab, setActiveTab }) => {
                 minHeight: '100vh',
                 transition: 'margin 0.3s ease',
             }}>
-                {/* Header */}
                 <header style={{
                     height: 'var(--header-height)',
                     background: 'rgba(255,255,255,0.8)',
@@ -44,11 +62,8 @@ const Layout = ({ children, activeTab, setActiveTab }) => {
                         }}>
                             <Menu size={22} />
                         </button>
-                        <h2 style={{
-                            fontSize: '1.1rem', fontWeight: 700, color: 'var(--dark)',
-                            textTransform: 'capitalize',
-                        }}>
-                            {activeTab?.replace(/-/g, ' ') || 'Dashboard'}
+                        <h2 style={{ fontSize: '1.1rem', fontWeight: 700, color: 'var(--dark)' }}>
+                            {pageTitle}
                         </h2>
                     </div>
 
@@ -72,7 +87,6 @@ const Layout = ({ children, activeTab, setActiveTab }) => {
                     </div>
                 </header>
 
-                {/* Content */}
                 <main style={{ flex: 1, padding: 24, animation: 'fadeIn 0.3s ease-out' }}>
                     {children}
                 </main>

@@ -110,6 +110,7 @@ app.use('/data/resources', express.static(path.join(process.cwd(), 'data/resourc
 app.use('/data/videos', express.static(path.join(process.cwd(), 'data/videos'), staticOpts));
 app.use('/data/documents', express.static(path.join(process.cwd(), 'data/documents'), staticOpts));
 app.use('/data/verifications', express.static(path.join(process.cwd(), 'data/verifications'), staticOpts));
+app.use('/data/posters', express.static(path.join(process.cwd(), 'data/posters'), { ...staticOpts, maxAge: '0' }));
 
 // Health check endpoint
 app.get('/health', (_req: Request, res: Response) => {

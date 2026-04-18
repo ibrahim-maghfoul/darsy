@@ -1,0 +1,181 @@
+{
+  "name": "Darsy Telegram Poster Generator",
+  "nodes": [
+    {
+      "parameters": {
+        "updates": [
+          "message"
+        ],
+        "additionalFields": {}
+      },
+      "id": "1",
+      "name": "Telegram Trigger",
+      "type": "n8n-nodes-base.telegramTrigger",
+      "typeVersion": 1,
+      "position": [
+        250,
+        300
+      ],
+      "notesInFlow": true,
+      "notes": "1. Receives your keyword"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://api.studio.nebius.ai/v1/chat/completions",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Authorization",
+              "value": "Bearer YOUR_NEBIUS_API_KEY"
+            },
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={\n  \"model\": \"meta-llama/Llama-3.3-70B-Instruct\",\n  \"messages\": [\n    {\n      \"role\": \"system\",\n      \"content\": \"You are an expert creative director. Output ONLY strictly valid JSON: { \\\"title\\\": \\\"...\\\", \\\"headline\\\": \\\"...\\\", \\\"subline\\\": \\\"...\\\", \\\"designPrompt\\\": \\\"highly creative description of the poster concept\\\" }\"\n    },\n    {\n      \"role\": \"user\",\n      \"content\": \"Brainstorm an Instagram educational poster about: \\\"{{ $json.message.text }}\\\". Return ONLY a parseable JSON object.\"\n    }\n  ],\n  \"temperature\": 0.85\n}",
+        "options": {}
+      },
+      "id": "2",
+      "name": "LLM (Nebius)",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.1,
+      "position": [
+        450,
+        300
+      ],
+      "notesInFlow": true,
+      "notes": "2. Generate Concept"
+    },
+    {
+      "parameters": {
+        "jsCode": "const responseText = $input.item.json.choices[0].message.content;\nconst rawJson = responseText.replace(/```json\\n?/gi, '').replace(/```/g, '').trim();\nconst parsed = JSON.parse(rawJson);\n\nreturn {\n  title: parsed.title,\n  headline: parsed.headline,\n  subline: parsed.subline,\n  designPrompt: parsed.designPrompt\n};"
+      },
+      "id": "3",
+      "name": "Build Master Prompt",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        650,
+        300
+      ],
+      "notesInFlow": true,
+      "notes": "3. Combine & Enforce Style"
+    },
+    {
+      "parameters": {
+        "jsCode": "const { title, headline, subline, designPrompt } = $input.item.json;\nconst keys = [\n  \"infip-2bb032bd\", \"infip-5350e2b6\", \"infip-744117e5\", \"infip-b005d12c\", \"infip-e6ac682a\", \"infip-ac628e9f\", \"infip-2fcc7019\", \"infip-b058c62b\", \"infip-d1302957\", \"infip-3642c084\", \"infip-523fda1b\", \"infip-c0e6a9b5\", \"infip-ed3aaacb\", \"infip-9aa99cdb\", \"infip-17379f55\", \"infip-6b4a3ab4\", \"infip-5bdc6d7d\", \"infip-a32b9b2f\", \"infip-9d05a08f\", \"infip-be7dd422\", \"infip-9ff0efaa\", \"infip-fa216627\", \"infip-41cbfaa9\", \"infip-3b87ee6f\", \"infip-e609470f\", \"infip-86dc3b16\", \"infip-d112da9a\", \"infip-527ccd05\", \"infip-dc0cef3f\", \"infip-2bb032bd\", \"infip-5350e2b6\", \"infip-744117e5\", \"infip-b005d12c\", \"infip-4afc2039\", \"infip-c322704f\", \"infip-3642c084\", \"infip-3dd59b1f\", \"infip-d8cdc10b\", \"infip-1e3f796f\", \"infip-77c9ba18\", \"infip-f1bf735d\", \"infip-9d05a08f\", \"infip-c8e39b24\", \"infip-8a98801e\", \"infip-2b40ba53\", \"infip-5b95d2b3\", \"infip-d1302957\", \"infip-e30fc0ea\", \"infip-ef0a0c21\", \"infip-68e9200d\", \"infip-6a801c65\", \"infip-55c92743\", \"infip-36fd29ab\", \"infip-b98ee253\", \"infip-abb8260d\", \"infip-94140f27\", \"infip-9db76de0\", \"infip-ee8c4b91\", \"infip-38e7bcc4\", \"infip-6d86d5f6\", \"infip-8357e5dc\", \"infip-6cf39dfc\", \"infip-04bf8c3a\", \"infip-c488dc9d\", \"infip-129aefd5\", \"infip-91900813\"\n];\n\nconst buildPrompt = (bg) => `You are generating a flat 2D digital graphic file — NOT a poster, NOT a mockup... Every pixel from corner to corner is part of the design itself. The ONLY text permitted in the image: 1. \"DARSY\" — top-right corner. 2. Headline: \"${headline}\" — bold, large display type. ${subline ? `3. Subline: \"${subline}\"` : \"\"}. COLOR PALETTE: Grayscale subject, Accent green (#3aaa6a). Background: strictly ${bg}. Topic: ${title}. Scene: ${designPrompt}. Editorial fashion photography style. Asymmetric layout. No center subject. No mockup frames. NO PHYSICAL POSTER INSIDE IMAGE.`.trim();\n\nlet urls = [];\nconst bgs = ['pure white (#ffffff)', 'solid green (#3aaa6a)'];\n\nfor (const bg of bgs) {\n  for (let i = 0; i < 3; i++) {\n    const randomKey = keys[Math.floor(Math.random() * keys.length)];\n    try {\n      const res = await fetch('https://api.infip.pro/v1/images/generations', {\n        method: 'POST',\n        headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${randomKey}` },\n        body: JSON.stringify({ model: 'img3', prompt: buildPrompt(bg), n: 3, size: '1024x1024' })\n      });\n      let data = await res.json();\n      if (data.data) { \n        urls.push(...data.data.map(d => d.url)); \n        break; \n      }\n    } catch(e) {}\n  }\n}\n\n// Fallback\nif (urls.length === 0) {\n  for(let i=0; i<6; i++) urls.push(`https://image.pollinations.ai/prompt/${encodeURIComponent(buildPrompt(i<3 ? 'white':'green'))}?width=1024&height=1024&nologo=true&seed=${Math.floor(Math.random()*1000000)}`);\n}\n\nreturn { data: urls.map(url => ({ url, title })) };"
+      },
+      "id": "4",
+      "name": "Robust Key Loop & Image Gen",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        850,
+        300
+      ],
+      "notesInFlow": true,
+      "notes": "4. Includes 66 Keys + Fallback"
+    },
+    {
+      "parameters": {
+        "fieldToSplitOut": "data",
+        "options": {}
+      },
+      "id": "5",
+      "name": "Item Lists (Split 4 URLs)",
+      "type": "n8n-nodes-base.itemLists",
+      "typeVersion": 3,
+      "position": [
+        1050,
+        300
+      ]
+    },
+    {
+      "parameters": {
+        "chatId": "={{ $('Telegram Trigger').item.json.message.chat.id }}",
+        "operation": "sendPhoto",
+        "file": "={{ $json.url }}",
+        "additionalFields": {
+          "caption": "={{ $('Build Master Prompt').item.json.title }}"
+        }
+      },
+      "id": "6",
+      "name": "Send back to Telegram",
+      "type": "n8n-nodes-base.telegram",
+      "typeVersion": 1,
+      "position": [
+        1250,
+        300
+      ]
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "Telegram Trigger": {
+      "main": [
+        [
+          {
+            "node": "LLM (Nebius)",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "LLM (Nebius)": {
+      "main": [
+        [
+          {
+            "node": "Build Master Prompt",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Build Master Prompt": {
+      "main": [
+        [
+          {
+            "node": "Robust Key Loop & Image Gen",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Robust Key Loop & Image Gen": {
+      "main": [
+        [
+          {
+            "node": "Item Lists (Split 4 URLs)",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Item Lists (Split 4 URLs)": {
+      "main": [
+        [
+          {
+            "node": "Send back to Telegram",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "versionId": "f900a6e0-32b0-4b95-a249-14a92c30076c"
+}

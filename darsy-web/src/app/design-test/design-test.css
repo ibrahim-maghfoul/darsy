@@ -1,0 +1,126 @@
+/* ════════════════════════════════════════
+   Design Test Page
+════════════════════════════════════════ */
+
+.design-test-page {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 2rem 1.5rem 5rem;
+}
+
+.dt-header {
+  text-align: center;
+  margin-bottom: 2.5rem;
+}
+.dt-header h1 {
+  font-size: 2rem;
+  font-weight: 800;
+  color: var(--color-dark);
+}
+.dt-header p {
+  color: #6b7280;
+  margin-top: 0.3rem;
+  font-size: 0.95rem;
+}
+
+.dt-section {
+  margin-bottom: 3rem;
+}
+.dt-section-title {
+  font-size: 1.1rem;
+  font-weight: 700;
+  color: var(--color-dark);
+  margin-bottom: 1.2rem;
+  padding-left: 0.5rem;
+  border-left: 3px solid var(--color-green);
+}
+
+
+/* ────────────────────────────────────
+   HERO CARD
+──────────────────────────────────── */
+.hero-card-wrapper {
+  position: relative;
+  padding-top: 20px;
+}
+
+.hero-card {
+  position: relative;
+  width: 100%;
+  height: 420px;
+  clip-path: url(#heroNotch);
+  background: var(--color-green);
+  border-radius: 20px;
+  overflow: hidden;
+}
+
+/* white dotted texture over the green */
+.hero-card-texture {
+  position: absolute;
+  inset: 0;
+  background-image:
+    radial-gradient(circle, rgba(255, 255, 255, 0.35) 1.2px, transparent 1.2px);
+  background-size: 18px 18px;
+}
+
+/* outer pill — green shell */
+.hero-resource-pill {
+  position: absolute;
+  top: 0;
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 10;
+  background: var(--color-green);
+  border-radius: 999px;
+  padding: 4px;
+  box-shadow: 0 3px 16px rgba(58, 170, 106, 0.35);
+}
+
+/* inner pill — white */
+.hero-resource-pill-inner {
+  display: flex;
+  gap: 4px;
+  background: #fff;
+  border-radius: 999px;
+  padding: 4px 6px;
+}
+
+/* green icons inside */
+.resource-icon {
+  width: 30px;
+  height: 30px;
+  border-radius: 50%;
+  border: none;
+  background: transparent;
+  color: var(--color-green);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+.resource-icon:hover {
+  background: rgba(58, 170, 106, 0.12);
+}
+
+
+
+/* ────────────────────────────────────
+   RESPONSIVE
+──────────────────────────────────── */
+@media (max-width: 768px) {
+  .hero-card {
+    height: 320px;
+  }
+
+  .resource-icon {
+    width: 28px;
+    height: 28px;
+  }
+}
+
+@media (max-width: 480px) {
+  .hero-card {
+    height: 260px;
+  }
+}

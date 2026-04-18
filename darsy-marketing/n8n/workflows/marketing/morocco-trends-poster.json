@@ -1,0 +1,280 @@
+{
+  "name": "Morocco Trends → Poster → Approve → Post",
+  "nodes": [
+    {
+      "parameters": {},
+      "id": "manual-trigger",
+      "name": "Manual Test Trigger",
+      "type": "n8n-nodes-base.manualTrigger",
+      "typeVersion": 1,
+      "position": [0, -200]
+    },
+    {
+      "parameters": {
+        "rule": {
+          "interval": [{ "field": "hours", "hoursInterval": 24, "triggerAtHour": 9 }]
+        }
+      },
+      "id": "schedule-trigger",
+      "name": "Daily 9AM Trigger",
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.2,
+      "position": [0, 0]
+    },
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "run-trends-poster",
+        "responseMode": "immediatelyAfterReceive",
+        "options": {}
+      },
+      "id": "webhook-trigger",
+      "name": "Webhook Trigger (from Bot)",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2,
+      "position": [0, 200],
+      "webhookId": "run-trends-poster"
+    },
+    {
+      "parameters": {
+        "jsCode": "const fromWebhook = $input.first().json.body?.chatId;\nconst chatId = fromWebhook || '6537042237';\nreturn [{ json: { chatId } }];"
+      },
+      "id": "get-chat-id",
+      "name": "Get ChatId",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [240, 100]
+    },
+    {
+      "parameters": {
+        "method": "GET",
+        "url": "https://news.google.com/rss?hl=ar&gl=MA&ceid=MA:ar",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "User-Agent",
+              "value": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36"
+            },
+            {
+              "name": "Accept",
+              "value": "application/rss+xml, application/xml, text/xml, */*"
+            }
+          ]
+        },
+        "options": {
+          "response": {
+            "response": { "responseFormat": "text" }
+          }
+        }
+      },
+      "id": "fetch-morocco-trends",
+      "name": "Fetch Morocco Trends",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [480, 100]
+    },
+    {
+      "parameters": {
+        "jsCode": "const raw = $input.first().json;\n\nconst xml = raw.data || raw.body || raw.text || raw.response || (typeof raw === 'string' ? raw : '');\n\nif (!xml || xml.length < 100) {\n  throw new Error('News RSS returned empty or invalid data. Raw response: ' + JSON.stringify(raw).substring(0, 300));\n}\n\n// Extract <item> blocks first, then pull <title> from each — avoids matching the feed-level <title>\nconst items = [];\nconst itemRegex = /<item[\\s\\S]*?<\\/item>/g;\nlet itemMatch;\nwhile ((itemMatch = itemRegex.exec(xml)) !== null) items.push(itemMatch[0]);\n\nif (items.length === 0) {\n  throw new Error('No <item> elements found in RSS. First 500 chars: ' + xml.substring(0, 500));\n}\n\nconst titleRegex = /<title>(?:<!\\[CDATA\\[)?(.*?)(?:\\]\\]>)?<\\/title>/;\nconst sourceRegex = /<source[^>]*>(.*?)<\\/source>/;\n\nconst newsList = items.slice(0, 15).map((item, i) => {\n  const titleMatch = item.match(titleRegex);\n  const sourceMatch = item.match(sourceRegex);\n  const title = titleMatch ? titleMatch[1].trim() : '';\n  const source = sourceMatch ? sourceMatch[1].trim() : '';\n  return { rank: i + 1, title, source };\n}).filter(n => n.title.length > 0);\n\nif (newsList.length === 0) {\n  throw new Error('Items found but no titles extracted. First item: ' + items[0].substring(0, 300));\n}\n\nconst chatId = $('Get ChatId').first().json.chatId;\n\nreturn [{ json: {\n  news: newsList,\n  trendsText: newsList.map(n => `${n.rank}. ${n.title}${n.source ? ' — ' + n.source : ''}`).join('\\n'),\n  fetchedAt: new Date().toISOString(),\n  chatId\n} }];"
+      },
+      "id": "parse-trends",
+      "name": "Parse Trends RSS",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [720, 100]
+    },
+    {
+      "parameters": {
+        "jsCode": "const data = $input.first().json;\n\nif (!data.trendsText || data.trendsText.trim() === '') {\n  throw new Error('trendsText is empty — the Parse Trends RSS node returned no data. Check that node first.');\n}\n\nconst visualStyle = 'VISUAL STYLE (apply to every poster, never change this): Square 1:1 format. High-contrast black-and-white photographic figure, partially hidden through circular masks and geometric overlays. Color palette: grayscale + bold green (#22C55E) on geometric elements only (circles, arcs, overlays). Background: light off-white or soft gray with subtle grain/noise texture. The ONLY readable text is DARSY in clean modern sans-serif, top-right corner, 5% padding — no other text anywhere. UI details: thin dividers, minimal markers, abstract labels without text. Composition: asymmetry, overlapping masks, rotated/layered geometric structures, depth. Vary scale, masking, and subject placement each time. Lighting: high contrast editorial style.';\n\nconst body = {\n  model: 'gpt-4o',\n  max_tokens: 1200,\n  temperature: 0.9,\n  messages: [\n    {\n      role: 'system',\n      content: 'You are a creative poster designer. You create visually striking editorial posters about any topic — sports, politics, entertainment, science, anything. Output ONLY valid JSON, no markdown, no code blocks.'\n    },\n    {\n      role: 'user',\n      content: `Today\\'s top news headlines in Morocco:\\n\\n${data.trendsText}\\n\\nStep 1 — Pick the single most relevant LOCAL Moroccan topic from the list.\\nPRIORITY ORDER (pick the highest available):\\n  1. Moroccan politics, government, economy, laws, official decisions\\n  2. Moroccan society, culture, local events, Moroccan celebrities\\n  3. Moroccan sports teams specifically (Raja, Wydad, ASFAR, Atlas Lions national team)\\n  4. Moroccan education, BAC, Brevet, ministry of education news\\n  5. Only if nothing local exists: any other topic from the list\\nAVOID: matches between two foreign teams (e.g. Man City vs Liverpool), foreign celebrities with no Morocco connection, generic world news.\\n\\nStep 2 — Think about what visuals, symbols, actions, or objects represent THAT specific Moroccan topic.\\nStep 3 — Write a DALL-E 3 image prompt where every visual element is directly about the chosen topic.\\n\\n${visualStyle}\\n\\nRules for the image_prompt field:\\n- The subject MUST visually represent the chosen Moroccan topic specifically\\n- Do NOT default to students or school imagery unless the topic is about education\\n- Describe the subject, pose, and symbolic elements that make the topic immediately recognizable\\n- Apply the visual style above\\n\\nRespond with ONLY this JSON:\\n{\"chosen_trend\":\"exact headline from the list\",\"why_chosen\":\"one sentence explaining why this is the most locally Moroccan topic\",\"angle\":\"informative|inspirational|commentary|satirical|cultural\",\"subject_description\":\"one sentence: what the human figure is doing and what makes it represent the topic\",\"image_prompt\":\"[Full DALL-E 3 prompt. Start with: A black-and-white high-contrast editorial photograph of [specific figure/action directly representing the chosen Moroccan topic], partially hidden by circular geometric masks, bold green (#22C55E) arc and circle overlays, off-white grainy background, the word DARSY in clean modern sans-serif top-right corner only, no other text, asymmetric editorial composition, thin UI dividers, layered geometric depth, square 1:1 format]\",\"caption\":\"social media caption in Moroccan Darija mixed with French naturally, relevant hashtags including #دارسي #المغرب\",\"language\":\"ar\"}`\n    }\n  ]\n};\nreturn [{ json: { body, chatId: data.chatId } }];"
+      },
+      "id": "build-gpt-prompt",
+      "name": "Build GPT Prompt",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [960, 100]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://api.openai.com/v1/chat/completions",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "openAiApi",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ JSON.stringify($json.body) }}",
+        "options": {}
+      },
+      "id": "gpt-create-concept",
+      "name": "GPT - Create Poster Concept",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [1200, 100],
+      "credentials": {
+        "openAiApi": { "id": "openai-api", "name": "OpenAI account" }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "const raw = $input.first().json;\nconst chatId = $('Build GPT Prompt').first().json.chatId;\nconst text = raw.choices?.[0]?.message?.content || '';\nlet parsed;\ntry {\n  parsed = JSON.parse(text.replace(/^```json\\s*/i, '').replace(/```\\s*$/i, '').trim());\n} catch(e) {\n  throw new Error('Could not parse GPT response: ' + text.substring(0, 300));\n}\nreturn [{ json: { ...parsed, chatId } }];"
+      },
+      "id": "parse-concept",
+      "name": "Parse Poster Concept",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [1440, 100]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://api.openai.com/v1/images/generations",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "openAiApi",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ JSON.stringify({ model: 'dall-e-3', prompt: $json.image_prompt, n: 1, size: '1024x1024', quality: 'hd', style: 'vivid' }) }}",
+        "options": {}
+      },
+      "id": "dalle-generate",
+      "name": "DALL-E - Generate Poster",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [1680, 100],
+      "credentials": {
+        "openAiApi": { "id": "openai-api", "name": "OpenAI account" }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "const dalleResp = $input.first().json;\nconst concept = $('Parse Poster Concept').first().json;\nconst imageUrl = dalleResp.data?.[0]?.url || '';\nif (!imageUrl) throw new Error('DALL-E returned no image URL: ' + JSON.stringify(dalleResp).substring(0, 300));\nreturn [{ json: { ...concept, imageUrl } }];"
+      },
+      "id": "extract-image-url",
+      "name": "Extract Image URL",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [1920, 100]
+    },
+    {
+      "parameters": {
+        "url": "={{ $json.imageUrl }}",
+        "options": {
+          "response": {
+            "response": { "responseFormat": "file", "outputPropertyName": "data" }
+          }
+        }
+      },
+      "id": "download-image",
+      "name": "Download Poster Image",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [2160, 100]
+    },
+    {
+      "parameters": {
+        "resource": "file",
+        "operation": "upload",
+        "folderId": { "__rl": true, "mode": "list", "value": "" },
+        "name": "=Darsy_Poster_{{ $now.format('yyyy-MM-dd_HH-mm') }}.png",
+        "inputDataFieldName": "data",
+        "options": {}
+      },
+      "id": "save-to-drive",
+      "name": "Save to Google Drive",
+      "type": "n8n-nodes-base.googleDrive",
+      "typeVersion": 3,
+      "position": [2400, -100],
+      "onError": "continueRegularOutput",
+      "credentials": {
+        "googleDriveOAuth2Api": { "id": "GOOGLE_DRIVE_CREDENTIAL_ID", "name": "Google Drive account" }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "const concept = $('Extract Image URL').first().json;\nconst binary = $('Download Poster Image').first().binary;\n\n// Build plain-text caption — no Markdown to avoid parse errors\nlet caption = '🎨 NEW POSTER READY FOR REVIEW\\n\\n';\ncaption += '📊 Trend: ' + (concept.chosen_trend || '') + '\\n';\ncaption += '🎯 Angle: ' + (concept.angle || '') + '\\n';\ncaption += '💬 Caption: ' + (concept.caption || '') + '\\n\\n';\ncaption += 'Tap a button below to respond:';\n\nreturn [{ json: { chatId: concept.chatId, caption }, binary }];"
+      },
+      "id": "prepare-telegram",
+      "name": "Prepare Telegram Message",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [2400, 300]
+    },
+    {
+      "parameters": {
+        "operation": "sendPhoto",
+        "chatId": "={{ $json.chatId }}",
+        "binaryData": true,
+        "binaryPropertyName": "data",
+        "additionalFields": {
+          "caption": "={{ $json.caption }}",
+          "reply_markup": {
+            "inline_keyboard": [
+              [
+                { "text": "✅ Approve & Post", "callback_data": "approve" },
+                { "text": "❌ Reject", "callback_data": "reject" }
+              ],
+              [{ "text": "🔄 Regenerate", "callback_data": "regenerate" }]
+            ]
+          }
+        }
+      },
+      "id": "send-telegram-approval",
+      "name": "Send to Telegram for Approval",
+      "type": "n8n-nodes-base.telegram",
+      "typeVersion": 1.2,
+      "position": [2640, 300],
+      "credentials": {
+        "telegramApi": { "id": "XKvv8ek8iXO8xWJT", "name": "Telegram account" }
+      }
+    }
+  ],
+  "connections": {
+    "Manual Test Trigger": {
+      "main": [[{ "node": "Get ChatId", "type": "main", "index": 0 }]]
+    },
+    "Daily 9AM Trigger": {
+      "main": [[{ "node": "Get ChatId", "type": "main", "index": 0 }]]
+    },
+    "Webhook Trigger (from Bot)": {
+      "main": [[{ "node": "Get ChatId", "type": "main", "index": 0 }]]
+    },
+    "Get ChatId": {
+      "main": [[{ "node": "Fetch Morocco Trends", "type": "main", "index": 0 }]]
+    },
+    "Fetch Morocco Trends": {
+      "main": [[{ "node": "Parse Trends RSS", "type": "main", "index": 0 }]]
+    },
+    "Parse Trends RSS": {
+      "main": [[{ "node": "Build GPT Prompt", "type": "main", "index": 0 }]]
+    },
+    "Build GPT Prompt": {
+      "main": [[{ "node": "GPT - Create Poster Concept", "type": "main", "index": 0 }]]
+    },
+    "GPT - Create Poster Concept": {
+      "main": [[{ "node": "Parse Poster Concept", "type": "main", "index": 0 }]]
+    },
+    "Parse Poster Concept": {
+      "main": [[{ "node": "DALL-E - Generate Poster", "type": "main", "index": 0 }]]
+    },
+    "DALL-E - Generate Poster": {
+      "main": [[{ "node": "Extract Image URL", "type": "main", "index": 0 }]]
+    },
+    "Extract Image URL": {
+      "main": [[{ "node": "Download Poster Image", "type": "main", "index": 0 }]]
+    },
+    "Download Poster Image": {
+      "main": [[
+        { "node": "Save to Google Drive", "type": "main", "index": 0 },
+        { "node": "Prepare Telegram Message", "type": "main", "index": 0 }
+      ]]
+    },
+    "Prepare Telegram Message": {
+      "main": [[{ "node": "Send to Telegram for Approval", "type": "main", "index": 0 }]]
+    }
+  },
+  "settings": { "executionOrder": "v1" },
+  "tags": [
+    { "name": "marketing" },
+    { "name": "morocco-trends" },
+    { "name": "social-media" }
+  ]
+}

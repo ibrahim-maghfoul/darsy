@@ -1,0 +1,554 @@
+{
+  "name": "Darsy Weekly Growth Dashboard",
+  "nodes": [
+    {
+      "parameters": {
+        "rule": {
+          "interval": [
+            {
+              "field": "cronExpression",
+              "expression": "0 20 * * 0"
+            }
+          ]
+        }
+      },
+      "id": "trigger-weekly",
+      "name": "Every Sunday 8PM",
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.2,
+      "position": [
+        0,
+        300
+      ]
+    },
+    {
+      "parameters": {
+        "operation": "aggregate",
+        "collection": "users",
+        "query": "={{ JSON.stringify([\n  {\n    $facet: {\n      totalUsers: [{ $count: 'count' }],\n      newUsersThisWeek: [\n        { $match: { createdAt: { $gte: new Date(new Date().setDate(new Date().getDate() - 7)) } } },\n        { $count: 'count' }\n      ],\n      dailyActiveUsers: [\n        { $match: { updatedAt: { $gte: new Date(new Date().setDate(new Date().getDate() - 1)) } } },\n        { $count: 'count' }\n      ],\n      weeklyActiveUsers: [\n        { $match: { updatedAt: { $gte: new Date(new Date().setDate(new Date().getDate() - 7)) } } },\n        { $count: 'count' }\n      ],\n      monthlyActiveUsers: [\n        { $match: { updatedAt: { $gte: new Date(new Date().setDate(new Date().getDate() - 30)) } } },\n        { $count: 'count' }\n      ],\n      roleBreakdown: [\n        { $group: { _id: '$role', count: { $sum: 1 } } }\n      ],\n      cityBreakdown: [\n        { $match: { city: { $exists: true, $ne: null } } },\n        { $group: { _id: '$city', count: { $sum: 1 } } },\n        { $sort: { count: -1 } },\n        { $limit: 10 }\n      ]\n    }\n  }\n]) }}"
+      },
+      "id": "mongo-user-stats",
+      "name": "MongoDB: User Stats",
+      "type": "n8n-nodes-base.mongoDb",
+      "typeVersion": 1.2,
+      "position": [
+        300,
+        0
+      ],
+      "credentials": {
+        "mongoDb": {
+          "id": "MONGO_CREDENTIAL_ID",
+          "name": "Darsy MongoDB"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "aggregate",
+        "collection": "users",
+        "query": "={{ JSON.stringify([\n  {\n    $facet: {\n      freeToProThisWeek: [\n        {\n          $match: {\n            'subscription.plan': 'pro',\n            updatedAt: { $gte: new Date(new Date().setDate(new Date().getDate() - 7)) }\n          }\n        },\n        { $count: 'count' }\n      ],\n      freeToPremiumThisWeek: [\n        {\n          $match: {\n            'subscription.plan': 'premium',\n            updatedAt: { $gte: new Date(new Date().setDate(new Date().getDate() - 7)) }\n          }\n        },\n        { $count: 'count' }\n      ],\n      planDistribution: [\n        { $group: { _id: '$subscription.plan', count: { $sum: 1 } } }\n      ],\n      expiringNextWeek: [\n        {\n          $match: {\n            'subscription.expiresAt': {\n              $gte: new Date(),\n              $lte: new Date(new Date().setDate(new Date().getDate() + 7))\n            }\n          }\n        },\n        { $count: 'count' }\n      ]\n    }\n  }\n]) }}"
+      },
+      "id": "mongo-subscriptions",
+      "name": "MongoDB: Subscription Conversions",
+      "type": "n8n-nodes-base.mongoDb",
+      "typeVersion": 1.2,
+      "position": [
+        300,
+        200
+      ],
+      "credentials": {
+        "mongoDb": {
+          "id": "MONGO_CREDENTIAL_ID",
+          "name": "Darsy MongoDB"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "aggregate",
+        "collection": "users",
+        "query": "={{ JSON.stringify([\n  { $unwind: '$progress.lessons' },\n  {\n    $match: {\n      'progress.lessons.lastAccessed': {\n        $gte: new Date(new Date().setDate(new Date().getDate() - 7))\n      }\n    }\n  },\n  {\n    $group: {\n      _id: '$progress.lessons.lessonId',\n      views: { $sum: 1 },\n      totalTimeSpent: { $sum: '$progress.lessons.totalTimeSpent' },\n      uniqueUsers: { $addToSet: '$_id' }\n    }\n  },\n  {\n    $project: {\n      _id: 1,\n      views: 1,\n      totalTimeSpent: 1,\n      uniqueUserCount: { $size: '$uniqueUsers' }\n    }\n  },\n  { $sort: { views: -1 } },\n  { $limit: 10 },\n  {\n    $lookup: {\n      from: 'lessons',\n      localField: '_id',\n      foreignField: '_id',\n      as: 'lessonDetails'\n    }\n  },\n  { $unwind: { path: '$lessonDetails', preserveNullAndEmptyArrays: true } },\n  {\n    $project: {\n      lessonId: '$_id',\n      title: '$lessonDetails.title',\n      subjectId: '$lessonDetails.subjectId',\n      views: 1,\n      uniqueUserCount: 1,\n      totalTimeSpent: 1\n    }\n  }\n]) }}"
+      },
+      "id": "mongo-top-lessons",
+      "name": "MongoDB: Top 10 Lessons by Views",
+      "type": "n8n-nodes-base.mongoDb",
+      "typeVersion": 1.2,
+      "position": [
+        300,
+        400
+      ],
+      "credentials": {
+        "mongoDb": {
+          "id": "MONGO_CREDENTIAL_ID",
+          "name": "Darsy MongoDB"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "aggregate",
+        "collection": "contributions",
+        "query": "={{ JSON.stringify([\n  {\n    $facet: {\n      newContributions: [\n        {\n          $match: {\n            createdAt: { $gte: new Date(new Date().setDate(new Date().getDate() - 7)) }\n          }\n        },\n        { $count: 'count' }\n      ],\n      statusBreakdown: [\n        {\n          $match: {\n            createdAt: { $gte: new Date(new Date().setDate(new Date().getDate() - 7)) }\n          }\n        },\n        { $group: { _id: '$status', count: { $sum: 1 } } }\n      ],\n      topContributors: [\n        {\n          $match: {\n            createdAt: { $gte: new Date(new Date().setDate(new Date().getDate() - 7)) }\n          }\n        },\n        { $group: { _id: '$userId', count: { $sum: 1 } } },\n        { $sort: { count: -1 } },\n        { $limit: 5 }\n      ]\n    }\n  }\n]) }}"
+      },
+      "id": "mongo-contributions",
+      "name": "MongoDB: Contributions",
+      "type": "n8n-nodes-base.mongoDb",
+      "typeVersion": 1.2,
+      "position": [
+        300,
+        600
+      ],
+      "credentials": {
+        "mongoDb": {
+          "id": "MONGO_CREDENTIAL_ID",
+          "name": "Darsy MongoDB"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "aggregate",
+        "collection": "users",
+        "query": "={{ JSON.stringify([\n  {\n    $match: {\n      role: { $in: ['teacher', 'instructor'] },\n      createdAt: { $gte: new Date(new Date().setDate(new Date().getDate() - 7)) }\n    }\n  },\n  {\n    $group: {\n      _id: '$role',\n      count: { $sum: 1 },\n      users: { $push: { name: '$displayName', email: '$email', city: '$city' } }\n    }\n  }\n]) }}"
+      },
+      "id": "mongo-teachers",
+      "name": "MongoDB: Teacher/Instructor Signups",
+      "type": "n8n-nodes-base.mongoDb",
+      "typeVersion": 1.2,
+      "position": [
+        300,
+        800
+      ],
+      "credentials": {
+        "mongoDb": {
+          "id": "MONGO_CREDENTIAL_ID",
+          "name": "Darsy MongoDB"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://analyticsdata.googleapis.com/v1beta/properties/{{ $env.GA4_PROPERTY_ID }}:runReport",
+        "authentication": "oAuth2",
+        "sendBody": true,
+        "bodyParameters": {
+          "parameters": [
+            {
+              "name": "body",
+              "value": "={{ JSON.stringify({\n  dateRanges: [{ startDate: '7daysAgo', endDate: 'today' }],\n  dimensions: [\n    { name: 'sessionDefaultChannelGroup' },\n    { name: 'pagePath' }\n  ],\n  metrics: [\n    { name: 'sessions' },\n    { name: 'totalUsers' },\n    { name: 'bounceRate' },\n    { name: 'averageSessionDuration' },\n    { name: 'screenPageViews' }\n  ],\n  orderBys: [{ metric: { metricName: 'sessions' }, desc: true }],\n  limit: 20\n}) }}"
+            }
+          ]
+        }
+      },
+      "id": "google-analytics",
+      "name": "Google Analytics: Traffic & Sources",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        300,
+        1000
+      ],
+      "credentials": {
+        "oAuth2Api": {
+          "id": "GA_OAUTH_CREDENTIAL_ID",
+          "name": "Google Analytics OAuth2"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "// Fetch social media stats via their APIs\n// This node aggregates follower counts and engagement rates\n\nconst platforms = {\n  facebook: {\n    pageId: process.env.FB_PAGE_ID || 'DARSY_FB_PAGE_ID',\n    accessToken: process.env.FB_ACCESS_TOKEN || 'FB_TOKEN'\n  },\n  instagram: {\n    accountId: process.env.IG_ACCOUNT_ID || 'DARSY_IG_ACCOUNT_ID',\n    accessToken: process.env.IG_ACCESS_TOKEN || 'IG_TOKEN'\n  },\n  tiktok: {\n    username: 'darsy_dz'\n  },\n  youtube: {\n    channelId: process.env.YT_CHANNEL_ID || 'DARSY_YT_CHANNEL_ID',\n    apiKey: process.env.YT_API_KEY || 'YT_KEY'\n  }\n};\n\ntry {\n  // Facebook Page Insights\n  const fbResponse = await this.helpers.httpRequest({\n    method: 'GET',\n    url: `https://graph.facebook.com/v18.0/${platforms.facebook.pageId}`,\n    qs: {\n      fields: 'followers_count,fan_count,talking_about_count',\n      access_token: platforms.facebook.accessToken\n    }\n  });\n\n  // Instagram Business Account Insights\n  const igResponse = await this.helpers.httpRequest({\n    method: 'GET',\n    url: `https://graph.facebook.com/v18.0/${platforms.instagram.accountId}`,\n    qs: {\n      fields: 'followers_count,media_count,profile_views',\n      access_token: platforms.instagram.accessToken\n    }\n  });\n\n  // YouTube Channel Stats\n  const ytResponse = await this.helpers.httpRequest({\n    method: 'GET',\n    url: 'https://www.googleapis.com/youtube/v3/channels',\n    qs: {\n      part: 'statistics',\n      id: platforms.youtube.channelId,\n      key: platforms.youtube.apiKey\n    }\n  });\n\n  return [{\n    json: {\n      facebook: {\n        followers: fbResponse.followers_count || 0,\n        fans: fbResponse.fan_count || 0,\n        talkingAbout: fbResponse.talking_about_count || 0\n      },\n      instagram: {\n        followers: igResponse.followers_count || 0,\n        mediaCount: igResponse.media_count || 0\n      },\n      youtube: {\n        subscribers: ytResponse.items?.[0]?.statistics?.subscriberCount || 0,\n        totalViews: ytResponse.items?.[0]?.statistics?.viewCount || 0,\n        videoCount: ytResponse.items?.[0]?.statistics?.videoCount || 0\n      },\n      fetchedAt: new Date().toISOString()\n    }\n  }];\n} catch (error) {\n  return [{\n    json: {\n      error: 'Some social media APIs failed',\n      message: error.message,\n      facebook: { followers: 0, note: 'API call failed' },\n      instagram: { followers: 0, note: 'API call failed' },\n      youtube: { subscribers: 0, note: 'API call failed' },\n      fetchedAt: new Date().toISOString()\n    }\n  }];\n}"
+      },
+      "id": "social-media-stats",
+      "name": "Social Media: Follower & Engagement Stats",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        300,
+        1200
+      ]
+    },
+    {
+      "parameters": {
+        "mode": "combine",
+        "combinationMode": "mergeByPosition",
+        "numberInputs": 7
+      },
+      "id": "merge-all-data",
+      "name": "Merge All Data",
+      "type": "n8n-nodes-base.merge",
+      "typeVersion": 3,
+      "position": [
+        700,
+        500
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "const items = $input.all();\n\n// Build a structured report from all merged data\nconst userStats = items[0]?.json || {};\nconst subscriptions = items[1]?.json || {};\nconst topLessons = items[2]?.json || {};\nconst contributions = items[3]?.json || {};\nconst teachers = items[4]?.json || {};\nconst analytics = items[5]?.json || {};\nconst social = items[6]?.json || {};\n\nconst weekStart = new Date(new Date().setDate(new Date().getDate() - 7)).toISOString().split('T')[0];\nconst weekEnd = new Date().toISOString().split('T')[0];\n\nconst report = {\n  reportPeriod: `${weekStart} to ${weekEnd}`,\n  generatedAt: new Date().toISOString(),\n  userMetrics: {\n    totalUsers: userStats.totalUsers?.[0]?.count || 0,\n    newUsersThisWeek: userStats.newUsersThisWeek?.[0]?.count || 0,\n    dau: userStats.dailyActiveUsers?.[0]?.count || 0,\n    wau: userStats.weeklyActiveUsers?.[0]?.count || 0,\n    mau: userStats.monthlyActiveUsers?.[0]?.count || 0,\n    roleBreakdown: userStats.roleBreakdown || [],\n    topCities: userStats.cityBreakdown || []\n  },\n  subscriptionMetrics: {\n    freeToProConversions: subscriptions.freeToProThisWeek?.[0]?.count || 0,\n    freeToPremiumConversions: subscriptions.freeToPremiumThisWeek?.[0]?.count || 0,\n    planDistribution: subscriptions.planDistribution || [],\n    expiringNextWeek: subscriptions.expiringNextWeek?.[0]?.count || 0\n  },\n  contentMetrics: {\n    topLessons: topLessons || [],\n    newContributions: contributions.newContributions?.[0]?.count || 0,\n    contributionStatus: contributions.statusBreakdown || [],\n    topContributors: contributions.topContributors || []\n  },\n  teacherMetrics: teachers || [],\n  webAnalytics: analytics,\n  socialMedia: social\n};\n\nreturn [{ json: report }];"
+      },
+      "id": "structure-report",
+      "name": "Structure Report Data",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        900,
+        500
+      ]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://api.openai.com/v1/chat/completions",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "openAiApi",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ JSON.stringify({ model: \"gpt-4o\", messages: [{\"role\":\"system\",\"content\":\"You are a growth marketing analyst for Darsy, a Moroccan educational platform targeting BAC and Brevet students in Morocco. Platform: Next.js web app + mobile. Languages: Arabic (Darija + MSA) and French. Currency: MAD (Moroccan Dirham). School calendar: BAC exams in June, Brevet in May, school starts in September. Analyze weekly metrics and write an executive summary with actionable insights. Focus on: growth trends, conversion rates, content engagement, and recommendations. Be specific with numbers and percentages. Write in English.\"},{\"role\":\"user\",\"content\":\"=Here is this week's growth data for Darsy:\\n\\n{{ JSON.stringify($json, null, 2) }}\\n\\nPlease provide:\\n1. Executive Summary (3-4 sentences)\\n2. Key Wins This Week\\n3. Areas of Concern\\n4. Week-over-Week Trends (estimate based on the data)\\n5. Top 3 Actionable Recommendations\\n6. Predicted Focus for Next Week\"}], temperature: 0.3, max_tokens: 1500 }) }}",
+        "options": {
+          "response": {
+            "response": {
+              "responseFormat": "json"
+            }
+          }
+        }
+      },
+      "id": "gpt4o-analysis",
+      "name": "GPT-4o: Analyze Trends & Insights",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        1100,
+        500
+      ],
+      "credentials": {
+        "openAiApi": {
+          "id": "openai-api",
+          "name": "OpenAI account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "const report = $('Structure Report Data').first().json;\nconst aiAnalysis = $json.message?.content || $json.text || 'AI analysis unavailable';\n\nconst metrics = report.userMetrics;\nconst subs = report.subscriptionMetrics;\nconst content = report.contentMetrics;\n\nconst html = `\n<!DOCTYPE html>\n<html dir=\"ltr\" lang=\"en\">\n<head>\n  <meta charset=\"UTF-8\">\n  <title>Darsy Weekly Growth Report - ${report.reportPeriod}</title>\n  <style>\n    body { font-family: 'Segoe UI', Arial, sans-serif; margin: 0; padding: 20px; background: #f5f7fa; color: #333; }\n    .container { max-width: 800px; margin: 0 auto; background: white; border-radius: 12px; overflow: hidden; box-shadow: 0 4px 20px rgba(0,0,0,0.08); }\n    .header { background: linear-gradient(135deg, #6366f1, #8b5cf6); color: white; padding: 30px; text-align: center; }\n    .header h1 { margin: 0; font-size: 24px; }\n    .header p { margin: 8px 0 0; opacity: 0.85; font-size: 14px; }\n    .metrics-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 1px; background: #e5e7eb; }\n    .metric-card { background: white; padding: 20px; text-align: center; }\n    .metric-value { font-size: 28px; font-weight: 700; color: #6366f1; }\n    .metric-label { font-size: 12px; color: #6b7280; text-transform: uppercase; margin-top: 4px; }\n    .section { padding: 24px 30px; border-bottom: 1px solid #f0f0f0; }\n    .section h2 { font-size: 18px; color: #1f2937; margin: 0 0 16px; }\n    .ai-analysis { background: #faf5ff; border-left: 4px solid #8b5cf6; padding: 16px; border-radius: 0 8px 8px 0; white-space: pre-wrap; line-height: 1.6; font-size: 14px; }\n    .lessons-table { width: 100%; border-collapse: collapse; font-size: 14px; }\n    .lessons-table th { background: #f9fafb; padding: 10px; text-align: left; font-weight: 600; }\n    .lessons-table td { padding: 10px; border-top: 1px solid #f0f0f0; }\n    .badge { display: inline-block; padding: 2px 8px; border-radius: 12px; font-size: 11px; font-weight: 600; }\n    .badge-green { background: #dcfce7; color: #166534; }\n    .badge-blue { background: #dbeafe; color: #1e40af; }\n    .badge-amber { background: #fef3c7; color: #92400e; }\n    .footer { padding: 20px 30px; text-align: center; color: #9ca3af; font-size: 12px; }\n  </style>\n</head>\n<body>\n  <div class=\"container\">\n    <div class=\"header\">\n      <h1>Darsy Weekly Growth Report</h1>\n      <p>${report.reportPeriod} | Generated ${new Date().toLocaleDateString('en-US', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })}</p>\n    </div>\n\n    <div class=\"metrics-grid\">\n      <div class=\"metric-card\">\n        <div class=\"metric-value\">${metrics.totalUsers.toLocaleString()}</div>\n        <div class=\"metric-label\">Total Users</div>\n      </div>\n      <div class=\"metric-card\">\n        <div class=\"metric-value\">+${metrics.newUsersThisWeek}</div>\n        <div class=\"metric-label\">New This Week</div>\n      </div>\n      <div class=\"metric-card\">\n        <div class=\"metric-value\">${metrics.dau}</div>\n        <div class=\"metric-label\">Daily Active</div>\n      </div>\n      <div class=\"metric-card\">\n        <div class=\"metric-value\">${metrics.wau}</div>\n        <div class=\"metric-label\">Weekly Active</div>\n      </div>\n      <div class=\"metric-card\">\n        <div class=\"metric-value\">${metrics.mau}</div>\n        <div class=\"metric-label\">Monthly Active</div>\n      </div>\n      <div class=\"metric-card\">\n        <div class=\"metric-value\">${metrics.wau > 0 ? ((metrics.dau / metrics.wau) * 100).toFixed(1) : 0}%</div>\n        <div class=\"metric-label\">DAU/WAU Ratio</div>\n      </div>\n    </div>\n\n    <div class=\"section\">\n      <h2>Subscription Conversions</h2>\n      <p><span class=\"badge badge-green\">+${subs.freeToPremiumConversions}</span> Free to Premium &nbsp; <span class=\"badge badge-blue\">+${subs.freeToProConversions}</span> Free to Pro &nbsp; <span class=\"badge badge-amber\">${subs.expiringNextWeek} expiring soon</span></p>\n    </div>\n\n    <div class=\"section\">\n      <h2>Top Lessons This Week</h2>\n      <table class=\"lessons-table\">\n        <tr><th>#</th><th>Lesson</th><th>Views</th><th>Unique Users</th></tr>\n        ${(content.topLessons || []).map((l, i) => `<tr><td>${i+1}</td><td>${l.title || l.lessonId || 'Unknown'}</td><td>${l.views}</td><td>${l.uniqueUserCount}</td></tr>`).join('')}\n      </table>\n    </div>\n\n    <div class=\"section\">\n      <h2>Contributions</h2>\n      <p><strong>${content.newContributions}</strong> new contributions this week</p>\n    </div>\n\n    <div class=\"section\">\n      <h2>AI Executive Analysis</h2>\n      <div class=\"ai-analysis\">${aiAnalysis}</div>\n    </div>\n\n    <div class=\"footer\">\n      <p>Darsy Growth Dashboard | Auto-generated by n8n</p>\n    </div>\n  </div>\n</body>\n</html>`;\n\nreturn [{ json: { html, reportData: report, aiAnalysis } }];"
+      },
+      "id": "generate-html",
+      "name": "Generate HTML Report",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1300,
+        500
+      ]
+    },
+    {
+      "parameters": {
+        "operation": "upload",
+        "folderId": "={{ $env.GDRIVE_REPORTS_FOLDER_ID }}",
+        "name": "=Darsy_Weekly_Report_{{ new Date().toISOString().split('T')[0] }}.html",
+        "mimeType": "text/html",
+        "binaryData": false,
+        "content": "={{ $json.html }}"
+      },
+      "id": "save-gdrive",
+      "name": "Save to Google Drive",
+      "type": "n8n-nodes-base.googleDrive",
+      "typeVersion": 3,
+      "position": [
+        1550,
+        350
+      ],
+      "credentials": {
+        "googleDriveOAuth2Api": {
+          "id": "GDRIVE_CREDENTIAL_ID",
+          "name": "Google Drive OAuth2"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "chatId": "={{ $env.TELEGRAM_GROWTH_CHAT_ID }}",
+        "text": "=**Darsy Weekly Growth Report**\n_{{ $('Structure Report Data').first().json.reportPeriod }}_\n\n**User Metrics:**\n- Total Users: {{ $('Structure Report Data').first().json.userMetrics.totalUsers.toLocaleString() }}\n- New This Week: +{{ $('Structure Report Data').first().json.userMetrics.newUsersThisWeek }}\n- DAU: {{ $('Structure Report Data').first().json.userMetrics.dau }} | WAU: {{ $('Structure Report Data').first().json.userMetrics.wau }} | MAU: {{ $('Structure Report Data').first().json.userMetrics.mau }}\n\n**Subscriptions:**\n- Free→Premium: +{{ $('Structure Report Data').first().json.subscriptionMetrics.freeToPremiumConversions }}\n- Free→Pro: +{{ $('Structure Report Data').first().json.subscriptionMetrics.freeToProConversions }}\n- Expiring next week: {{ $('Structure Report Data').first().json.subscriptionMetrics.expiringNextWeek }}\n\n**Content:**\n- New Contributions: {{ $('Structure Report Data').first().json.contentMetrics.newContributions }}\n\n**AI Analysis:**\n{{ $json.aiAnalysis }}",
+        "parseMode": "Markdown"
+      },
+      "id": "telegram-summary",
+      "name": "Send Summary to Telegram",
+      "type": "n8n-nodes-base.telegram",
+      "typeVersion": 1.2,
+      "position": [
+        1550,
+        550
+      ],
+      "credentials": {
+        "telegramApi": {
+          "id": "XKvv8ek8iXO8xWJT",
+          "name": "Telegram account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "appendOrUpdate",
+        "documentId": {
+          "__rl": true,
+          "mode": "id",
+          "value": "={{ $env.GSHEET_GROWTH_TRACKER_ID }}"
+        },
+        "sheetName": {
+          "__rl": true,
+          "mode": "name",
+          "value": "Weekly Reports"
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "Week Ending": "={{ new Date().toISOString().split('T')[0] }}",
+            "Total Users": "={{ $('Structure Report Data').first().json.userMetrics.totalUsers }}",
+            "New Users": "={{ $('Structure Report Data').first().json.userMetrics.newUsersThisWeek }}",
+            "DAU": "={{ $('Structure Report Data').first().json.userMetrics.dau }}",
+            "WAU": "={{ $('Structure Report Data').first().json.userMetrics.wau }}",
+            "MAU": "={{ $('Structure Report Data').first().json.userMetrics.mau }}",
+            "Free to Premium": "={{ $('Structure Report Data').first().json.subscriptionMetrics.freeToPremiumConversions }}",
+            "Free to Pro": "={{ $('Structure Report Data').first().json.subscriptionMetrics.freeToProConversions }}",
+            "New Contributions": "={{ $('Structure Report Data').first().json.contentMetrics.newContributions }}",
+            "Expiring Subs": "={{ $('Structure Report Data').first().json.subscriptionMetrics.expiringNextWeek }}"
+          }
+        },
+        "options": {}
+      },
+      "id": "gsheets-archive",
+      "name": "Archive to Google Sheets",
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.5,
+      "position": [
+        1550,
+        750
+      ],
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "GSHEET_CREDENTIAL_ID",
+          "name": "Google Sheets OAuth2"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "run-growth-dashboard",
+        "responseMode": "immediatelyAfterReceive",
+        "options": {}
+      },
+      "id": "webhook-trigger-bot",
+      "name": "Webhook Trigger (from Bot)",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2,
+      "position": [
+        0,
+        420
+      ],
+      "webhookId": "run-growth-dashboard"
+    },
+    {
+      "parameters": {
+        "jsCode": "// Gets chatId from Telegram command center webhook, or falls back to env var\nconst fromWebhook = $input.first().json.body?.chatId;\nconst chatId = fromWebhook || $env.TELEGRAM_CHAT_ID;\nreturn [{ json: { chatId } }];"
+      },
+      "id": "get-chat-id-bot",
+      "name": "Get ChatId",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        240,
+        360
+      ]
+    }
+  ],
+  "connections": {
+    "Every Sunday 8PM": {
+      "main": [
+        [
+          {
+            "node": "Get ChatId",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "MongoDB: User Stats": {
+      "main": [
+        [
+          {
+            "node": "Merge All Data",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "MongoDB: Subscription Conversions": {
+      "main": [
+        [
+          {
+            "node": "Merge All Data",
+            "type": "main",
+            "index": 1
+          }
+        ]
+      ]
+    },
+    "MongoDB: Top 10 Lessons by Views": {
+      "main": [
+        [
+          {
+            "node": "Merge All Data",
+            "type": "main",
+            "index": 2
+          }
+        ]
+      ]
+    },
+    "MongoDB: Contributions": {
+      "main": [
+        [
+          {
+            "node": "Merge All Data",
+            "type": "main",
+            "index": 3
+          }
+        ]
+      ]
+    },
+    "MongoDB: Teacher/Instructor Signups": {
+      "main": [
+        [
+          {
+            "node": "Merge All Data",
+            "type": "main",
+            "index": 4
+          }
+        ]
+      ]
+    },
+    "Google Analytics: Traffic & Sources": {
+      "main": [
+        [
+          {
+            "node": "Merge All Data",
+            "type": "main",
+            "index": 5
+          }
+        ]
+      ]
+    },
+    "Social Media: Follower & Engagement Stats": {
+      "main": [
+        [
+          {
+            "node": "Merge All Data",
+            "type": "main",
+            "index": 6
+          }
+        ]
+      ]
+    },
+    "Merge All Data": {
+      "main": [
+        [
+          {
+            "node": "Structure Report Data",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Structure Report Data": {
+      "main": [
+        [
+          {
+            "node": "GPT-4o: Analyze Trends & Insights",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "GPT-4o: Analyze Trends & Insights": {
+      "main": [
+        [
+          {
+            "node": "Generate HTML Report",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Generate HTML Report": {
+      "main": [
+        [
+          {
+            "node": "Save to Google Drive",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Send Summary to Telegram",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Archive to Google Sheets",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Webhook Trigger (from Bot)": {
+      "main": [
+        [
+          {
+            "node": "Get ChatId",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Get ChatId": {
+      "main": [
+        [
+          {
+            "node": "MongoDB: User Stats",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "settings": {
+    "executionOrder": "v1",
+    "saveManualExecutions": true,
+    "callerPolicy": "workflowsFromSameOwner",
+    "errorWorkflow": ""
+  },
+  "staticData": null,
+  "tags": [
+    {
+      "name": "analytics"
+    },
+    {
+      "name": "weekly-report"
+    },
+    {
+      "name": "growth"
+    }
+  ],
+  "meta": {
+    "templateCredsSetupCompleted": false,
+    "instanceId": "darsy-production"
+  }
+}

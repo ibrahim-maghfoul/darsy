@@ -1,0 +1,415 @@
+{
+  "name": "Review & Reputation Manager",
+  "nodes": [
+    {
+      "parameters": {
+        "rule": {
+          "interval": [
+            {
+              "field": "hours",
+              "hoursInterval": 4
+            }
+          ]
+        }
+      },
+      "id": "every-4h",
+      "name": "Every 4 Hours",
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.2,
+      "position": [
+        0,
+        0
+      ]
+    },
+    {
+      "parameters": {
+        "method": "GET",
+        "url": "https://serpapi.com/search.json",
+        "sendQuery": true,
+        "queryParameters": {
+          "parameters": [
+            {
+              "name": "q",
+              "value": "Darsy دارسي education app review"
+            },
+            {
+              "name": "api_key",
+              "value": "={{ $env.SERPAPI_KEY }}"
+            },
+            {
+              "name": "gl",
+              "value": "ma"
+            },
+            {
+              "name": "num",
+              "value": "20"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "search-google",
+      "name": "Google Search - Mentions",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        220,
+        -100
+      ]
+    },
+    {
+      "parameters": {
+        "method": "GET",
+        "url": "=https://graph.facebook.com/v19.0/{{ $env.FB_PAGE_ID }}/ratings",
+        "sendQuery": true,
+        "queryParameters": {
+          "parameters": [
+            {
+              "name": "access_token",
+              "value": "={{ $env.FB_PAGE_ACCESS_TOKEN }}"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "fetch-fb-reviews",
+      "name": "Fetch Facebook Reviews",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        220,
+        100
+      ]
+    },
+    {
+      "parameters": {
+        "method": "GET",
+        "url": "http://localhost:5000/api/user/admin/feedback",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "sendQuery": true,
+        "queryParameters": {
+          "parameters": [
+            {
+              "name": "status",
+              "value": "pending"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "fetch-platform-feedback",
+      "name": "Fetch Darsy Feedback",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        220,
+        300
+      ]
+    },
+    {
+      "parameters": {
+        "mode": "combine",
+        "options": {}
+      },
+      "id": "merge-all",
+      "name": "Merge All Sources",
+      "type": "n8n-nodes-base.merge",
+      "typeVersion": 3,
+      "position": [
+        500,
+        100
+      ]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://api.openai.com/v1/chat/completions",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "openAiApi",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ JSON.stringify({ model: \"gpt-4o\", messages: [{\"role\":\"system\",\"content\":\"You are a reputation manager for Darsy, a Moroccan educational platform targeting BAC and Brevet students in Morocco. Languages: Arabic (Darija + MSA) and French. Currency: MAD. Respond to users in the same language they wrote in (Darija, French, or English). Analyze all incoming mentions, reviews, and feedback. For each item, classify and generate a response.\\n\\nOutput JSON:\\n{\\n  \\\"items\\\": [\\n    {\\n      \\\"source\\\": \\\"google|facebook|platform\\\",\\n      \\\"sentiment\\\": \\\"positive|negative|neutral|question|feature_request\\\",\\n      \\\"severity\\\": 1-5,\\n      \\\"summary\\\": \\\"brief summary\\\",\\n      \\\"suggested_response\\\": \\\"diplomatic, brand-appropriate response in the same language as the original\\\",\\n      \\\"auto_reply\\\": true/false (true for positive, false for negative - needs human approval),\\n      \\\"action_needed\\\": \\\"none|respond|escalate|investigate\\\"\\n    }\\n  ],\\n  \\\"overall_sentiment_score\\\": 1-10,\\n  \\\"urgent_issues\\\": [\\\"any critical items\\\"],\\n  \\\"executive_summary\\\": \\\"1 paragraph overview\\\"\\n}\"},{\"role\":\"user\",\"content\":\"Google mentions: {{ JSON.stringify($json.googleResults || []) }}\\n\\nFacebook reviews: {{ JSON.stringify($json.fbReviews || []) }}\\n\\nPlatform feedback: {{ JSON.stringify($json.feedback || []) }}\"}], temperature: 0.4, max_tokens: 1000 }) }}",
+        "options": {
+          "response": {
+            "response": {
+              "responseFormat": "json"
+            }
+          }
+        }
+      },
+      "id": "ai-analyze",
+      "name": "AI - Analyze & Classify",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        720,
+        100
+      ],
+      "credentials": {
+        "openAiApi": {
+          "id": "openai-api",
+          "name": "OpenAI account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "const response = $input.first().json.message.content;\nlet parsed;\ntry { parsed = JSON.parse(response); } catch(e) {\n  const m = response.match(/```(?:json)?\\s*([\\s\\S]*?)```/);\n  parsed = JSON.parse(m[1].trim());\n}\n\nconst urgent = parsed.items.filter(i => i.severity >= 4 || i.sentiment === 'negative');\nconst positive = parsed.items.filter(i => i.sentiment === 'positive');\nconst requests = parsed.items.filter(i => i.sentiment === 'feature_request');\n\nreturn [{ json: { ...parsed, urgentCount: urgent.length, positiveCount: positive.length, requestCount: requests.length, urgent, positive, requests } }];"
+      },
+      "id": "parse-analysis",
+      "name": "Parse Analysis",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        940,
+        100
+      ]
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "conditions": [
+            {
+              "leftValue": "={{ $json.urgentCount }}",
+              "rightValue": "0",
+              "operator": {
+                "type": "number",
+                "operation": "gt"
+              }
+            }
+          ]
+        }
+      },
+      "id": "has-urgent",
+      "name": "Any Urgent Issues?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2,
+      "position": [
+        1160,
+        0
+      ]
+    },
+    {
+      "parameters": {
+        "operation": "sendMessage",
+        "chatId": "={{ $('Get ChatId').first().json.chatId }}",
+        "text": "=🚨 *URGENT REPUTATION ALERT*\n\nSentiment Score: {{ $('Parse Analysis').first().json.overall_sentiment_score }}/10\nUrgent issues: {{ $('Parse Analysis').first().json.urgentCount }}\n\n{{ $('Parse Analysis').first().json.urgent.map(u => '⚠️ [' + u.source + '] ' + u.summary + '\\nSuggested: ' + u.suggested_response).join('\\n\\n') }}\n\n📊 *Summary:*\n{{ $('Parse Analysis').first().json.executive_summary }}",
+        "additionalFields": {
+          "parse_mode": "Markdown"
+        }
+      },
+      "id": "telegram-urgent",
+      "name": "Telegram - Urgent Alert",
+      "type": "n8n-nodes-base.telegram",
+      "typeVersion": 1.2,
+      "position": [
+        1380,
+        -100
+      ],
+      "credentials": {
+        "telegramApi": {
+          "id": "XKvv8ek8iXO8xWJT",
+          "name": "Telegram account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "appendOrUpdate",
+        "documentId": {
+          "__rl": true,
+          "mode": "id",
+          "value": "={{ $env.CONTENT_SHEET_ID }}"
+        },
+        "sheetName": "Reputation_Log",
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "date": "={{ $now.format('yyyy-MM-dd HH:mm') }}",
+            "sentiment_score": "={{ $('Parse Analysis').first().json.overall_sentiment_score }}",
+            "total_items": "={{ $('Parse Analysis').first().json.items.length }}",
+            "urgent": "={{ $('Parse Analysis').first().json.urgentCount }}",
+            "positive": "={{ $('Parse Analysis').first().json.positiveCount }}",
+            "feature_requests": "={{ $('Parse Analysis').first().json.requestCount }}",
+            "summary": "={{ $('Parse Analysis').first().json.executive_summary }}"
+          }
+        },
+        "options": {}
+      },
+      "id": "log-sheets",
+      "name": "Log to Sheets",
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.5,
+      "position": [
+        1380,
+        200
+      ],
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "GEdm4SCZIB4132yL",
+          "name": "Google Sheets account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "run-reputation",
+        "responseMode": "immediatelyAfterReceive",
+        "options": {}
+      },
+      "id": "webhook-trigger-bot",
+      "name": "Webhook Trigger (from Bot)",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2,
+      "position": [
+        0,
+        120
+      ],
+      "webhookId": "run-reputation"
+    },
+    {
+      "parameters": {
+        "jsCode": "// Gets chatId from Telegram command center webhook, or falls back to env var\nconst fromWebhook = $input.first().json.body?.chatId;\nconst chatId = fromWebhook || $env.TELEGRAM_CHAT_ID;\nreturn [{ json: { chatId } }];"
+      },
+      "id": "get-chat-id-bot",
+      "name": "Get ChatId",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        240,
+        60
+      ]
+    }
+  ],
+  "connections": {
+    "Every 4 Hours": {
+      "main": [
+        [
+          {
+            "node": "Get ChatId",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Google Search - Mentions": {
+      "main": [
+        [
+          {
+            "node": "Merge All Sources",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Fetch Facebook Reviews": {
+      "main": [
+        [
+          {
+            "node": "Merge All Sources",
+            "type": "main",
+            "index": 1
+          }
+        ]
+      ]
+    },
+    "Fetch Darsy Feedback": {
+      "main": [
+        [
+          {
+            "node": "Merge All Sources",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Merge All Sources": {
+      "main": [
+        [
+          {
+            "node": "AI - Analyze & Classify",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "AI - Analyze & Classify": {
+      "main": [
+        [
+          {
+            "node": "Parse Analysis",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Parse Analysis": {
+      "main": [
+        [
+          {
+            "node": "Any Urgent Issues?",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Log to Sheets",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Any Urgent Issues?": {
+      "main": [
+        [
+          {
+            "node": "Telegram - Urgent Alert",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        []
+      ]
+    },
+    "Webhook Trigger (from Bot)": {
+      "main": [
+        [
+          {
+            "node": "Get ChatId",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Get ChatId": {
+      "main": [
+        [
+          {
+            "node": "Google Search - Mentions",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "tags": [
+    {
+      "name": "marketing"
+    },
+    {
+      "name": "reputation"
+    }
+  ]
+}

@@ -1,0 +1,113 @@
+{
+  "name": "🤖 Darsy Bot - Command Center",
+  "nodes": [
+    {
+      "parameters": {
+        "updates": ["message", "callback_query"],
+        "additionalFields": {}
+      },
+      "id": "node-trigger",
+      "name": "Telegram Bot Trigger",
+      "type": "n8n-nodes-base.telegramTrigger",
+      "typeVersion": 1.1,
+      "position": [0, 300],
+      "webhookId": "darsy-command-center",
+      "credentials": {
+        "telegramApi": {
+          "id": "XKvv8ek8iXO8xWJT",
+          "name": "Telegram account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "const update = $input.first().json;\n\nlet chatId, from, text, callbackData;\n\nif (update.callback_query) {\n  chatId       = update.callback_query.message.chat.id;\n  from         = update.callback_query.from.first_name || 'User';\n  callbackData = update.callback_query.data;\n  text         = callbackData;\n} else if (update.message) {\n  chatId       = update.message.chat.id;\n  from         = update.message.from.first_name || 'User';\n  text         = update.message.text || '';\n  callbackData = null;\n}\n\nconst t = (text || '').toLowerCase().trim();\n\nlet action = 'unknown';\n\nif (t === '/start' || t === '/menu' || t === 'menu' || callbackData === 'back_main') {\n  action = 'main_menu';\n} else if (callbackData === 'menu_marketing') {\n  action = 'menu_marketing';\n} else if (callbackData === 'menu_engagement') {\n  action = 'menu_engagement';\n} else if (callbackData === 'menu_analytics') {\n  action = 'menu_analytics';\n} else if (callbackData === 'menu_growth') {\n  action = 'menu_growth';\n} else if (callbackData === 'menu_status' || t === '/status') {\n  action = 'menu_status';\n} else if (callbackData && callbackData.startsWith('run_')) {\n  action = callbackData;\n}\n\nreturn [{ json: { chatId, from, text, callbackData, action } }];"
+      },
+      "id": "node-parse",
+      "name": "Parse Input",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [240, 300]
+    },
+    {
+      "parameters": {
+        "jsCode": "const { chatId, from, action } = $input.first().json;\nconst TOKEN = '8305189828:AAHzDmygHbM4YUuyL43wmgCwQNDsmSOLSCg';\n\nconst menus = {\n  main_menu: {\n    text: `👋 *Welcome back, ${from}!*\\n\\n🤖 *Darsy Marketing Bot*\\nChoose a category:`,\n    buttons: [\n      [{text:'📣 Marketing',    callback_data:'menu_marketing'}, {text:'💌 Engagement', callback_data:'menu_engagement'}],\n      [{text:'📊 Analytics',    callback_data:'menu_analytics'}, {text:'🚀 Growth',     callback_data:'menu_growth'}],\n      [{text:'⚡ Status',       callback_data:'menu_status'}]\n    ]\n  },\n  menu_marketing: {\n    text: '📣 *Marketing Workflows*\\n\\nChoose what to run:',\n    buttons: [\n      [{text:'🇲🇦 Morocco Trends Poster',  callback_data:'run_trends_poster'}],\n      [{text:'📅 AI Content Calendar',     callback_data:'run_content_calendar'}],\n      [{text:'♻️ Content Repurposing',     callback_data:'run_repurpose'}],\n      [{text:'🔥 Viral Hook Generator',    callback_data:'run_viral_hooks'}],\n      [{text:'🕵️ Competitor Spy',         callback_data:'run_competitor_spy'}],\n      [{text:'🔍 SEO Keyword Monitor',     callback_data:'run_seo_monitor'}],\n      [{text:'🤝 Influencer Outreach',     callback_data:'run_influencer'}],\n      [{text:'📱 Social Media Autopilot',  callback_data:'run_social_autopilot'}],\n      [{text:'📸 UGC Collector',           callback_data:'run_ugc'}],\n      [{text:'🗓️ Seasonal Campaign',       callback_data:'run_seasonal'}],\n      [{text:'⭐ Reputation Manager',      callback_data:'run_reputation'}],\n      [{text:'👂 Social Listening',        callback_data:'run_social_listening'}],\n      [{text:'« Back',                     callback_data:'back_main'}]\n    ]\n  },\n  menu_engagement: {\n    text: '💌 *Engagement Workflows*\\n\\nChoose what to run:',\n    buttons: [\n      [{text:'📰 Smart Newsletter',          callback_data:'run_newsletter'}],\n      [{text:'💤 Re-engagement Campaign',    callback_data:'run_reengagement'}],\n      [{text:'💎 Subscription Upgrade',      callback_data:'run_upgrade_nudge'}],\n      [{text:'🎯 Personalized Recommendations', callback_data:'run_recommendations'}],\n      [{text:'🏆 Check Milestones',          callback_data:'run_milestones'}],\n      [{text:'« Back',                       callback_data:'back_main'}]\n    ]\n  },\n  menu_analytics: {\n    text: '📊 *Analytics Workflows*\\n\\nChoose what to run:',\n    buttons: [\n      [{text:'📈 Weekly Growth Dashboard',  callback_data:'run_growth_dashboard'}],\n      [{text:'⚠️ Churn Predictor',          callback_data:'run_churn'}],\n      [{text:'🧪 A/B Test Generator',       callback_data:'run_ab_test'}],\n      [{text:'« Back',                      callback_data:'back_main'}]\n    ]\n  },\n  menu_growth: {\n    text: '🚀 *Growth Workflows*\\n\\nChoose what to run:',\n    buttons: [\n      [{text:'🔗 Referral Program Report',  callback_data:'run_referral_report'}],\n      [{text:'🌀 Lead Funnel Status',        callback_data:'run_lead_funnel'}],\n      [{text:'« Back',                      callback_data:'back_main'}]\n    ]\n  }\n};\n\nconst labels = {\n  run_trends_poster:'🇲🇦 Morocco Trends Poster', run_content_calendar:'📅 AI Content Calendar',\n  run_repurpose:'♻️ Content Repurposing', run_viral_hooks:'🔥 Viral Hook Generator',\n  run_competitor_spy:'🕵️ Competitor Spy', run_seo_monitor:'🔍 SEO Monitor',\n  run_influencer:'🤝 Influencer Outreach', run_social_autopilot:'📱 Social Autopilot',\n  run_ugc:'📸 UGC Collector', run_seasonal:'🗓️ Seasonal Campaign',\n  run_reputation:'⭐ Reputation Manager', run_social_listening:'👂 Social Listening',\n  run_newsletter:'📰 Smart Newsletter', run_reengagement:'💤 Re-engagement',\n  run_upgrade_nudge:'💎 Upgrade Nudge', run_recommendations:'🎯 Recommendations',\n  run_milestones:'🏆 Milestones Check', run_growth_dashboard:'📈 Growth Dashboard',\n  run_churn:'⚠️ Churn Predictor', run_ab_test:'🧪 A/B Test',\n  run_referral_report:'🔗 Referral Report', run_lead_funnel:'🌀 Lead Funnel'\n};\n\nconst webhookPaths = {\n  run_trends_poster:'run-trends-poster', run_content_calendar:'run-content-calendar',\n  run_repurpose:'run-repurpose', run_viral_hooks:'run-viral-hooks',\n  run_competitor_spy:'run-competitor-spy', run_seo_monitor:'run-seo-monitor',\n  run_influencer:'run-influencer', run_social_autopilot:'run-social-autopilot',\n  run_ugc:'run-ugc', run_seasonal:'run-seasonal',\n  run_reputation:'run-reputation', run_social_listening:'run-social-listening',\n  run_newsletter:'run-newsletter', run_reengagement:'run-reengagement',\n  run_upgrade_nudge:'run-upgrade-nudge', run_recommendations:'run-recommendations',\n  run_milestones:'run-milestones', run_growth_dashboard:'run-growth-dashboard',\n  run_churn:'run-churn', run_ab_test:'run-ab-test',\n  run_referral_report:'run-referral-report', run_lead_funnel:'run-lead-funnel'\n};\n\nif (action === 'unknown') {\n  return [{ json: { telegramUrl: `https://api.telegram.org/bot${TOKEN}/sendMessage`, body: { chat_id: chatId, text: '❓ Send /menu to open the control panel.' } } }];\n}\n\nif (menus[action]) {\n  const m = menus[action];\n  return [{ json: { telegramUrl: `https://api.telegram.org/bot${TOKEN}/sendMessage`, body: { chat_id: chatId, text: m.text, parse_mode: 'Markdown', reply_markup: { inline_keyboard: m.buttons } } } }];\n}\n\nif (action === 'menu_status') {\n  return [{ json: { telegramUrl: `https://api.telegram.org/bot${TOKEN}/sendMessage`, body: { chat_id: chatId, text: '⚡ *Status*\\n\\n🤖 N8N: ✅ Running\\n📡 Bot: ✅ Online', parse_mode: 'Markdown', reply_markup: { inline_keyboard: [[{text:'« Back', callback_data:'back_main'}]] } } } }];\n}\n\nif (action.startsWith('run_')) {\n  const label = labels[action] || action;\n  const path  = webhookPaths[action];\n  return [{ json: {\n    telegramUrl: `https://api.telegram.org/bot${TOKEN}/sendMessage`,\n    body: { chat_id: chatId, text: `⏳ *${label}* is starting...\\n\\nResults will be sent here when done.`, parse_mode: 'Markdown' },\n    triggerUrl: path ? `https://overidly-rubbly-karl.ngrok-free.dev/webhook/${path}` : null,\n    triggerBody: { chatId, triggeredFrom: 'telegram_bot' }\n  }}];\n}\n\nreturn [{ json: { telegramUrl: `https://api.telegram.org/bot${TOKEN}/sendMessage`, body: { chat_id: chatId, text: '❓ Send /menu to open the control panel.' } } }];"
+      },
+      "id": "node-prepare",
+      "name": "Prepare Response",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [480, 300]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "={{ $json.telegramUrl }}",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ JSON.stringify($json.body) }}",
+        "options": {}
+      },
+      "id": "node-send-telegram",
+      "name": "Send to Telegram",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [720, 300]
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "conditions": [
+            {
+              "leftValue": "={{ $('Prepare Response').first().json.triggerUrl }}",
+              "rightValue": "",
+              "operator": { "type": "string", "operation": "notEmpty" }
+            }
+          ]
+        }
+      },
+      "id": "node-has-trigger",
+      "name": "Has Workflow To Trigger?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2,
+      "position": [960, 300]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "={{ $('Prepare Response').first().json.triggerUrl }}",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ JSON.stringify($('Prepare Response').first().json.triggerBody) }}",
+        "options": { "allowUnauthorizedCerts": true }
+      },
+      "id": "node-trigger-workflow",
+      "name": "Trigger Sub-Workflow",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [1200, 200]
+    }
+  ],
+  "connections": {
+    "Telegram Bot Trigger": {
+      "main": [[{ "node": "Parse Input", "type": "main", "index": 0 }]]
+    },
+    "Parse Input": {
+      "main": [[{ "node": "Prepare Response", "type": "main", "index": 0 }]]
+    },
+    "Prepare Response": {
+      "main": [[{ "node": "Send to Telegram", "type": "main", "index": 0 }]]
+    },
+    "Send to Telegram": {
+      "main": [[{ "node": "Has Workflow To Trigger?", "type": "main", "index": 0 }]]
+    },
+    "Has Workflow To Trigger?": {
+      "main": [
+        [{ "node": "Trigger Sub-Workflow", "type": "main", "index": 0 }],
+        []
+      ]
+    }
+  },
+  "settings": { "executionOrder": "v1" },
+  "tags": [{ "name": "command-center" }, { "name": "telegram" }]
+}

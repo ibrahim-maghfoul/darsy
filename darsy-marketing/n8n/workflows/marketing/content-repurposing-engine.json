@@ -1,0 +1,376 @@
+{
+  "name": "Darsy - Content Repurposing Engine",
+  "nodes": [
+    {
+      "parameters": {
+        "rule": {
+          "interval": [
+            {
+              "field": "hours",
+              "hoursInterval": 6
+            }
+          ]
+        }
+      },
+      "id": "schedule-trigger",
+      "name": "Every 6 Hours",
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.2,
+      "position": [
+        240,
+        300
+      ]
+    },
+    {
+      "parameters": {
+        "url": "http://localhost:5000/api/news",
+        "options": {
+          "response": {
+            "response": {
+              "responseFormat": "json"
+            }
+          }
+        }
+      },
+      "id": "fetch-news",
+      "name": "Fetch Latest News",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        460,
+        300
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "// Filter out already-processed articles\n// We track processed IDs in a static variable or check Google Sheets\nconst items = $input.all();\nconst articles = items[0].json.data || items[0].json;\n\nif (!Array.isArray(articles)) {\n  return [{ json: { error: 'No articles array found', raw: items[0].json } }];\n}\n\n// Get the last 24 hours of articles (4 runs x 6h)\nconst cutoff = new Date(Date.now() - 24 * 60 * 60 * 1000);\n\nconst newArticles = articles.filter(article => {\n  const createdAt = new Date(article.createdAt || article.publishedAt || article.date);\n  return createdAt >= cutoff;\n});\n\nif (newArticles.length === 0) {\n  return [{ json: { skip: true, message: 'No new articles found' } }];\n}\n\nreturn newArticles.map(article => ({\n  json: {\n    id: article._id || article.id,\n    title: article.title,\n    content: article.content || article.description || article.summary,\n    category: article.category,\n    language: article.language || 'ar',\n    url: article.url || article.link,\n    imageUrl: article.imageUrl || article.image,\n    publishedAt: article.createdAt || article.publishedAt || article.date\n  }\n}));"
+      },
+      "id": "filter-new",
+      "name": "Filter Unprocessed Articles",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        680,
+        300
+      ]
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "boolean": [
+            {
+              "value1": "={{ $json.skip }}",
+              "value2": true,
+              "operation": "notEqual"
+            }
+          ]
+        }
+      },
+      "id": "if-has-articles",
+      "name": "Has New Articles?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2,
+      "position": [
+        900,
+        300
+      ]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://api.openai.com/v1/chat/completions",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "openAiApi",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ JSON.stringify({ model: \"gpt-4o\", messages: [{\"role\":\"user\",\"content\":\"= You are a multilingual content marketing expert for \\\"Darsy\\\" (دارسي), a Moroccan educational platform targeting BAC and Brevet students in Morocco. Currency: MAD (Moroccan Dirham). You understand Arabic (Modern Standard + Moroccan dialect), French, and English. You specialize in educational content for Moroccan students (Baccalaureate, Brevet, university).\\n\\nYour tone is: encouraging, modern, relatable to Moroccan youth, uses relevant cultural references.\\n\\nGiven this article/news from the Darsy platform:\\n\\n---\\nTitle: {{ $json.title }}\\nContent: {{ $json.content }}\\nCategory: {{ $json.category }}\\nLanguage: {{ $json.language }}\\n---\\n\\nRepurpose this into ALL of the following formats. Respond in the SAME language as the original article (or use Arabic/French mix as common in Morocco). Return ONLY valid JSON with this exact structure:\\n\\n{\\n  \\\"twitter_thread\\\": [\\n    { \\\"tweet_number\\\": 1, \\\"text\\\": \\\"...(max 280 chars)...\\\", \\\"has_media\\\": true/false },\\n    { \\\"tweet_number\\\": 2, \\\"text\\\": \\\"...\\\" , \\\"has_media\\\": false },\\n    { \\\"tweet_number\\\": 3, \\\"text\\\": \\\"...\\\" , \\\"has_media\\\": false },\\n    { \\\"tweet_number\\\": 4, \\\"text\\\": \\\"...\\\" , \\\"has_media\\\": false },\\n    { \\\"tweet_number\\\": 5, \\\"text\\\": \\\"...(end with CTA to Darsy)\\\" , \\\"has_media\\\": false }\\n  ],\\n  \\\"instagram_carousel\\\": [\\n    { \\\"slide\\\": 1, \\\"headline\\\": \\\"...\\\", \\\"body\\\": \\\"...\\\", \\\"design_notes\\\": \\\"...\\\" },\\n    { \\\"slide\\\": 2, \\\"headline\\\": \\\"...\\\", \\\"body\\\": \\\"...\\\", \\\"design_notes\\\": \\\"...\\\" },\\n    { \\\"slide\\\": 3, \\\"headline\\\": \\\"...(CTA slide)...\\\", \\\"body\\\": \\\"...\\\", \\\"design_notes\\\": \\\"...\\\" }\\n  ],\\n  \\\"instagram_caption\\\": \\\"...(with hashtags like #دارسي #باكالوريا #التعليم_في_المغرب)...\\\",\\n  \\\"linkedin_post\\\": \\\"...(professional tone, 150-300 words, with relevant hashtags)...\\\",\\n  \\\"facebook_post\\\": \\\"...(conversational, engaging, with emoji, question at end to boost engagement)...\\\",\\n  \\\"tiktok_scripts\\\": [\\n    { \\\"idea\\\": 1, \\\"hook\\\": \\\"...(first 3 seconds)\\\", \\\"script\\\": \\\"...(30-60 sec script)\\\", \\\"trending_sound_suggestion\\\": \\\"...\\\" },\\n    { \\\"idea\\\": 2, \\\"hook\\\": \\\"...\\\", \\\"script\\\": \\\"...\\\", \\\"trending_sound_suggestion\\\": \\\"...\\\" },\\n    { \\\"idea\\\": 3, \\\"hook\\\": \\\"...\\\", \\\"script\\\": \\\"...\\\", \\\"trending_sound_suggestion\\\": \\\"...\\\" }\\n  ],\\n  \\\"email_newsletter\\\": {\\n    \\\"subject_line\\\": \\\"...\\\",\\n    \\\"preview_text\\\": \\\"...\\\",\\n    \\\"body_html\\\": \\\"...(short, 100-150 words, with CTA button text)...\\\",\\n    \\\"cta_text\\\": \\\"...\\\"\\n  },\\n  \\\"metadata\\\": {\\n    \\\"original_article_id\\\": \\\"{{ $json.id }}\\\",\\n    \\\"generated_at\\\": \\\"{{ $now.toISO() }}\\\",\\n    \\\"content_language\\\": \\\"{{ $json.language }}\\\",\\n    \\\"suggested_posting_times\\\": {\\n      \\\"twitter\\\": \\\"10:00 AM CET\\\",\\n      \\\"instagram\\\": \\\"12:00 PM CET\\\",\\n      \\\"linkedin\\\": \\\"9:00 AM CET\\\",\\n      \\\"facebook\\\": \\\"6:00 PM CET\\\",\\n      \\\"tiktok\\\": \\\"8:00 PM CET\\\",\\n      \\\"email\\\": \\\"7:00 AM CET\\\"\\n    }\\n  }\\n}\\n\\nIMPORTANT:\\n- Use Moroccan cultural context (mention BAC, Brevet, university entrance, etc. where relevant)\\n- Include bilingual hashtags (Arabic + French) for maximum reach\\n- Twitter thread should tell a story/insight, not just repeat the article\\n- TikTok hooks must be attention-grabbing for Gen-Z Moroccan audience\\n- LinkedIn should position Darsy as an EdTech thought leader\\n- Email should drive traffic back to the platform\"}], temperature: 0.7, max_tokens: 4000 }) }}",
+        "options": {
+          "response": {
+            "response": {
+              "responseFormat": "json"
+            }
+          }
+        }
+      },
+      "id": "gpt-repurpose",
+      "name": "GPT-4o Repurpose Content",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        1120,
+        200
+      ],
+      "credentials": {
+        "openAiApi": {
+          "id": "openai-api",
+          "name": "OpenAI account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "// Parse the GPT-4o JSON response\nconst raw = $input.first().json;\n\nlet content;\ntry {\n  // The response might be in message.content or text\n  const text = raw.message?.content || raw.text || raw.output || JSON.stringify(raw);\n  \n  // Extract JSON from potential markdown code blocks\n  const jsonMatch = text.match(/```json\\n?([\\s\\S]*?)\\n?```/) || text.match(/\\{[\\s\\S]*\\}/);\n  const jsonStr = jsonMatch ? (jsonMatch[1] || jsonMatch[0]) : text;\n  \n  content = JSON.parse(jsonStr);\n} catch (e) {\n  return [{ json: { error: 'Failed to parse GPT response', raw: raw, parseError: e.message } }];\n}\n\n// Flatten for Google Sheets - one row per content piece\nconst rows = [];\nconst articleId = content.metadata?.original_article_id || 'unknown';\nconst generatedAt = content.metadata?.generated_at || new Date().toISOString();\n\n// Twitter thread\ncontent.twitter_thread?.forEach(tweet => {\n  rows.push({\n    article_id: articleId,\n    platform: 'Twitter/X',\n    content_type: `Thread Tweet #${tweet.tweet_number}`,\n    content_text: tweet.text,\n    has_media: tweet.has_media || false,\n    notes: '',\n    suggested_time: content.metadata?.suggested_posting_times?.twitter || '',\n    generated_at: generatedAt,\n    status: 'draft'\n  });\n});\n\n// Instagram carousel\ncontent.instagram_carousel?.forEach(slide => {\n  rows.push({\n    article_id: articleId,\n    platform: 'Instagram',\n    content_type: `Carousel Slide #${slide.slide}`,\n    content_text: `${slide.headline}\\n\\n${slide.body}`,\n    has_media: true,\n    notes: slide.design_notes || '',\n    suggested_time: content.metadata?.suggested_posting_times?.instagram || '',\n    generated_at: generatedAt,\n    status: 'draft'\n  });\n});\n\nrows.push({\n  article_id: articleId,\n  platform: 'Instagram',\n  content_type: 'Caption',\n  content_text: content.instagram_caption || '',\n  has_media: false,\n  notes: '',\n  suggested_time: content.metadata?.suggested_posting_times?.instagram || '',\n  generated_at: generatedAt,\n  status: 'draft'\n});\n\n// LinkedIn\nrows.push({\n  article_id: articleId,\n  platform: 'LinkedIn',\n  content_type: 'Post',\n  content_text: content.linkedin_post || '',\n  has_media: false,\n  notes: '',\n  suggested_time: content.metadata?.suggested_posting_times?.linkedin || '',\n  generated_at: generatedAt,\n  status: 'draft'\n});\n\n// Facebook\nrows.push({\n  article_id: articleId,\n  platform: 'Facebook',\n  content_type: 'Post',\n  content_text: content.facebook_post || '',\n  has_media: false,\n  notes: '',\n  suggested_time: content.metadata?.suggested_posting_times?.facebook || '',\n  generated_at: generatedAt,\n  status: 'draft'\n});\n\n// TikTok scripts\ncontent.tiktok_scripts?.forEach(script => {\n  rows.push({\n    article_id: articleId,\n    platform: 'TikTok/Reels',\n    content_type: `Script Idea #${script.idea}`,\n    content_text: `HOOK: ${script.hook}\\n\\nSCRIPT: ${script.script}`,\n    has_media: true,\n    notes: `Sound: ${script.trending_sound_suggestion || 'N/A'}`,\n    suggested_time: content.metadata?.suggested_posting_times?.tiktok || '',\n    generated_at: generatedAt,\n    status: 'draft'\n  });\n});\n\n// Email newsletter\nif (content.email_newsletter) {\n  rows.push({\n    article_id: articleId,\n    platform: 'Email',\n    content_type: 'Newsletter Snippet',\n    content_text: `Subject: ${content.email_newsletter.subject_line}\\nPreview: ${content.email_newsletter.preview_text}\\n\\n${content.email_newsletter.body_html}\\n\\nCTA: ${content.email_newsletter.cta_text}`,\n    has_media: false,\n    notes: '',\n    suggested_time: content.metadata?.suggested_posting_times?.email || '',\n    generated_at: generatedAt,\n    status: 'draft'\n  });\n}\n\n// Also pass the full content object for the Telegram summary\nreturn rows.map(row => ({ json: { ...row, _fullContent: content } }));"
+      },
+      "id": "parse-output",
+      "name": "Parse & Flatten for Sheets",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1340,
+        200
+      ]
+    },
+    {
+      "parameters": {
+        "operation": "append",
+        "documentId": {
+          "__rl": true,
+          "mode": "id",
+          "value": "YOUR_GOOGLE_SHEET_ID"
+        },
+        "sheetName": {
+          "__rl": true,
+          "mode": "name",
+          "value": "Repurposed Content"
+        },
+        "columns": {
+          "mappingMode": "autoMapInputData"
+        },
+        "options": {}
+      },
+      "id": "save-sheets",
+      "name": "Save to Google Sheets",
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.5,
+      "position": [
+        1560,
+        200
+      ],
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "GEdm4SCZIB4132yL",
+          "name": "Google Sheets account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "// Build a Telegram summary message\nconst items = $input.all();\nconst firstItem = items[0]?.json || {};\nconst content = firstItem._fullContent || {};\nconst articleId = firstItem.article_id || 'N/A';\n\nconst platformCounts = {};\nitems.forEach(item => {\n  const p = item.json.platform || 'Unknown';\n  platformCounts[p] = (platformCounts[p] || 0) + 1;\n});\n\nconst summary = Object.entries(platformCounts)\n  .map(([platform, count]) => `  - ${platform}: ${count} piece(s)`)\n  .join('\\n');\n\nconst message = `🎯 *Darsy Content Repurposing Complete*\\n\\n` +\n  `📰 Article ID: \\`${articleId}\\`\\n` +\n  `📊 Generated ${items.length} content pieces:\\n${summary}\\n\\n` +\n  `⏰ Suggested posting times (CET):\\n` +\n  `  - Twitter: ${content.metadata?.suggested_posting_times?.twitter || '10:00 AM'}\\n` +\n  `  - Instagram: ${content.metadata?.suggested_posting_times?.instagram || '12:00 PM'}\\n` +\n  `  - LinkedIn: ${content.metadata?.suggested_posting_times?.linkedin || '9:00 AM'}\\n` +\n  `  - Facebook: ${content.metadata?.suggested_posting_times?.facebook || '6:00 PM'}\\n` +\n  `  - TikTok: ${content.metadata?.suggested_posting_times?.tiktok || '8:00 PM'}\\n` +\n  `  - Email: ${content.metadata?.suggested_posting_times?.email || '7:00 AM'}\\n\\n` +\n  `✅ All saved to Google Sheets. Review and approve for publishing.`;\n\nreturn [{ json: { message } }];"
+      },
+      "id": "build-summary",
+      "name": "Build Telegram Summary",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1780,
+        200
+      ]
+    },
+    {
+      "parameters": {
+        "chatId": "={{ $('Get ChatId').first().json.chatId }}",
+        "text": "={{ $json.message }}",
+        "additionalFields": {
+          "parse_mode": "Markdown"
+        }
+      },
+      "id": "telegram-notify",
+      "name": "Notify Telegram",
+      "type": "n8n-nodes-base.telegram",
+      "typeVersion": 1.2,
+      "position": [
+        2000,
+        200
+      ],
+      "credentials": {
+        "telegramApi": {
+          "id": "XKvv8ek8iXO8xWJT",
+          "name": "Telegram account"
+        }
+      }
+    },
+    {
+      "parameters": {},
+      "id": "no-op-skip",
+      "name": "No New Articles",
+      "type": "n8n-nodes-base.noOp",
+      "typeVersion": 1,
+      "position": [
+        1120,
+        420
+      ]
+    },
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "run-repurpose",
+        "responseMode": "immediatelyAfterReceive",
+        "options": {}
+      },
+      "id": "webhook-trigger-bot",
+      "name": "Webhook Trigger (from Bot)",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2,
+      "position": [
+        240,
+        420
+      ],
+      "webhookId": "run-repurpose"
+    },
+    {
+      "parameters": {
+        "jsCode": "// Gets chatId from Telegram command center webhook, or falls back to env var\nconst fromWebhook = $input.first().json.body?.chatId;\nconst chatId = fromWebhook || $env.TELEGRAM_CHAT_ID;\nreturn [{ json: { chatId } }];"
+      },
+      "id": "get-chat-id-bot",
+      "name": "Get ChatId",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        480,
+        360
+      ]
+    }
+  ],
+  "connections": {
+    "Every 6 Hours": {
+      "main": [
+        [
+          {
+            "node": "Get ChatId",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Fetch Latest News": {
+      "main": [
+        [
+          {
+            "node": "Filter Unprocessed Articles",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Filter Unprocessed Articles": {
+      "main": [
+        [
+          {
+            "node": "Has New Articles?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Has New Articles?": {
+      "main": [
+        [
+          {
+            "node": "GPT-4o Repurpose Content",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "No New Articles",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "GPT-4o Repurpose Content": {
+      "main": [
+        [
+          {
+            "node": "Parse & Flatten for Sheets",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Parse & Flatten for Sheets": {
+      "main": [
+        [
+          {
+            "node": "Save to Google Sheets",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Save to Google Sheets": {
+      "main": [
+        [
+          {
+            "node": "Build Telegram Summary",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Build Telegram Summary": {
+      "main": [
+        [
+          {
+            "node": "Notify Telegram",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Webhook Trigger (from Bot)": {
+      "main": [
+        [
+          {
+            "node": "Get ChatId",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Get ChatId": {
+      "main": [
+        [
+          {
+            "node": "Fetch Latest News",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "settings": {
+    "executionOrder": "v1",
+    "saveManualExecutions": true,
+    "callerPolicy": "workflowsFromSameOwner"
+  },
+  "staticData": null,
+  "tags": [
+    {
+      "name": "marketing",
+      "id": "1"
+    },
+    {
+      "name": "content",
+      "id": "2"
+    },
+    {
+      "name": "darsy",
+      "id": "3"
+    }
+  ],
+  "triggerCount": 1,
+  "updatedAt": "2026-04-02T00:00:00.000Z",
+  "versionId": "1"
+}

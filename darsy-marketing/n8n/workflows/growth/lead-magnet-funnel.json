@@ -1,0 +1,426 @@
+{
+  "name": "Lead Magnet Funnel - Capture & Nurture",
+  "nodes": [
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "lead-capture",
+        "responseMode": "responseNode",
+        "options": {}
+      },
+      "id": "webhook-lead",
+      "name": "Webhook - Lead Captured",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2,
+      "position": [
+        0,
+        0
+      ],
+      "webhookId": "lead-capture"
+    },
+    {
+      "parameters": {
+        "jsCode": "const { email, name, leadMagnet, source } = $input.first().json.body;\nreturn [{ json: { email, name: name || 'there', leadMagnet: leadMagnet || 'free-guide', source: source || 'website', capturedAt: new Date().toISOString() } }];"
+      },
+      "id": "parse-lead",
+      "name": "Parse Lead Data",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        220,
+        0
+      ]
+    },
+    {
+      "parameters": {
+        "operation": "appendOrUpdate",
+        "documentId": {
+          "__rl": true,
+          "mode": "id",
+          "value": "={{ $env.CONTENT_SHEET_ID }}"
+        },
+        "sheetName": "Leads",
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "date": "={{ $json.capturedAt }}",
+            "email": "={{ $json.email }}",
+            "name": "={{ $json.name }}",
+            "lead_magnet": "={{ $json.leadMagnet }}",
+            "source": "={{ $json.source }}",
+            "status": "captured",
+            "converted": "no"
+          }
+        },
+        "options": {}
+      },
+      "id": "save-to-sheets",
+      "name": "Save Lead to Sheets",
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.5,
+      "position": [
+        440,
+        0
+      ],
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "GEdm4SCZIB4132yL",
+          "name": "Google Sheets account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "fromEmail": "noreply@darsy.app",
+        "toEmail": "={{ $('Parse Lead Data').first().json.email }}",
+        "subject": "🎁 Here's your free resource from Darsy!",
+        "html": "=<h2>Merhba {{ $('Parse Lead Data').first().json.name }}! 👋</h2><p>Thank you for downloading our free guide. Here's your resource:</p><p><a href='https://darsy.app/resources/{{ $('Parse Lead Data').first().json.leadMagnet }}' style='padding:15px 30px;background:#4F46E5;color:white;border-radius:8px;text-decoration:none;font-size:16px;'>📥 Download Now</a></p><p>At Darsy, we help thousands of Moroccan students succeed in their studies with quality courses, exercises, and exam prep.</p><p>بالتوفيق!<br/>The Darsy Team</p>"
+      },
+      "id": "email-1-delivery",
+      "name": "Email 1 - Deliver Resource",
+      "type": "n8n-nodes-base.emailSend",
+      "typeVersion": 2.1,
+      "position": [
+        660,
+        0
+      ]
+    },
+    {
+      "parameters": {
+        "amount": 1,
+        "unit": "days"
+      },
+      "id": "wait-1-day",
+      "name": "Wait 1 Day",
+      "type": "n8n-nodes-base.wait",
+      "typeVersion": 1.1,
+      "position": [
+        880,
+        0
+      ]
+    },
+    {
+      "parameters": {
+        "fromEmail": "noreply@darsy.app",
+        "toEmail": "={{ $('Parse Lead Data').first().json.email }}",
+        "subject": "How was the resource? Here's even more 📚",
+        "html": "=<h2>Hey {{ $('Parse Lead Data').first().json.name }},</h2><p>We hope you enjoyed the free guide!</p><p>Did you know Darsy has <strong>thousands of free lessons</strong> covering:</p><ul><li>🎓 Baccalaureate prep (all streams)</li><li>📖 Middle school courses</li><li>📝 Exercises and past exams</li><li>🎥 Video explanations</li></ul><p><a href='https://darsy.app/explore' style='padding:12px 25px;background:#4F46E5;color:white;border-radius:8px;text-decoration:none;'>Explore Free Lessons →</a></p>"
+      },
+      "id": "email-2-value",
+      "name": "Email 2 - More Value",
+      "type": "n8n-nodes-base.emailSend",
+      "typeVersion": 2.1,
+      "position": [
+        1100,
+        0
+      ]
+    },
+    {
+      "parameters": {
+        "amount": 3,
+        "unit": "days"
+      },
+      "id": "wait-3-days",
+      "name": "Wait 3 Days",
+      "type": "n8n-nodes-base.wait",
+      "typeVersion": 1.1,
+      "position": [
+        1320,
+        0
+      ]
+    },
+    {
+      "parameters": {
+        "fromEmail": "noreply@darsy.app",
+        "toEmail": "={{ $('Parse Lead Data').first().json.email }}",
+        "subject": "Students like you achieved amazing results 🌟",
+        "html": "=<h2>{{ $('Parse Lead Data').first().json.name }}, see what others achieved:</h2><p>\"<em>I used Darsy to prepare for my BAC and got 16.5/20!</em>\" - Amina, Casablanca</p><p>\"<em>The exercises helped me understand math concepts I struggled with for months.</em>\" - Yacine, Fes</p><p>\"<em>Best platform for Moroccan students, the content is exactly what we study.</em>\" - Rania, Marrakech</p><p><br/><a href='https://darsy.app/signup' style='padding:12px 25px;background:#4F46E5;color:white;border-radius:8px;text-decoration:none;'>Join 10,000+ Students →</a></p>"
+      },
+      "id": "email-3-social-proof",
+      "name": "Email 3 - Social Proof",
+      "type": "n8n-nodes-base.emailSend",
+      "typeVersion": 2.1,
+      "position": [
+        1540,
+        0
+      ]
+    },
+    {
+      "parameters": {
+        "amount": 5,
+        "unit": "days"
+      },
+      "id": "wait-5-days",
+      "name": "Wait 5 Days",
+      "type": "n8n-nodes-base.wait",
+      "typeVersion": 1.1,
+      "position": [
+        1760,
+        0
+      ]
+    },
+    {
+      "parameters": {
+        "method": "GET",
+        "url": "=http://localhost:5000/api/user/by-email/{{ $('Parse Lead Data').first().json.email }}",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "options": {
+          "allowUnauthorizedCerts": true
+        }
+      },
+      "id": "check-signup",
+      "name": "Check If Signed Up",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        1980,
+        0
+      ]
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "conditions": [
+            {
+              "leftValue": "={{ $json._id }}",
+              "rightValue": "",
+              "operator": {
+                "type": "string",
+                "operation": "notEmpty"
+              }
+            }
+          ]
+        }
+      },
+      "id": "did-convert",
+      "name": "Did They Convert?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2,
+      "position": [
+        2200,
+        0
+      ]
+    },
+    {
+      "parameters": {
+        "fromEmail": "noreply@darsy.app",
+        "toEmail": "={{ $('Parse Lead Data').first().json.email }}",
+        "subject": "🎁 Last chance: 50% off Premium for 7 days",
+        "html": "=<h2>{{ $('Parse Lead Data').first().json.name }}, special offer just for you!</h2><p>We noticed you haven't signed up yet. Here's an exclusive deal:</p><div style='background:#FEF3C7;padding:20px;border-radius:10px;text-align:center;'><h3>🔥 50% OFF Premium - 7 Days Only</h3><p>Use code: <strong>WELCOME50</strong></p><p>Get unlimited access to ALL lessons, exercises, and exams.</p><p><a href='https://darsy.app/signup?code=WELCOME50' style='padding:15px 30px;background:#F59E0B;color:white;border-radius:8px;text-decoration:none;font-size:18px;'>Claim Your Discount →</a></p></div><p style='color:#888;font-size:12px;'>This offer expires in 7 days.</p>"
+      },
+      "id": "email-4-final-offer",
+      "name": "Email 4 - Final Offer",
+      "type": "n8n-nodes-base.emailSend",
+      "typeVersion": 2.1,
+      "position": [
+        2420,
+        100
+      ]
+    },
+    {
+      "parameters": {
+        "operation": "sendMessage",
+        "chatId": "YOUR_TELEGRAM_CHAT_ID",
+        "text": "=📊 *Lead Funnel Update*\n\n{{ $('Parse Lead Data').first().json.name }} ({{ $('Parse Lead Data').first().json.email }})\nSource: {{ $('Parse Lead Data').first().json.source }}\nStatus: {{ $json._id ? '✅ CONVERTED' : '❌ Not converted - final offer sent' }}",
+        "additionalFields": {
+          "parse_mode": "Markdown"
+        }
+      },
+      "id": "telegram-report",
+      "name": "Telegram Report",
+      "type": "n8n-nodes-base.telegram",
+      "typeVersion": 1.2,
+      "position": [
+        2640,
+        0
+      ],
+      "credentials": {
+        "telegramApi": {
+          "id": "XKvv8ek8iXO8xWJT",
+          "name": "Telegram account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "run-lead-funnel",
+        "responseMode": "lastNode",
+        "options": {}
+      },
+      "id": "run-lead-funnel-wh",
+      "name": "Webhook Trigger (Bot)",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2,
+      "position": [
+        240,
+        160
+      ],
+      "webhookId": "run-lead-funnel-wh"
+    }
+  ],
+  "connections": {
+    "Webhook - Lead Captured": {
+      "main": [
+        [
+          {
+            "node": "Parse Lead Data",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Parse Lead Data": {
+      "main": [
+        [
+          {
+            "node": "Save Lead to Sheets",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Save Lead to Sheets": {
+      "main": [
+        [
+          {
+            "node": "Email 1 - Deliver Resource",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Email 1 - Deliver Resource": {
+      "main": [
+        [
+          {
+            "node": "Wait 1 Day",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Wait 1 Day": {
+      "main": [
+        [
+          {
+            "node": "Email 2 - More Value",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Email 2 - More Value": {
+      "main": [
+        [
+          {
+            "node": "Wait 3 Days",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Wait 3 Days": {
+      "main": [
+        [
+          {
+            "node": "Email 3 - Social Proof",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Email 3 - Social Proof": {
+      "main": [
+        [
+          {
+            "node": "Wait 5 Days",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Wait 5 Days": {
+      "main": [
+        [
+          {
+            "node": "Check If Signed Up",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Check If Signed Up": {
+      "main": [
+        [
+          {
+            "node": "Did They Convert?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Did They Convert?": {
+      "main": [
+        [
+          {
+            "node": "Telegram Report",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Email 4 - Final Offer",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Email 4 - Final Offer": {
+      "main": [
+        [
+          {
+            "node": "Telegram Report",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Webhook Trigger (Bot)": {
+      "main": [
+        [
+          {
+            "node": "Parse Lead Data",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "tags": [
+    {
+      "name": "growth"
+    },
+    {
+      "name": "funnel"
+    }
+  ]
+}

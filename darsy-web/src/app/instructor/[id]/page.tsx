@@ -7,10 +7,12 @@ import { InstructorCourse, InstructorRating } from '@/types';
 import api from '@/lib/api';
 import { useAuth } from '@/contexts/AuthContext';
 import {
-    Star, BookOpen, Video, FileText, Eye, Download,
+    Star, BookOpen, Video, FileText, Eye,
     GraduationCap, MessageSquare, Loader2, ChevronDown, ChevronUp,
 } from 'lucide-react';
 import Link from 'next/link';
+
+const FONT_IMPORT = `@import url('https://fonts.googleapis.com/css2?family=Syne:wght@600;700;800&family=DM+Sans:ital,opsz,wght@0,9..40,400;0,9..40,500;0,9..40,600&display=swap');`;
 
 function imgURL(url?: string | null, type: 'avatar' | 'cover' = 'avatar') {
     if (!url) return null;
@@ -24,7 +26,7 @@ function Stars({ value, max = 5, interactive = false, onChange }: {
 }) {
     const [hover, setHover] = useState(0);
     return (
-        <div className="flex items-center gap-0.5">
+        <div style={{ display: 'flex', alignItems: 'center', gap: '3px' }}>
             {Array.from({ length: max }, (_, i) => {
                 const filled = (interactive ? (hover || value) : value) > i;
                 return (
@@ -32,9 +34,9 @@ function Stars({ value, max = 5, interactive = false, onChange }: {
                         onClick={() => interactive && onChange?.(i + 1)}
                         onMouseEnter={() => interactive && setHover(i + 1)}
                         onMouseLeave={() => interactive && setHover(0)}
-                        className={interactive ? 'cursor-pointer' : 'cursor-default'}>
-                        <Star size={interactive ? 24 : 14}
-                            className={filled ? 'text-amber-400 fill-amber-400' : 'text-gray-300 fill-gray-300'} />
+                        style={{ background: 'none', border: 'none', padding: '2px', cursor: interactive ? 'pointer' : 'default' }}>
+                        <Star size={interactive ? 22 : 13}
+                            style={{ color: filled ? '#F0A030' : '#2A3342', fill: filled ? '#F0A030' : '#2A3342', display: 'block' }} />
                     </button>
                 );
             })}
@@ -66,7 +68,6 @@ export default function InstructorProfilePage() {
     const [ratingsData, setRatingsData] = useState<RatingsData | null>(null);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState('');
-
     const [myRating, setMyRating] = useState(0);
     const [myFeedback, setMyFeedback] = useState('');
     const [submitting, setSubmitting] = useState(false);
@@ -83,7 +84,6 @@ export default function InstructorProfilePage() {
             ]);
             setProfile(profRes.data);
             setRatingsData(ratRes.data);
-
             if (user) {
                 const existing = ratRes.data.ratings.find((r: InstructorRating) => r.userId._id === user.id);
                 if (existing) { setMyRating(existing.rating); setMyFeedback(existing.feedback || ''); }
@@ -119,19 +119,24 @@ export default function InstructorProfilePage() {
 
     if (loading) {
         return (
-            <div className="min-h-screen flex items-center justify-center">
-                <Loader2 className="animate-spin text-green" size={36} />
+            <div style={{ background: '#07090F', minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                <style>{FONT_IMPORT}</style>
+                <div style={{ textAlign: 'center' }}>
+                    <div style={{ width: '40px', height: '40px', border: '3px solid rgba(58,170,106,0.2)', borderTopColor: '#3aaa6a', borderRadius: '50%', animation: 'spin 0.8s linear infinite', margin: '0 auto' }} />
+                    <style>{`@keyframes spin { to { transform: rotate(360deg); } }`}</style>
+                </div>
             </div>
         );
     }
 
     if (error || !profile) {
         return (
-            <div className="min-h-screen flex items-center justify-center">
-                <div className="text-center">
-                    <h1 className="text-2xl font-bold text-dark mb-2">Not Found</h1>
-                    <p className="text-dark/60">{error || 'Instructor not found'}</p>
-                    <Link href="/instructors" className="mt-4 inline-block text-green font-semibold hover:underline">Browse instructors</Link>
+            <div style={{ background: '#07090F', minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                <style>{FONT_IMPORT}</style>
+                <div style={{ textAlign: 'center', fontFamily: 'DM Sans, sans-serif' }}>
+                    <h1 style={{ color: '#F0F0F0', fontSize: '1.5rem', fontFamily: 'Syne, sans-serif', marginBottom: '8px' }}>Not Found</h1>
+                    <p style={{ color: '#8A9099' }}>{error || 'Instructor not found'}</p>
+                    <Link href="/instructors" style={{ color: '#3aaa6a', fontWeight: 600, display: 'inline-block', marginTop: '16px' }}>Browse instructors →</Link>
                 </div>
             </div>
         );
@@ -140,94 +145,229 @@ export default function InstructorProfilePage() {
     const { user: instrUser, profile: instrProfile, courses } = profile;
     const isOwnProfile = user?.id === instrUser._id;
     const displayedRatings = showAllReviews ? (ratingsData?.ratings || []) : (ratingsData?.ratings || []).slice(0, 3);
+    const coverUrl = imgURL(instrUser.coverPhotoURL, 'cover');
+    const avatarUrl = imgURL(instrUser.photoURL);
 
     return (
-        <main className="min-h-screen bg-gray-50 pb-16">
+        <main style={{ background: '#07090F', minHeight: '100vh', paddingBottom: '80px', fontFamily: 'DM Sans, sans-serif' }}>
+            <style>{`
+                ${FONT_IMPORT}
+                @keyframes spin { to { transform: rotate(360deg); } }
 
-            {/* Cover photo */}
-            <div className="relative w-full h-56 md:h-72 overflow-hidden bg-gradient-to-br from-[#0a2a1a] to-[#166534]">
-                {imgURL(instrUser.coverPhotoURL, 'cover') ? (
-                    <Image src={imgURL(instrUser.coverPhotoURL, 'cover')!} alt="cover" fill className="object-cover" unoptimized />
+                .icard {
+                    background: #0F1421;
+                    border: 1px solid rgba(255,255,255,0.07);
+                    border-radius: 18px;
+                    overflow: hidden;
+                    cursor: pointer;
+                    transition: transform 0.22s ease, border-color 0.22s ease, box-shadow 0.22s ease;
+                }
+                .icard:hover {
+                    transform: translateY(-4px);
+                    border-color: rgba(58,170,106,0.35);
+                    box-shadow: 0 12px 40px rgba(58,170,106,0.1);
+                }
+                .irev {
+                    background: #0F1421;
+                    border: 1px solid rgba(255,255,255,0.06);
+                    border-radius: 16px;
+                    padding: 18px;
+                    transition: border-color 0.2s;
+                }
+                .irev:hover { border-color: rgba(255,255,255,0.13); }
+
+                .iinput {
+                    width: 100%;
+                    background: rgba(255,255,255,0.04);
+                    border: 1px solid rgba(255,255,255,0.09);
+                    border-radius: 12px;
+                    padding: 11px 15px;
+                    color: #F0F0F0;
+                    font-size: 14px;
+                    font-family: 'DM Sans', sans-serif;
+                    resize: none;
+                    outline: none;
+                    transition: border-color 0.2s;
+                    box-sizing: border-box;
+                }
+                .iinput:focus { border-color: rgba(58,170,106,0.45); }
+                .iinput::placeholder { color: #3A4455; }
+
+                .ibtn-show {
+                    width: 100%;
+                    padding: 14px;
+                    background: transparent;
+                    border: 1px solid rgba(255,255,255,0.08);
+                    border-radius: 14px;
+                    color: #8A9099;
+                    font-weight: 600;
+                    font-size: 0.875rem;
+                    cursor: pointer;
+                    display: flex;
+                    align-items: center;
+                    justify-content: center;
+                    gap: 6px;
+                    font-family: 'DM Sans', sans-serif;
+                    transition: background 0.2s, color 0.2s;
+                    margin-top: 14px;
+                }
+                .ibtn-show:hover { background: rgba(255,255,255,0.04); color: #C0C8D0; }
+
+                .icourse-grid {
+                    display: grid;
+                    grid-template-columns: repeat(auto-fill, minmax(270px, 1fr));
+                    gap: 16px;
+                }
+            `}</style>
+
+            {/* ── HERO ── */}
+            <div style={{ position: 'relative', width: '100%', height: '320px', overflow: 'hidden', background: 'linear-gradient(135deg, #0C1F14 0%, #0A1829 100%)' }}>
+                {coverUrl ? (
+                    <Image src={coverUrl} alt="cover" fill style={{ objectFit: 'cover', opacity: 0.65 }} unoptimized />
                 ) : (
-                    <div className="absolute inset-0"
-                        style={{ backgroundImage: 'radial-gradient(circle, rgba(255,255,255,0.07) 1.5px, transparent 1.5px)', backgroundSize: '22px 22px' }}
-                    />
+                    <svg style={{ position: 'absolute', inset: 0, width: '100%', height: '100%' }} xmlns="http://www.w3.org/2000/svg">
+                        <defs>
+                            <pattern id="zellige" x="0" y="0" width="40" height="40" patternUnits="userSpaceOnUse">
+                                <circle cx="20" cy="20" r="1.5" fill="#3aaa6a" opacity="0.25" />
+                                <circle cx="0" cy="0" r="1.5" fill="#3aaa6a" opacity="0.15" />
+                                <circle cx="40" cy="0" r="1.5" fill="#3aaa6a" opacity="0.15" />
+                                <circle cx="0" cy="40" r="1.5" fill="#3aaa6a" opacity="0.15" />
+                                <circle cx="40" cy="40" r="1.5" fill="#3aaa6a" opacity="0.15" />
+                                <line x1="20" y1="0" x2="20" y2="40" stroke="#3aaa6a" strokeWidth="0.5" opacity="0.06" />
+                                <line x1="0" y1="20" x2="40" y2="20" stroke="#3aaa6a" strokeWidth="0.5" opacity="0.06" />
+                            </pattern>
+                        </defs>
+                        <rect width="100%" height="100%" fill="url(#zellige)" />
+                    </svg>
                 )}
-                <div className="absolute inset-0 bg-gradient-to-t from-black/65 via-black/15 to-transparent" />
+                <div style={{ position: 'absolute', inset: 0, background: 'linear-gradient(to top, #07090F 0%, rgba(7,9,15,0.3) 55%, transparent 100%)' }} />
+            </div>
 
-                {/* Profile info overlaid at bottom of cover */}
-                <div className="absolute bottom-0 left-0 right-0 max-w-4xl mx-auto px-6 pb-5 flex items-end justify-between gap-4">
-                    <div className="flex items-end gap-4">
-                        <div className="w-20 h-20 rounded-[20px] border-[3px] border-white/30 shadow-2xl shadow-black/40 overflow-hidden bg-gradient-to-br from-green to-green/60 flex-shrink-0 relative">
-                            {imgURL(instrUser.photoURL) ? (
-                                <Image src={imgURL(instrUser.photoURL)!} alt={instrUser.displayName} fill className="object-cover" unoptimized />
+            <div style={{ maxWidth: '960px', margin: '0 auto', padding: '0 20px' }}>
+
+                {/* ── PROFILE CARD ── */}
+                <div style={{
+                    marginTop: '-90px',
+                    background: '#0F1421',
+                    border: '1px solid rgba(255,255,255,0.08)',
+                    borderRadius: '22px',
+                    padding: '24px 28px',
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '22px',
+                    flexWrap: 'wrap',
+                    justifyContent: 'space-between',
+                    position: 'relative',
+                    boxShadow: '0 24px 60px rgba(0,0,0,0.5)',
+                }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '20px', minWidth: 0 }}>
+                        {/* Avatar */}
+                        <div style={{
+                            width: '84px', height: '84px', flexShrink: 0, borderRadius: '50%',
+                            border: '3px solid #3aaa6a',
+                            boxShadow: '0 0 0 6px rgba(58,170,106,0.12), 0 8px 30px rgba(0,0,0,0.4)',
+                            overflow: 'hidden', position: 'relative',
+                            background: 'linear-gradient(135deg, #1a3a2a, #0C1820)',
+                            display: 'flex', alignItems: 'center', justifyContent: 'center',
+                        }}>
+                            {avatarUrl ? (
+                                <Image src={avatarUrl} alt={instrUser.displayName} fill style={{ objectFit: 'cover' }} unoptimized />
                             ) : (
-                                <span className="absolute inset-0 flex items-center justify-center text-3xl font-bold text-white">{instrUser.displayName.charAt(0).toUpperCase()}</span>
+                                <span style={{ fontSize: '2rem', fontWeight: 800, color: '#3aaa6a', fontFamily: 'Syne, sans-serif', lineHeight: 1 }}>
+                                    {instrUser.displayName.charAt(0).toUpperCase()}
+                                </span>
                             )}
                         </div>
-                        <div className="pb-1">
-                            <div className="flex items-center gap-1.5 mb-0.5">
-                                <GraduationCap size={13} className="text-green-300" />
-                                <span className="text-[11px] font-bold text-green-300 uppercase tracking-widest">Instructor</span>
-                            </div>
-                            <h1 className="text-xl font-bold text-white">{instrUser.displayName}</h1>
-                            {instrProfile?.specialist && <p className="text-white/60 text-sm mt-0.5">{instrProfile.specialist}</p>}
+                        <div style={{ minWidth: 0 }}>
+                            <span style={{
+                                display: 'inline-flex', alignItems: 'center', gap: '5px',
+                                fontSize: '10px', fontWeight: 700, letterSpacing: '0.12em',
+                                color: '#3aaa6a', background: 'rgba(58,170,106,0.1)',
+                                border: '1px solid rgba(58,170,106,0.25)',
+                                borderRadius: '20px', padding: '2px 10px',
+                                marginBottom: '8px', fontFamily: 'Syne, sans-serif',
+                            }}>
+                                <GraduationCap size={11} /> INSTRUCTOR
+                            </span>
+                            <h1 style={{ fontFamily: 'Syne, sans-serif', fontWeight: 700, fontSize: '1.5rem', color: '#F0F0F0', margin: 0, lineHeight: 1.2 }}>
+                                {instrUser.displayName}
+                            </h1>
+                            {instrProfile?.specialist && (
+                                <p style={{ color: '#8A9099', fontSize: '0.9rem', marginTop: '3px', margin: '4px 0 0' }}>
+                                    {instrProfile.specialist}
+                                </p>
+                            )}
                         </div>
                     </div>
-                    {/* Stats chips */}
-                    <div className="flex items-center gap-2 pb-1 flex-wrap justify-end">
-                        <div className="flex items-center gap-1.5 px-3 py-1.5 bg-white/15 backdrop-blur-sm rounded-xl border border-white/20">
-                            <BookOpen size={13} className="text-white/80" />
-                            <span className="text-sm font-bold text-white">{courses.length}</span>
-                            <span className="text-xs text-white/60">courses</span>
+
+                    {/* Stats */}
+                    <div style={{ display: 'flex', gap: '10px', flexWrap: 'wrap' }}>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '7px', padding: '8px 16px', background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.08)', borderRadius: '40px' }}>
+                            <BookOpen size={14} style={{ color: '#3aaa6a' }} />
+                            <span style={{ fontSize: '0.9rem', fontWeight: 600, color: '#F0F0F0' }}>{courses.length}</span>
+                            <span style={{ fontSize: '0.78rem', color: '#8A9099' }}>courses</span>
                         </div>
                         {(ratingsData?.totalRatings || 0) > 0 && (
-                            <div className="flex items-center gap-1.5 px-3 py-1.5 bg-amber-400/20 backdrop-blur-sm rounded-xl border border-amber-300/30">
-                                <Star size={13} className="text-amber-300 fill-amber-300" />
-                                <span className="text-sm font-bold text-white">{ratingsData?.averageRating}</span>
-                                <span className="text-xs text-white/60">({ratingsData?.totalRatings})</span>
+                            <div style={{ display: 'flex', alignItems: 'center', gap: '7px', padding: '8px 16px', background: 'rgba(240,160,48,0.07)', border: '1px solid rgba(240,160,48,0.2)', borderRadius: '40px' }}>
+                                <Star size={14} style={{ color: '#F0A030', fill: '#F0A030' }} />
+                                <span style={{ fontSize: '0.9rem', fontWeight: 600, color: '#F0F0F0' }}>{ratingsData?.averageRating}</span>
+                                <span style={{ fontSize: '0.78rem', color: '#8A9099' }}>({ratingsData?.totalRatings})</span>
                             </div>
                         )}
                     </div>
                 </div>
-            </div>
 
-            <div className="max-w-4xl mx-auto px-4 sm:px-6 pt-6">
+                {/* ── COURSES ── */}
+                <section style={{ marginTop: '44px', marginBottom: '52px' }}>
+                    <h2 style={{ fontFamily: 'Syne, sans-serif', fontWeight: 700, fontSize: '1.2rem', color: '#F0F0F0', marginBottom: '20px', display: 'flex', alignItems: 'center', gap: '10px' }}>
+                        <span style={{ width: '3px', height: '20px', background: '#3aaa6a', borderRadius: '2px', display: 'inline-block' }} />
+                        Courses
+                    </h2>
 
-                {/* Courses */}
-                <section className="mb-10">
-                    <h2 className="text-xl font-bold text-dark mb-5">Courses</h2>
                     {courses.length === 0 ? (
-                        <div className="bg-white rounded-2xl border border-dashed border-gray-200 p-12 text-center">
-                            <BookOpen className="text-dark/20 mx-auto mb-3" size={40} />
-                            <p className="font-semibold text-dark/60">No courses uploaded yet</p>
+                        <div style={{ background: '#0F1421', border: '1px dashed rgba(255,255,255,0.09)', borderRadius: '18px', padding: '56px 24px', textAlign: 'center' }}>
+                            <BookOpen style={{ color: 'rgba(255,255,255,0.08)', margin: '0 auto 12px', display: 'block' }} size={44} />
+                            <p style={{ color: '#8A9099', fontWeight: 500 }}>No courses uploaded yet</p>
                         </div>
                     ) : (
-                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
+                        <div className="icourse-grid">
                             {courses.map(course => (
-                                <div key={course._id}
-                                    className="group bg-white rounded-3xl border border-gray-100 shadow-sm overflow-hidden hover:shadow-xl hover:shadow-green/8 hover:border-green/20 hover:-translate-y-1 transition-all duration-300 cursor-pointer"
-                                    onClick={() => handleView(course._id)}>
-                                    {/* Rich texture header */}
-                                    <div
-                                        className={`h-32 flex items-center justify-center relative overflow-hidden ${course.videoUrl ? 'bg-gradient-to-br from-blue-600 to-indigo-700' : 'bg-gradient-to-br from-rose-500 to-pink-700'}`}
-                                        style={{ backgroundImage: 'radial-gradient(circle, rgba(255,255,255,0.12) 1px, transparent 1px)', backgroundSize: '16px 16px' }}>
-                                        <div className="w-16 h-16 rounded-2xl bg-white/20 backdrop-blur-sm flex items-center justify-center group-hover:scale-110 transition-transform duration-300 border border-white/25">
-                                            {course.videoUrl ? <Video className="text-white" size={28} /> : <FileText className="text-white" size={28} />}
+                                <div key={course._id} className="icard" onClick={() => handleView(course._id)}>
+                                    <div style={{
+                                        height: '130px',
+                                        background: course.videoUrl
+                                            ? 'linear-gradient(135deg, #1A2F5E 0%, #0D1B40 100%)'
+                                            : 'linear-gradient(135deg, #3A1A2E 0%, #1F0D1A 100%)',
+                                        display: 'flex', alignItems: 'center', justifyContent: 'center',
+                                        position: 'relative', overflow: 'hidden',
+                                    }}>
+                                        <svg style={{ position: 'absolute', inset: 0, opacity: 0.1 }} width="100%" height="100%">
+                                            <defs>
+                                                <pattern id={`cp-${course._id}`} x="0" y="0" width="18" height="18" patternUnits="userSpaceOnUse">
+                                                    <circle cx="9" cy="9" r="1" fill="white" />
+                                                </pattern>
+                                            </defs>
+                                            <rect width="100%" height="100%" fill={`url(#cp-${course._id})`} />
+                                        </svg>
+                                        <div style={{ width: '54px', height: '54px', borderRadius: '15px', background: 'rgba(255,255,255,0.1)', backdropFilter: 'blur(8px)', display: 'flex', alignItems: 'center', justifyContent: 'center', border: '1px solid rgba(255,255,255,0.18)', position: 'relative', zIndex: 1, transition: 'transform 0.2s' }}>
+                                            {course.videoUrl ? <Video style={{ color: 'white' }} size={24} /> : <FileText style={{ color: 'white' }} size={24} />}
                                         </div>
-                                        <span className={`absolute top-3 right-3 text-xs font-black px-2.5 py-1 rounded-xl bg-white/20 backdrop-blur-sm border border-white/25 text-white tracking-wider`}>
+                                        <span style={{ position: 'absolute', top: '12px', right: '12px', fontSize: '9px', fontFamily: 'Syne, sans-serif', fontWeight: 700, letterSpacing: '0.12em', color: 'rgba(255,255,255,0.85)', background: 'rgba(255,255,255,0.12)', border: '1px solid rgba(255,255,255,0.18)', borderRadius: '8px', padding: '3px 8px' }}>
                                             {course.videoUrl ? 'VIDEO' : 'PDF'}
                                         </span>
                                     </div>
-
-                                    <div className="p-5">
-                                        <h3 className="font-bold text-dark mb-2 line-clamp-2 leading-snug text-[15px]">{course.title}</h3>
+                                    <div style={{ padding: '16px 18px' }}>
+                                        <h3 style={{ fontFamily: 'Syne, sans-serif', fontWeight: 600, color: '#E8EDF2', fontSize: '0.92rem', marginBottom: '8px', lineHeight: 1.4, overflow: 'hidden', display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical' }}>
+                                            {course.title}
+                                        </h3>
                                         {course.description && (
-                                            <p className="text-sm text-dark/45 line-clamp-2 mb-4 leading-relaxed">{course.description}</p>
+                                            <p style={{ fontSize: '0.8rem', color: '#8A9099', lineHeight: 1.55, marginBottom: '12px', overflow: 'hidden', display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical' }}>
+                                                {course.description}
+                                            </p>
                                         )}
-                                        <div className="flex items-center gap-4 pt-2 border-t border-gray-50">
-                                            <span className="text-xs text-dark/40 flex items-center gap-1.5 font-medium">
-                                                <Eye size={12} className="text-blue-400" /> {course.viewCount || 0} views
+                                        <div style={{ borderTop: '1px solid rgba(255,255,255,0.05)', paddingTop: '10px', display: 'flex', gap: '14px' }}>
+                                            <span style={{ fontSize: '11px', color: '#8A9099', display: 'flex', alignItems: 'center', gap: '5px' }}>
+                                                <Eye size={11} style={{ color: '#4A7FA6' }} /> {course.viewCount || 0} views
                                             </span>
                                         </div>
                                     </div>
@@ -237,82 +377,99 @@ export default function InstructorProfilePage() {
                     )}
                 </section>
 
-                {/* Ratings & Reviews */}
+                {/* ── REVIEWS ── */}
                 <section>
-                    <div className="flex items-center justify-between mb-5">
-                        <h2 className="text-xl font-bold text-dark flex items-center gap-2">
-                            <MessageSquare size={20} className="text-green" /> Reviews
+                    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '22px', flexWrap: 'wrap', gap: '12px' }}>
+                        <h2 style={{ fontFamily: 'Syne, sans-serif', fontWeight: 700, fontSize: '1.2rem', color: '#F0F0F0', display: 'flex', alignItems: 'center', gap: '10px', margin: 0 }}>
+                            <span style={{ width: '3px', height: '20px', background: '#3aaa6a', borderRadius: '2px', display: 'inline-block' }} />
+                            Reviews
                         </h2>
                         {(ratingsData?.totalRatings || 0) > 0 && (
-                            <div className="flex items-center gap-2">
+                            <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
                                 <Stars value={ratingsData?.averageRating || 0} />
-                                <span className="font-bold text-dark">{ratingsData?.averageRating}</span>
-                                <span className="text-sm text-dark/50">· {ratingsData?.totalRatings} reviews</span>
+                                <span style={{ fontWeight: 700, color: '#F0F0F0', fontSize: '0.95rem' }}>{ratingsData?.averageRating}</span>
+                                <span style={{ color: '#8A9099', fontSize: '0.85rem' }}>· {ratingsData?.totalRatings} reviews</span>
                             </div>
                         )}
                     </div>
 
                     {/* Rating form */}
                     {!user ? (
-                        <div className="bg-white rounded-2xl border border-dashed border-gray-200 p-6 text-center mb-6">
-                            <p className="text-dark/60 text-sm">
-                                <Link href="/login" className="text-green font-semibold hover:underline">Log in</Link> to rate this instructor
+                        <div style={{ background: '#0F1421', border: '1px dashed rgba(255,255,255,0.08)', borderRadius: '16px', padding: '24px', textAlign: 'center', marginBottom: '20px' }}>
+                            <p style={{ color: '#8A9099', fontSize: '0.875rem' }}>
+                                <Link href="/login" style={{ color: '#3aaa6a', fontWeight: 600 }}>Log in</Link> to rate this instructor
                             </p>
                         </div>
                     ) : !isOwnProfile ? (
-                        <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-6 mb-6">
-                            <h3 className="font-bold text-dark mb-4">
+                        <div style={{ background: '#0F1421', border: '1px solid rgba(255,255,255,0.08)', borderRadius: '18px', padding: '24px', marginBottom: '20px' }}>
+                            <h3 style={{ fontFamily: 'Syne, sans-serif', fontWeight: 700, color: '#F0F0F0', marginBottom: '16px', fontSize: '1rem', margin: '0 0 16px' }}>
                                 {ratingsData?.ratings.some(r => r.userId._id === user.id) ? 'Update your rating' : 'Rate this instructor'}
                             </h3>
-                            <div className="mb-3">
-                                <Stars value={myRating} interactive onChange={setMyRating} />
-                            </div>
+                            <Stars value={myRating} interactive onChange={setMyRating} />
                             <textarea
+                                className="iinput"
                                 value={myFeedback}
                                 onChange={e => setMyFeedback(e.target.value)}
                                 placeholder="Share your experience (optional)..."
                                 rows={3}
-                                className="w-full px-4 py-3 rounded-xl border border-gray-200 focus:border-green outline-none text-sm resize-none mb-3"
+                                style={{ marginTop: '12px' }}
                             />
-                            {ratingError && <p className="text-red-500 text-sm mb-2">{ratingError}</p>}
-                            {ratingSuccess && <p className="text-green font-semibold text-sm mb-2">Rating submitted!</p>}
+                            {ratingError && <p style={{ color: '#F87171', fontSize: '0.85rem', marginTop: '8px' }}>{ratingError}</p>}
+                            {ratingSuccess && <p style={{ color: '#3aaa6a', fontWeight: 600, fontSize: '0.85rem', marginTop: '8px' }}>Rating submitted!</p>}
                             <button
                                 onClick={handleSubmitRating}
                                 disabled={submitting || !myRating}
-                                className="px-6 py-2.5 bg-green text-white rounded-xl font-semibold text-sm hover:bg-green/80 transition-all disabled:opacity-50 flex items-center gap-2">
-                                {submitting ? <><Loader2 size={14} className="animate-spin" /> Submitting...</> : 'Submit Rating'}
+                                style={{
+                                    marginTop: '14px',
+                                    padding: '10px 24px',
+                                    background: submitting || !myRating ? 'rgba(58,170,106,0.25)' : '#3aaa6a',
+                                    color: 'white',
+                                    border: 'none',
+                                    borderRadius: '12px',
+                                    fontWeight: 600,
+                                    fontSize: '0.875rem',
+                                    cursor: submitting || !myRating ? 'not-allowed' : 'pointer',
+                                    display: 'flex',
+                                    alignItems: 'center',
+                                    gap: '8px',
+                                    fontFamily: 'DM Sans, sans-serif',
+                                    transition: 'background 0.2s',
+                                }}>
+                                {submitting ? <><Loader2 size={14} style={{ animation: 'spin 0.8s linear infinite' }} /> Submitting...</> : 'Submit Rating'}
                             </button>
                         </div>
                     ) : null}
 
                     {/* Reviews list */}
                     {(ratingsData?.totalRatings || 0) === 0 ? (
-                        <div className="bg-white rounded-2xl border border-dashed border-gray-200 p-8 text-center">
-                            <Star size={32} className="text-gray-200 mx-auto mb-2" />
-                            <p className="text-dark/50 text-sm">No reviews yet. Be the first!</p>
+                        <div style={{ background: '#0F1421', border: '1px dashed rgba(255,255,255,0.08)', borderRadius: '16px', padding: '44px 24px', textAlign: 'center' }}>
+                            <Star size={36} style={{ color: 'rgba(255,255,255,0.07)', margin: '0 auto 10px', display: 'block' }} />
+                            <p style={{ color: '#8A9099', fontSize: '0.875rem' }}>No reviews yet. Be the first!</p>
                         </div>
                     ) : (
                         <>
-                            <div className="space-y-3">
+                            <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
                                 {displayedRatings.map(r => {
                                     const reviewer = r.userId;
                                     const rPhoto = imgURL(reviewer.photoURL);
                                     return (
-                                        <div key={r._id} className="bg-white rounded-3xl border border-gray-100 shadow-sm hover:shadow-md p-5 flex gap-4 transition-all">
-                                            <div className="w-10 h-10 rounded-full bg-gradient-to-br from-green to-green/60 flex items-center justify-center flex-shrink-0 overflow-hidden relative">
-                                                {rPhoto ? (
-                                                    <Image src={rPhoto} alt={reviewer.displayName} fill className="object-cover" unoptimized />
-                                                ) : (
-                                                    <span className="text-white font-bold text-sm">{reviewer.displayName?.charAt(0)?.toUpperCase()}</span>
-                                                )}
-                                            </div>
-                                            <div className="flex-1">
-                                                <div className="flex items-center justify-between flex-wrap gap-1 mb-1">
-                                                    <span className="font-bold text-dark text-sm">{reviewer.displayName}</span>
-                                                    <span className="text-xs text-dark/40">{new Date(r.createdAt).toLocaleDateString()}</span>
+                                        <div key={r._id} className="irev">
+                                            <div style={{ display: 'flex', gap: '14px' }}>
+                                                <div style={{ width: '40px', height: '40px', borderRadius: '50%', flexShrink: 0, overflow: 'hidden', position: 'relative', background: 'linear-gradient(135deg, #1a3a2a, #0C1820)', border: '2px solid rgba(58,170,106,0.25)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                                                    {rPhoto ? (
+                                                        <Image src={rPhoto} alt={reviewer.displayName} fill style={{ objectFit: 'cover' }} unoptimized />
+                                                    ) : (
+                                                        <span style={{ color: '#3aaa6a', fontWeight: 700, fontSize: '0.875rem', fontFamily: 'Syne, sans-serif' }}>{reviewer.displayName?.charAt(0)?.toUpperCase()}</span>
+                                                    )}
                                                 </div>
-                                                <Stars value={r.rating} />
-                                                {r.feedback && <p className="text-sm text-dark/70 mt-1.5">{r.feedback}</p>}
+                                                <div style={{ flex: 1, minWidth: 0 }}>
+                                                    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '5px', gap: '8px' }}>
+                                                        <span style={{ fontWeight: 600, color: '#E8EDF2', fontSize: '0.875rem', fontFamily: 'Syne, sans-serif' }}>{reviewer.displayName}</span>
+                                                        <span style={{ fontSize: '0.75rem', color: '#8A9099', whiteSpace: 'nowrap' }}>{new Date(r.createdAt).toLocaleDateString()}</span>
+                                                    </div>
+                                                    <Stars value={r.rating} />
+                                                    {r.feedback && <p style={{ fontSize: '0.875rem', color: '#9AABB8', marginTop: '6px', lineHeight: 1.55 }}>{r.feedback}</p>}
+                                                </div>
                                             </div>
                                         </div>
                                     );
@@ -320,9 +477,7 @@ export default function InstructorProfilePage() {
                             </div>
 
                             {(ratingsData?.ratings.length || 0) > 3 && (
-                                <button
-                                    onClick={() => setShowAllReviews(!showAllReviews)}
-                                    className="mt-4 w-full py-3 border border-gray-200 rounded-2xl text-sm font-semibold text-dark/60 hover:bg-gray-50 transition-all flex items-center justify-center gap-2">
+                                <button className="ibtn-show" onClick={() => setShowAllReviews(!showAllReviews)}>
                                     {showAllReviews
                                         ? <><ChevronUp size={16} /> Show less</>
                                         : <><ChevronDown size={16} /> Show all {ratingsData?.totalRatings} reviews</>}

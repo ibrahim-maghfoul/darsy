@@ -1,0 +1,365 @@
+{
+  "name": "A/B Test Social Media Content",
+  "nodes": [
+    {
+      "parameters": {},
+      "id": "manual-trigger",
+      "name": "Manual Trigger",
+      "type": "n8n-nodes-base.manualTrigger",
+      "typeVersion": 1,
+      "position": [
+        0,
+        0
+      ]
+    },
+    {
+      "parameters": {
+        "method": "GET",
+        "url": "https://sheets.googleapis.com/v4/spreadsheets/{{ $env.CONTENT_SHEET_ID }}/values/AB_Tests!A:F",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "googleSheetsOAuth2Api",
+        "options": {}
+      },
+      "id": "fetch-test-brief",
+      "name": "Fetch Test Brief from Sheets",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        220,
+        0
+      ]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://api.openai.com/v1/chat/completions",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "openAiApi",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ JSON.stringify({ model: \"gpt-4o\", messages: [{\"role\":\"system\",\"content\":\"You are an A/B testing expert for social media marketing, specializing in Darsy — a Moroccan educational platform targeting BAC and Brevet students in Morocco. Content should be culturally relevant to Morocco, use Arabic (Darija + MSA) and French (bilingual), and prices are in MAD (Moroccan Dirham). Consider the Moroccan school calendar (BAC in June, Brevet in May, school starts in September).\\n\\nGiven a content idea, generate two distinct variations that test a specific hypothesis. Each variation must differ in ONE key element (hook, visual style, CTA, tone, or format). Output valid JSON only.\\n\\nJSON format:\\n{\\n  \\\"hypothesis\\\": \\\"what you're testing\\\",\\n  \\\"variable\\\": \\\"the element that differs\\\",\\n  \\\"variation_a\\\": {\\n    \\\"hook\\\": \\\"opening line\\\",\\n    \\\"body\\\": \\\"main text\\\",\\n    \\\"cta\\\": \\\"call to action\\\",\\n    \\\"image_prompt\\\": \\\"DALL-E prompt for the visual\\\",\\n    \\\"tone\\\": \\\"description of tone\\\"\\n  },\\n  \\\"variation_b\\\": {\\n    \\\"hook\\\": \\\"opening line\\\",\\n    \\\"body\\\": \\\"main text\\\",\\n    \\\"cta\\\": \\\"call to action\\\",\\n    \\\"image_prompt\\\": \\\"DALL-E prompt for the visual\\\",\\n    \\\"tone\\\": \\\"description of tone\\\"\\n  },\\n  \\\"success_metric\\\": \\\"what to measure\\\",\\n  \\\"duration_hours\\\": 24\\n}\"},{\"role\":\"user\",\"content\":\"Content idea: {{ $json.values[0][0] }}\\nTarget audience: Moroccan students\\nPlatform: {{ $json.values[0][1] || 'Instagram' }}\\nGoal: {{ $json.values[0][2] || 'engagement' }}\"}], temperature: 0.8, max_tokens: 1000 }) }}",
+        "options": {
+          "response": {
+            "response": {
+              "responseFormat": "json"
+            }
+          }
+        }
+      },
+      "id": "ai-generate-variations",
+      "name": "AI - Generate A/B Variations",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        440,
+        0
+      ],
+      "credentials": {
+        "openAiApi": {
+          "id": "openai-api",
+          "name": "OpenAI account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "const response = $input.first().json.message.content;\nlet parsed;\ntry { parsed = JSON.parse(response); } catch(e) {\n  const m = response.match(/```(?:json)?\\s*([\\s\\S]*?)```/);\n  parsed = JSON.parse(m[1].trim());\n}\nreturn [{ json: parsed }];"
+      },
+      "id": "parse-variations",
+      "name": "Parse Variations",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        660,
+        0
+      ]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://api.openai.com/v1/images/generations",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "openAiApi",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ JSON.stringify({ model: \"dall-e-3\", prompt: {{ $json.variation_a.image_prompt }}, n: 1, size: \"1024x1024\", quality: \"hd\", style: \"vivid\" }) }}",
+        "options": {}
+      },
+      "id": "dalle-variation-a",
+      "name": "DALL-E - Variation A Image",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        880,
+        -100
+      ],
+      "credentials": {
+        "openAiApi": {
+          "id": "openai-api",
+          "name": "OpenAI account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://api.openai.com/v1/images/generations",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "openAiApi",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ JSON.stringify({ model: \"dall-e-3\", prompt: {{ $json.variation_b.image_prompt }}, n: 1, size: \"1024x1024\", quality: \"hd\", style: \"vivid\" }) }}",
+        "options": {}
+      },
+      "id": "dalle-variation-b",
+      "name": "DALL-E - Variation B Image",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        880,
+        100
+      ],
+      "credentials": {
+        "openAiApi": {
+          "id": "openai-api",
+          "name": "OpenAI account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "mode": "combine",
+        "mergeByFields": {},
+        "options": {}
+      },
+      "id": "merge-images",
+      "name": "Merge Variations",
+      "type": "n8n-nodes-base.merge",
+      "typeVersion": 3,
+      "position": [
+        1100,
+        0
+      ]
+    },
+    {
+      "parameters": {
+        "operation": "sendPhoto",
+        "chatId": "={{ $('Get ChatId').first().json.chatId }}",
+        "photo": "={{ $json.data[0].url }}",
+        "additionalFields": {
+          "caption": "=🧪 *A/B TEST READY*\n\n📊 *Hypothesis:* {{ $('Parse Variations').first().json.hypothesis }}\n🔬 *Variable:* {{ $('Parse Variations').first().json.variable }}\n\n*VARIATION A:*\n{{ $('Parse Variations').first().json.variation_a.hook }}\n{{ $('Parse Variations').first().json.variation_a.body }}\nCTA: {{ $('Parse Variations').first().json.variation_a.cta }}\n\n*VARIATION B:*\n{{ $('Parse Variations').first().json.variation_b.hook }}\n{{ $('Parse Variations').first().json.variation_b.body }}\nCTA: {{ $('Parse Variations').first().json.variation_b.cta }}\n\n📏 *Success Metric:* {{ $('Parse Variations').first().json.success_metric }}\n⏱️ *Duration:* {{ $('Parse Variations').first().json.duration_hours }}h\n\n_Reply ✅ to launch test_",
+          "parse_mode": "Markdown"
+        }
+      },
+      "id": "send-telegram-preview",
+      "name": "Send Test Preview to Telegram",
+      "type": "n8n-nodes-base.telegram",
+      "typeVersion": 1.2,
+      "position": [
+        1320,
+        0
+      ],
+      "credentials": {
+        "telegramApi": {
+          "id": "XKvv8ek8iXO8xWJT",
+          "name": "Telegram account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "appendOrUpdate",
+        "documentId": {
+          "__rl": true,
+          "mode": "id",
+          "value": "={{ $env.CONTENT_SHEET_ID }}"
+        },
+        "sheetName": "AB_Results",
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "date": "={{ $now.format('yyyy-MM-dd') }}",
+            "hypothesis": "={{ $('Parse Variations').first().json.hypothesis }}",
+            "variable": "={{ $('Parse Variations').first().json.variable }}",
+            "variation_a_text": "={{ $('Parse Variations').first().json.variation_a.hook }}",
+            "variation_b_text": "={{ $('Parse Variations').first().json.variation_b.hook }}",
+            "status": "pending_approval"
+          }
+        },
+        "options": {}
+      },
+      "id": "log-to-sheets",
+      "name": "Log Test to Google Sheets",
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.5,
+      "position": [
+        1540,
+        0
+      ],
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "GEdm4SCZIB4132yL",
+          "name": "Google Sheets account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "run-ab-test",
+        "responseMode": "immediatelyAfterReceive",
+        "options": {}
+      },
+      "id": "webhook-trigger-bot",
+      "name": "Webhook Trigger (from Bot)",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2,
+      "position": [
+        0,
+        120
+      ],
+      "webhookId": "run-ab-test"
+    },
+    {
+      "parameters": {
+        "jsCode": "// Gets chatId from Telegram command center webhook, or falls back to env var\nconst fromWebhook = $input.first().json.body?.chatId;\nconst chatId = fromWebhook || $env.TELEGRAM_CHAT_ID;\nreturn [{ json: { chatId } }];"
+      },
+      "id": "get-chat-id-bot",
+      "name": "Get ChatId",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        240,
+        60
+      ]
+    }
+  ],
+  "connections": {
+    "Manual Trigger": {
+      "main": [
+        [
+          {
+            "node": "Get ChatId",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Fetch Test Brief from Sheets": {
+      "main": [
+        [
+          {
+            "node": "AI - Generate A/B Variations",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "AI - Generate A/B Variations": {
+      "main": [
+        [
+          {
+            "node": "Parse Variations",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Parse Variations": {
+      "main": [
+        [
+          {
+            "node": "DALL-E - Variation A Image",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "DALL-E - Variation B Image",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "DALL-E - Variation A Image": {
+      "main": [
+        [
+          {
+            "node": "Merge Variations",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "DALL-E - Variation B Image": {
+      "main": [
+        [
+          {
+            "node": "Merge Variations",
+            "type": "main",
+            "index": 1
+          }
+        ]
+      ]
+    },
+    "Merge Variations": {
+      "main": [
+        [
+          {
+            "node": "Send Test Preview to Telegram",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Send Test Preview to Telegram": {
+      "main": [
+        [
+          {
+            "node": "Log Test to Google Sheets",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Webhook Trigger (from Bot)": {
+      "main": [
+        [
+          {
+            "node": "Get ChatId",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Get ChatId": {
+      "main": [
+        [
+          {
+            "node": "Fetch Test Brief from Sheets",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "tags": [
+    {
+      "name": "analytics"
+    },
+    {
+      "name": "ab-testing"
+    }
+  ]
+}

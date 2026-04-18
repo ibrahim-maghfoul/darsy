@@ -1,0 +1,329 @@
+{
+  "name": "AI Personalized Lesson Recommendations",
+  "nodes": [
+    {
+      "parameters": {
+        "rule": {
+          "interval": [
+            {
+              "field": "hours",
+              "hoursInterval": 24,
+              "triggerAtHour": 10
+            }
+          ]
+        }
+      },
+      "id": "daily-trigger",
+      "name": "Daily 10AM",
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.2,
+      "position": [
+        0,
+        0
+      ]
+    },
+    {
+      "parameters": {
+        "query": "{ \"lastLogin\": { \"$gte\": \"{{ $now.minus(2, 'days').toISO() }}\" }, \"role\": \"user\" }",
+        "collection": "users",
+        "options": {
+          "limit": 100
+        }
+      },
+      "id": "get-active-users",
+      "name": "MongoDB - Active Users",
+      "type": "n8n-nodes-base.mongoDb",
+      "typeVersion": 1.1,
+      "position": [
+        220,
+        0
+      ],
+      "credentials": {
+        "mongoDb": {
+          "id": "MONGODB_CREDENTIAL_ID",
+          "name": "MongoDB"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "batchSize": 1,
+        "options": {}
+      },
+      "id": "loop-users",
+      "name": "Loop Over Users",
+      "type": "n8n-nodes-base.splitInBatches",
+      "typeVersion": 3,
+      "position": [
+        440,
+        0
+      ]
+    },
+    {
+      "parameters": {
+        "method": "GET",
+        "url": "=http://localhost:5000/api/progress/user/{{ $json._id }}",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "options": {}
+      },
+      "id": "fetch-progress",
+      "name": "Fetch User Progress",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        660,
+        0
+      ]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://api.openai.com/v1/chat/completions",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "openAiApi",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ JSON.stringify({ model: \"gpt-4o\", messages: [{\"role\":\"system\",\"content\":\"You are an educational recommendation engine for Darsy, a Moroccan educational platform targeting BAC and Brevet students in Morocco. Languages: Arabic (Darija + MSA) and French. Currency: MAD. School calendar: BAC in June, Brevet in May. Based on a student's progress data, recommend 3 lessons they should take next. Consider:\\n- Their current subjects and completed lessons\\n- Gaps in their learning path\\n- Popular lessons in their guidance track\\n- Difficulty progression\\n\\nOutput JSON:\\n{\\n  \\\"recommendations\\\": [\\n    { \\\"lessonTitle\\\": \\\"...\\\", \\\"reason\\\": \\\"short reason in user's language\\\", \\\"subjectArea\\\": \\\"...\\\" }\\n  ],\\n  \\\"email_subject\\\": \\\"personalized email subject line\\\",\\n  \\\"email_greeting\\\": \\\"personalized greeting in Arabic or French based on the user\\\",\\n  \\\"motivation_message\\\": \\\"1-line motivational message\\\"\\n}\"},{\"role\":\"user\",\"content\":\"Student: {{ $('Loop Over Users').first().json.displayName }}\\nLevel: {{ $('Loop Over Users').first().json.level }}\\nGuidance: {{ $('Loop Over Users').first().json.guidance }}\\nCompleted lessons: {{ JSON.stringify($json.completedLessons || []) }}\\nFavorites: {{ JSON.stringify($json.favorites || []) }}\\nTotal time: {{ $json.totalTime || 0 }} minutes\\nLast active: {{ $json.lastAccessed || 'unknown' }}\"}], temperature: 0.7, max_tokens: 1000 }) }}",
+        "options": {
+          "response": {
+            "response": {
+              "responseFormat": "json"
+            }
+          }
+        }
+      },
+      "id": "ai-recommend",
+      "name": "AI - Generate Recommendations",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        880,
+        0
+      ],
+      "credentials": {
+        "openAiApi": {
+          "id": "openai-api",
+          "name": "OpenAI account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "const response = $input.first().json.message.content;\nlet parsed;\ntry { parsed = JSON.parse(response); } catch(e) {\n  const m = response.match(/```(?:json)?\\s*([\\s\\S]*?)```/);\n  parsed = JSON.parse(m[1].trim());\n}\nconst user = $('Loop Over Users').first().json;\nreturn [{ json: { ...parsed, email: user.email, name: user.displayName } }];"
+      },
+      "id": "parse-recs",
+      "name": "Parse Recommendations",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1100,
+        0
+      ]
+    },
+    {
+      "parameters": {
+        "fromEmail": "noreply@darsy.app",
+        "toEmail": "={{ $json.email }}",
+        "subject": "={{ $json.email_subject }}",
+        "html": "=<h2>{{ $json.email_greeting }}</h2><p>{{ $json.motivation_message }}</p><h3>📚 Recommended for you:</h3><ol>{{ $json.recommendations.map(r => '<li><strong>' + r.lessonTitle + '</strong> (' + r.subjectArea + ')<br/><em>' + r.reason + '</em></li>').join('') }}</ol><p><a href='https://darsy.app/explore' style='padding:12px 25px;background:#4F46E5;color:white;border-radius:8px;text-decoration:none;'>Start Learning →</a></p>"
+      },
+      "id": "send-email",
+      "name": "Send Personalized Email",
+      "type": "n8n-nodes-base.emailSend",
+      "typeVersion": 2.1,
+      "position": [
+        1320,
+        0
+      ]
+    },
+    {
+      "parameters": {
+        "operation": "appendOrUpdate",
+        "documentId": {
+          "__rl": true,
+          "mode": "id",
+          "value": "={{ $env.CONTENT_SHEET_ID }}"
+        },
+        "sheetName": "Recommendations_Log",
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "date": "={{ $now.format('yyyy-MM-dd') }}",
+            "user": "={{ $json.name }}",
+            "email": "={{ $json.email }}",
+            "recommendations": "={{ $json.recommendations.map(r => r.lessonTitle).join(', ') }}"
+          }
+        },
+        "options": {}
+      },
+      "id": "log-sheets",
+      "name": "Log to Sheets",
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.5,
+      "position": [
+        1540,
+        0
+      ],
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "GEdm4SCZIB4132yL",
+          "name": "Google Sheets account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "run-recommendations",
+        "responseMode": "immediatelyAfterReceive",
+        "options": {}
+      },
+      "id": "webhook-trigger-bot",
+      "name": "Webhook Trigger (from Bot)",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2,
+      "position": [
+        0,
+        120
+      ],
+      "webhookId": "run-recommendations"
+    },
+    {
+      "parameters": {
+        "jsCode": "// Gets chatId from Telegram command center webhook, or falls back to env var\nconst fromWebhook = $input.first().json.body?.chatId;\nconst chatId = fromWebhook || $env.TELEGRAM_CHAT_ID;\nreturn [{ json: { chatId } }];"
+      },
+      "id": "get-chat-id-bot",
+      "name": "Get ChatId",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        240,
+        60
+      ]
+    }
+  ],
+  "connections": {
+    "Daily 10AM": {
+      "main": [
+        [
+          {
+            "node": "Get ChatId",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "MongoDB - Active Users": {
+      "main": [
+        [
+          {
+            "node": "Loop Over Users",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Loop Over Users": {
+      "main": [
+        [
+          {
+            "node": "Fetch User Progress",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Fetch User Progress": {
+      "main": [
+        [
+          {
+            "node": "AI - Generate Recommendations",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "AI - Generate Recommendations": {
+      "main": [
+        [
+          {
+            "node": "Parse Recommendations",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Parse Recommendations": {
+      "main": [
+        [
+          {
+            "node": "Send Personalized Email",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Send Personalized Email": {
+      "main": [
+        [
+          {
+            "node": "Log to Sheets",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Log to Sheets": {
+      "main": [
+        [
+          {
+            "node": "Loop Over Users",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Webhook Trigger (from Bot)": {
+      "main": [
+        [
+          {
+            "node": "Get ChatId",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Get ChatId": {
+      "main": [
+        [
+          {
+            "node": "MongoDB - Active Users",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "tags": [
+    {
+      "name": "engagement"
+    },
+    {
+      "name": "ai-recommendations"
+    }
+  ]
+}

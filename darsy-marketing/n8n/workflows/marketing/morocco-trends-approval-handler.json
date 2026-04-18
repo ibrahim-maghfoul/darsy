@@ -1,0 +1,252 @@
+{
+  "name": "Poster Approval Handler (Telegram Callback)",
+  "nodes": [
+    {
+      "parameters": {
+        "updates": ["callback_query"],
+        "additionalFields": {}
+      },
+      "id": "telegram-trigger",
+      "name": "Telegram Trigger - Button Click",
+      "type": "n8n-nodes-base.telegramTrigger",
+      "typeVersion": 1.1,
+      "position": [0, 0],
+      "webhookId": "poster-approval",
+      "credentials": {
+        "telegramApi": {
+          "id": "XKvv8ek8iXO8xWJT",
+          "name": "Telegram account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "const callbackData = $input.first().json.callback_query.data;\nconst messageId = $input.first().json.callback_query.message.message_id;\nconst chatId = $input.first().json.callback_query.message.chat.id;\nconst caption = $input.first().json.callback_query.message.caption || '';\n\nconst driveMatch = caption.match(/drive\\.google\\.com[^\\s]*/);\nconst driveLink = driveMatch ? 'https://' + driveMatch[0] : '';\n\nconst captionMatch = caption.match(/Caption for posting:\\*\\n([\\s\\S]*?)\\n\\n📁/);\nconst postCaption = captionMatch ? captionMatch[1].trim() : '';\n\nconst trendMatch = caption.match(/Trend:\\*\\s*(.+?)\\n/);\nconst trend = trendMatch ? trendMatch[1].trim() : '';\n\nreturn [{\n  json: {\n    action: callbackData,\n    messageId,\n    chatId,\n    driveLink,\n    postCaption,\n    trend,\n    fullCaption: caption\n  }\n}];"
+      },
+      "id": "parse-callback",
+      "name": "Parse Callback Data",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [240, 0]
+    },
+    {
+      "parameters": {
+        "rules": {
+          "values": [
+            {
+              "conditions": {
+                "conditions": [
+                  {
+                    "leftValue": "={{ $json.action }}",
+                    "rightValue": "approve",
+                    "operator": { "type": "string", "operation": "equals" }
+                  }
+                ]
+              },
+              "renameOutput": true,
+              "outputKey": "approve"
+            },
+            {
+              "conditions": {
+                "conditions": [
+                  {
+                    "leftValue": "={{ $json.action }}",
+                    "rightValue": "reject",
+                    "operator": { "type": "string", "operation": "equals" }
+                  }
+                ]
+              },
+              "renameOutput": true,
+              "outputKey": "reject"
+            },
+            {
+              "conditions": {
+                "conditions": [
+                  {
+                    "leftValue": "={{ $json.action }}",
+                    "rightValue": "regenerate",
+                    "operator": { "type": "string", "operation": "equals" }
+                  }
+                ]
+              },
+              "renameOutput": true,
+              "outputKey": "regenerate"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "switch-action",
+      "name": "Check Action",
+      "type": "n8n-nodes-base.switch",
+      "typeVersion": 3,
+      "position": [480, 0]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "=https://graph.facebook.com/v19.0/{{ $env.FB_PAGE_ID }}/photos",
+        "sendQuery": true,
+        "queryParameters": {
+          "parameters": [
+            { "name": "access_token", "value": "={{ $env.FB_PAGE_ACCESS_TOKEN }}" },
+            { "name": "url", "value": "={{ $json.driveLink }}" },
+            { "name": "message", "value": "={{ $json.postCaption }}" }
+          ]
+        },
+        "options": {}
+      },
+      "id": "post-facebook",
+      "name": "Post to Facebook",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [760, -200]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "=https://graph.facebook.com/v19.0/{{ $env.IG_BUSINESS_ACCOUNT_ID }}/media",
+        "sendQuery": true,
+        "queryParameters": {
+          "parameters": [
+            { "name": "access_token", "value": "={{ $env.FB_PAGE_ACCESS_TOKEN }}" },
+            { "name": "image_url", "value": "={{ $json.driveLink }}" },
+            { "name": "caption", "value": "={{ $json.postCaption }}" }
+          ]
+        },
+        "options": {}
+      },
+      "id": "post-instagram-create",
+      "name": "Instagram - Create Media",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [760, 0]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "=https://graph.facebook.com/v19.0/{{ $env.IG_BUSINESS_ACCOUNT_ID }}/media_publish",
+        "sendQuery": true,
+        "queryParameters": {
+          "parameters": [
+            { "name": "access_token", "value": "={{ $env.FB_PAGE_ACCESS_TOKEN }}" },
+            { "name": "creation_id", "value": "={{ $json.id }}" }
+          ]
+        },
+        "options": {}
+      },
+      "id": "post-instagram-publish",
+      "name": "Instagram - Publish",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [1000, 0]
+    },
+    {
+      "parameters": {
+        "operation": "sendMessage",
+        "chatId": "={{ $('Parse Callback Data').first().json.chatId }}",
+        "text": "=✅ *POSTER APPROVED & POSTED!*\n\n📊 Trend: {{ $('Parse Callback Data').first().json.trend }}\n\n📱 Posted to:\n• Facebook ✅\n• Instagram ✅\n\n📁 Google Drive: {{ $('Parse Callback Data').first().json.driveLink }}",
+        "additionalFields": { "parse_mode": "Markdown" }
+      },
+      "id": "confirm-posted",
+      "name": "Telegram - Confirm Posted",
+      "type": "n8n-nodes-base.telegram",
+      "typeVersion": 1.2,
+      "position": [1240, -100],
+      "credentials": {
+        "telegramApi": {
+          "id": "XKvv8ek8iXO8xWJT",
+          "name": "Telegram account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "sendMessage",
+        "chatId": "={{ $json.chatId }}",
+        "text": "❌ *Poster rejected.* It won't be posted. Run the main workflow again for a new poster.",
+        "additionalFields": { "parse_mode": "Markdown" }
+      },
+      "id": "notify-rejected",
+      "name": "Telegram - Rejected",
+      "type": "n8n-nodes-base.telegram",
+      "typeVersion": 1.2,
+      "position": [760, 200],
+      "credentials": {
+        "telegramApi": {
+          "id": "XKvv8ek8iXO8xWJT",
+          "name": "Telegram account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "={{ $env.N8N_WEBHOOK_URL }}/webhook/run-trends-poster",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={ \"chatId\": \"{{ $json.chatId }}\" }",
+        "options": {}
+      },
+      "id": "trigger-regenerate",
+      "name": "Trigger Regeneration",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [760, 400]
+    },
+    {
+      "parameters": {
+        "operation": "sendMessage",
+        "chatId": "={{ $('Parse Callback Data').first().json.chatId }}",
+        "text": "🔄 *Regenerating poster...* Give me a moment.",
+        "additionalFields": { "parse_mode": "Markdown" }
+      },
+      "id": "notify-regenerating",
+      "name": "Telegram - Regenerating",
+      "type": "n8n-nodes-base.telegram",
+      "typeVersion": 1.2,
+      "position": [1000, 400],
+      "credentials": {
+        "telegramApi": {
+          "id": "XKvv8ek8iXO8xWJT",
+          "name": "Telegram account"
+        }
+      }
+    }
+  ],
+  "connections": {
+    "Telegram Trigger - Button Click": {
+      "main": [[{ "node": "Parse Callback Data", "type": "main", "index": 0 }]]
+    },
+    "Parse Callback Data": {
+      "main": [[{ "node": "Check Action", "type": "main", "index": 0 }]]
+    },
+    "Check Action": {
+      "main": [
+        [
+          { "node": "Post to Facebook", "type": "main", "index": 0 },
+          { "node": "Instagram - Create Media", "type": "main", "index": 0 }
+        ],
+        [{ "node": "Telegram - Rejected", "type": "main", "index": 0 }],
+        [{ "node": "Trigger Regeneration", "type": "main", "index": 0 }]
+      ]
+    },
+    "Post to Facebook": {
+      "main": [[{ "node": "Telegram - Confirm Posted", "type": "main", "index": 0 }]]
+    },
+    "Instagram - Create Media": {
+      "main": [[{ "node": "Instagram - Publish", "type": "main", "index": 0 }]]
+    },
+    "Instagram - Publish": {
+      "main": [[{ "node": "Telegram - Confirm Posted", "type": "main", "index": 0 }]]
+    },
+    "Trigger Regeneration": {
+      "main": [[{ "node": "Telegram - Regenerating", "type": "main", "index": 0 }]]
+    }
+  },
+  "settings": { "executionOrder": "v1" },
+  "tags": [
+    { "name": "marketing" },
+    { "name": "approval-handler" }
+  ]
+}

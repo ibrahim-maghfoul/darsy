@@ -1,0 +1,410 @@
+@charset "UTF-8";
+
+/* === Container === */
+.fizzy_container {
+    position: relative;
+    display: inline-block;
+}
+
+/* === Green variant === */
+.fizzy_container.green .button_inner { background: #3aaa6a; }
+.fizzy_container.green .button_inner:hover { background: #2d8a54; }
+.fizzy_container.green .b_l_quad .button_spots { background: #ffffff; }
+
+/* === Disabled state === */
+.fizzy_container.disabled { opacity: 0.6; cursor: not-allowed; }
+.fizzy_container.disabled .button_inner {
+    background: #f5f5f5 !important;
+    color: #999 !important;
+    border: 2px dashed #3aaa6a44;
+    box-shadow: none !important;
+    cursor: not-allowed;
+}
+.fizzy_container.disabled .button_inner span.t,
+.fizzy_container.disabled .button_inner p,
+.fizzy_container.disabled .button_inner div { color: #999 !important; }
+.fizzy_container.disabled:hover .button_inner {
+    transform: none !important;
+    box-shadow: none !important;
+}
+
+/* === Hidden input === */
+.fizzy_container input { display: none; }
+
+/* === Checked state === */
+.fizzy_container input:checked + label .button_inner {
+    background: #3aaa6a !important;
+    transform: rotate(90deg);
+    width: 80px;
+    height: 80px;
+    border-radius: 100px;
+    box-shadow: 0px 0px 0px 0px rgba(0, 0, 0, 0);
+    animation: finalbox .4s 4s cubic-bezier(0.39, 2.01, 0.27, 0.75) forwards;
+}
+.fizzy_container input:checked + label .button_inner .content_wrapper {
+    opacity: 0;
+    transform: scale(0.5);
+    transition: all 0.3s;
+}
+.fizzy_container input:checked + label .tick {
+    transform: scale(1) rotate(-90deg);
+    opacity: 1;
+    animation: tick .3s 4.5s forwards;
+}
+.fizzy_container input:checked + label .button_spots { opacity: 1; }
+
+/* Checked state: spots fly out (nth-of-type 1–52) */
+.fizzy_container input:checked + label .button_spots:nth-of-type(1)  { top:11px !important; left:-34px !important; opacity:0; padding:4px !important; animation: spew 1s .3s forwards, rotate 4.1s .3s linear infinite, final .2s 4s forwards, spot-1  .7s 10.1s linear infinite !important; }
+.fizzy_container input:checked + label .button_spots:nth-of-type(2)  { top:12px !important; left:-34px !important; opacity:0; padding:5px !important; animation: spew 1s .3s forwards, rotate 4.2s .5s linear infinite, final .2s 4s forwards, spot-2  .7s 10.3s linear infinite !important; }
+.fizzy_container input:checked + label .button_spots:nth-of-type(3)  { top: 9px !important; left:-34px !important; opacity:0; padding:3px !important; animation: spew 1s .3s forwards, rotate 4.3s .7s linear infinite, final .2s 4s forwards, spot-3  .7s 10.2s linear infinite !important; }
+.fizzy_container input:checked + label .button_spots:nth-of-type(4)  { top:14px !important; left:-34px !important; opacity:0; padding:6px !important; animation: spew 1s .3s forwards, rotate 4.4s .9s linear infinite, final .2s 4s forwards, spot-4  .7s 10.5s linear infinite !important; }
+.fizzy_container input:checked + label .button_spots:nth-of-type(5)  { top: 8px !important; left:-34px !important; opacity:0; padding:4px !important; animation: spew 1s .3s forwards, rotate 4.1s .4s linear infinite, final .2s 4s forwards, spot-5  .7s 10.4s linear infinite !important; }
+.fizzy_container input:checked + label .button_spots:nth-of-type(6)  { top:13px !important; left:-34px !important; opacity:0; padding:5px !important; animation: spew 1s .3s forwards, rotate 4.2s .6s linear infinite, final .2s 4s forwards, spot-6  .7s 10.6s linear infinite !important; }
+.fizzy_container input:checked + label .button_spots:nth-of-type(7)  { top:10px !important; left:-34px !important; opacity:0; padding:3px !important; animation: spew 1s .3s forwards, rotate 4.3s .8s linear infinite, final .2s 4s forwards, spot-7  .7s 10.7s linear infinite !important; }
+.fizzy_container input:checked + label .button_spots:nth-of-type(8)  { top:15px !important; left:-34px !important; opacity:0; padding:4px !important; animation: spew 1s .3s forwards, rotate 4.4s .3s linear infinite, final .2s 4s forwards, spot-8  .7s 10.8s linear infinite !important; }
+.fizzy_container input:checked + label .button_spots:nth-of-type(9)  { top: 7px !important; left:-34px !important; opacity:0; padding:5px !important; animation: spew 1s .3s forwards, rotate 4.1s .5s linear infinite, final .2s 4s forwards, spot-9  .7s 10.9s linear infinite !important; }
+.fizzy_container input:checked + label .button_spots:nth-of-type(10) { top:11px !important; left:-34px !important; opacity:0; padding:3px !important; animation: spew 1s .3s forwards, rotate 4.2s .7s linear infinite, final .2s 4s forwards, spot-10 .7s 10.1s linear infinite !important; }
+.fizzy_container input:checked + label .button_spots:nth-of-type(11) { top:12px !important; left:-34px !important; opacity:0; padding:4px !important; animation: spew 1s .3s forwards, rotate 4.3s .9s linear infinite, final .2s 4s forwards, spot-11 .7s 10.3s linear infinite !important; }
+.fizzy_container input:checked + label .button_spots:nth-of-type(12) { top: 9px !important; left:-34px !important; opacity:0; padding:6px !important; animation: spew 1s .3s forwards, rotate 4.4s .4s linear infinite, final .2s 4s forwards, spot-12 .7s 10.2s linear infinite !important; }
+.fizzy_container input:checked + label .button_spots:nth-of-type(13) { top:14px !important; left:-34px !important; opacity:0; padding:4px !important; animation: spew 1s .3s forwards, rotate 4.1s .6s linear infinite, final .2s 4s forwards, spot-13 .7s 10.5s linear infinite !important; }
+.fizzy_container input:checked + label .button_spots:nth-of-type(14) { top: 8px !important; left:-34px !important; opacity:0; padding:5px !important; animation: spew 1s .3s forwards, rotate 4.2s .8s linear infinite, final .2s 4s forwards, spot-14 .7s 10.4s linear infinite !important; }
+.fizzy_container input:checked + label .button_spots:nth-of-type(15) { top:13px !important; left:-34px !important; opacity:0; padding:3px !important; animation: spew 1s .3s forwards, rotate 4.3s .3s linear infinite, final .2s 4s forwards, spot-15 .7s 10.6s linear infinite !important; }
+.fizzy_container input:checked + label .button_spots:nth-of-type(16) { top:10px !important; left:-34px !important; opacity:0; padding:4px !important; animation: spew 1s .3s forwards, rotate 4.4s .5s linear infinite, final .2s 4s forwards, spot-16 .7s 10.7s linear infinite !important; }
+.fizzy_container input:checked + label .button_spots:nth-of-type(17) { top:15px !important; left:-34px !important; opacity:0; padding:5px !important; animation: spew 1s .3s forwards, rotate 4.1s .7s linear infinite, final .2s 4s forwards, spot-17 .7s 10.8s linear infinite !important; }
+.fizzy_container input:checked + label .button_spots:nth-of-type(18) { top: 7px !important; left:-34px !important; opacity:0; padding:3px !important; animation: spew 1s .3s forwards, rotate 4.2s .9s linear infinite, final .2s 4s forwards, spot-18 .7s 10.9s linear infinite !important; }
+.fizzy_container input:checked + label .button_spots:nth-of-type(19) { top:11px !important; left:-34px !important; opacity:0; padding:4px !important; animation: spew 1s .3s forwards, rotate 4.3s .4s linear infinite, final .2s 4s forwards, spot-19 .7s 10.1s linear infinite !important; }
+.fizzy_container input:checked + label .button_spots:nth-of-type(20) { top:12px !important; left:-34px !important; opacity:0; padding:6px !important; animation: spew 1s .3s forwards, rotate 4.4s .6s linear infinite, final .2s 4s forwards, spot-20 .7s 10.3s linear infinite !important; }
+.fizzy_container input:checked + label .button_spots:nth-of-type(21) { top: 9px !important; left:-34px !important; opacity:0; padding:4px !important; animation: spew 1s .3s forwards, rotate 4.1s .8s linear infinite, final .2s 4s forwards, spot-21 .7s 10.2s linear infinite !important; }
+.fizzy_container input:checked + label .button_spots:nth-of-type(22) { top:14px !important; left:-34px !important; opacity:0; padding:5px !important; animation: spew 1s .3s forwards, rotate 4.2s .3s linear infinite, final .2s 4s forwards, spot-22 .7s 10.5s linear infinite !important; }
+.fizzy_container input:checked + label .button_spots:nth-of-type(23) { top: 8px !important; left:-34px !important; opacity:0; padding:3px !important; animation: spew 1s .3s forwards, rotate 4.3s .5s linear infinite, final .2s 4s forwards, spot-23 .7s 10.4s linear infinite !important; }
+.fizzy_container input:checked + label .button_spots:nth-of-type(24) { top:13px !important; left:-34px !important; opacity:0; padding:4px !important; animation: spew 1s .3s forwards, rotate 4.4s .7s linear infinite, final .2s 4s forwards, spot-24 .7s 10.6s linear infinite !important; }
+.fizzy_container input:checked + label .button_spots:nth-of-type(25) { top:10px !important; left:-34px !important; opacity:0; padding:5px !important; animation: spew 1s .3s forwards, rotate 4.1s .9s linear infinite, final .2s 4s forwards, spot-25 .7s 10.7s linear infinite !important; }
+.fizzy_container input:checked + label .button_spots:nth-of-type(26) { top:15px !important; left:-34px !important; opacity:0; padding:3px !important; animation: spew 1s .3s forwards, rotate 4.2s .4s linear infinite, final .2s 4s forwards, spot-26 .7s 10.8s linear infinite !important; }
+.fizzy_container input:checked + label .button_spots:nth-of-type(27) { top: 7px !important; left:-34px !important; opacity:0; padding:4px !important; animation: spew 1s .3s forwards, rotate 4.3s .6s linear infinite, final .2s 4s forwards, spot-27 .7s 10.9s linear infinite !important; }
+.fizzy_container input:checked + label .button_spots:nth-of-type(28) { top:11px !important; left:-34px !important; opacity:0; padding:6px !important; animation: spew 1s .3s forwards, rotate 4.4s .8s linear infinite, final .2s 4s forwards, spot-28 .7s 10.1s linear infinite !important; }
+.fizzy_container input:checked + label .button_spots:nth-of-type(29) { top:12px !important; left:-34px !important; opacity:0; padding:5px !important; animation: spew 1s .3s forwards, rotate 4.1s .3s linear infinite, final .2s 4s forwards, spot-29 .7s 10.3s linear infinite !important; }
+.fizzy_container input:checked + label .button_spots:nth-of-type(30) { top: 9px !important; left:-34px !important; opacity:0; padding:3px !important; animation: spew 1s .3s forwards, rotate 4.2s .5s linear infinite, final .2s 4s forwards, spot-30 .7s 10.2s linear infinite !important; }
+.fizzy_container input:checked + label .button_spots:nth-of-type(31) { top:14px !important; left:-34px !important; opacity:0; padding:4px !important; animation: spew 1s .3s forwards, rotate 4.3s .7s linear infinite, final .2s 4s forwards, spot-31 .7s 10.5s linear infinite !important; }
+.fizzy_container input:checked + label .button_spots:nth-of-type(32) { top: 8px !important; left:-34px !important; opacity:0; padding:5px !important; animation: spew 1s .3s forwards, rotate 4.4s .9s linear infinite, final .2s 4s forwards, spot-32 .7s 10.4s linear infinite !important; }
+.fizzy_container input:checked + label .button_spots:nth-of-type(33) { top:13px !important; left:-34px !important; opacity:0; padding:3px !important; animation: spew 1s .3s forwards, rotate 4.1s .4s linear infinite, final .2s 4s forwards, spot-33 .7s 10.6s linear infinite !important; }
+.fizzy_container input:checked + label .button_spots:nth-of-type(34) { top:10px !important; left:-34px !important; opacity:0; padding:4px !important; animation: spew 1s .3s forwards, rotate 4.2s .6s linear infinite, final .2s 4s forwards, spot-34 .7s 10.7s linear infinite !important; }
+.fizzy_container input:checked + label .button_spots:nth-of-type(35) { top:15px !important; left:-34px !important; opacity:0; padding:5px !important; animation: spew 1s .3s forwards, rotate 4.3s .8s linear infinite, final .2s 4s forwards, spot-35 .7s 10.8s linear infinite !important; }
+.fizzy_container input:checked + label .button_spots:nth-of-type(36) { top: 7px !important; left:-34px !important; opacity:0; padding:3px !important; animation: spew 1s .3s forwards, rotate 4.4s .3s linear infinite, final .2s 4s forwards, spot-36 .7s 10.9s linear infinite !important; }
+.fizzy_container input:checked + label .button_spots:nth-of-type(37) { top:11px !important; left:-34px !important; opacity:0; padding:4px !important; animation: spew 1s .3s forwards, rotate 4.1s .5s linear infinite, final .2s 4s forwards, spot-37 .7s 10.1s linear infinite !important; }
+.fizzy_container input:checked + label .button_spots:nth-of-type(38) { top:12px !important; left:-34px !important; opacity:0; padding:6px !important; animation: spew 1s .3s forwards, rotate 4.2s .7s linear infinite, final .2s 4s forwards, spot-38 .7s 10.3s linear infinite !important; }
+.fizzy_container input:checked + label .button_spots:nth-of-type(39) { top: 9px !important; left:-34px !important; opacity:0; padding:4px !important; animation: spew 1s .3s forwards, rotate 4.3s .9s linear infinite, final .2s 4s forwards, spot-39 .7s 10.2s linear infinite !important; }
+.fizzy_container input:checked + label .button_spots:nth-of-type(40) { top:14px !important; left:-34px !important; opacity:0; padding:5px !important; animation: spew 1s .3s forwards, rotate 4.4s .4s linear infinite, final .2s 4s forwards, spot-40 .7s 10.5s linear infinite !important; }
+.fizzy_container input:checked + label .button_spots:nth-of-type(41) { top: 8px !important; left:-34px !important; opacity:0; padding:3px !important; animation: spew 1s .3s forwards, rotate 4.1s .6s linear infinite, final .2s 4s forwards, spot-41 .7s 10.4s linear infinite !important; }
+.fizzy_container input:checked + label .button_spots:nth-of-type(42) { top:13px !important; left:-34px !important; opacity:0; padding:4px !important; animation: spew 1s .3s forwards, rotate 4.2s .8s linear infinite, final .2s 4s forwards, spot-42 .7s 10.6s linear infinite !important; }
+.fizzy_container input:checked + label .button_spots:nth-of-type(43) { top:10px !important; left:-34px !important; opacity:0; padding:5px !important; animation: spew 1s .3s forwards, rotate 4.3s .3s linear infinite, final .2s 4s forwards, spot-43 .7s 10.7s linear infinite !important; }
+.fizzy_container input:checked + label .button_spots:nth-of-type(44) { top:15px !important; left:-34px !important; opacity:0; padding:3px !important; animation: spew 1s .3s forwards, rotate 4.4s .5s linear infinite, final .2s 4s forwards, spot-44 .7s 10.8s linear infinite !important; }
+.fizzy_container input:checked + label .button_spots:nth-of-type(45) { top: 7px !important; left:-34px !important; opacity:0; padding:4px !important; animation: spew 1s .3s forwards, rotate 4.1s .7s linear infinite, final .2s 4s forwards, spot-45 .7s 10.9s linear infinite !important; }
+.fizzy_container input:checked + label .button_spots:nth-of-type(46) { top:11px !important; left:-34px !important; opacity:0; padding:6px !important; animation: spew 1s .3s forwards, rotate 4.2s .9s linear infinite, final .2s 4s forwards, spot-46 .7s 10.1s linear infinite !important; }
+.fizzy_container input:checked + label .button_spots:nth-of-type(47) { top:12px !important; left:-34px !important; opacity:0; padding:4px !important; animation: spew 1s .3s forwards, rotate 4.3s .4s linear infinite, final .2s 4s forwards, spot-47 .7s 10.3s linear infinite !important; }
+.fizzy_container input:checked + label .button_spots:nth-of-type(48) { top: 9px !important; left:-34px !important; opacity:0; padding:5px !important; animation: spew 1s .3s forwards, rotate 4.4s .6s linear infinite, final .2s 4s forwards, spot-48 .7s 10.2s linear infinite !important; }
+.fizzy_container input:checked + label .button_spots:nth-of-type(49) { top:14px !important; left:-34px !important; opacity:0; padding:3px !important; animation: spew 1s .3s forwards, rotate 4.1s .8s linear infinite, final .2s 4s forwards, spot-49 .7s 10.5s linear infinite !important; }
+.fizzy_container input:checked + label .button_spots:nth-of-type(50) { top: 8px !important; left:-34px !important; opacity:0; padding:4px !important; animation: spew 1s .3s forwards, rotate 4.2s .3s linear infinite, final .2s 4s forwards, spot-50 .7s 10.4s linear infinite !important; }
+.fizzy_container input:checked + label .button_spots:nth-of-type(51) { top:13px !important; left:-34px !important; opacity:0; padding:5px !important; animation: spew 1s .3s forwards, rotate 4.3s .5s linear infinite, final .2s 4s forwards, spot-51 .7s 10.6s linear infinite !important; }
+.fizzy_container input:checked + label .button_spots:nth-of-type(52) { top:10px !important; left:-34px !important; opacity:0; padding:3px !important; animation: spew 1s .3s forwards, rotate 4.4s .7s linear infinite, final .2s 4s forwards, spot-52 .7s 10.7s linear infinite !important; }
+
+/* === Button inner === */
+.button_inner {
+    border-radius: 22px;
+    position: relative;
+    width: 320px;
+    height: 76px;
+    background: #111;
+    box-shadow: 0px 8px 32px rgba(0, 0, 0, 0.2);
+    font-weight: 100;
+    cursor: pointer;
+    border: 2px solid transparent;
+    color: white;
+    transition: all .3s, box-shadow .2s, transform .2s .2s;
+    display: flex;
+    align-items: center;
+    justify-content: flex-start;
+    padding: 0 32px;
+    overflow: visible;
+}
+.button_inner .content_wrapper {
+    display: flex;
+    align-items: center;
+    gap: 20px;
+    width: 100%;
+    transition: all 0.3s;
+}
+.button_inner:hover {
+    background: #1a1a1a;
+    box-shadow: 0px 16px 48px rgba(0, 0, 0, 0.28);
+}
+.button_inner:hover .content_wrapper { transform: translateX(8px); }
+
+/* Hover spot animations (nth-of-type 1–52) */
+.button_inner:hover .button_spots:nth-of-type(1)  { animation: spot-1  .7s 0.1s linear infinite; }
+.button_inner:hover .button_spots:nth-of-type(2)  { animation: spot-2  .7s 0.2s linear infinite; }
+.button_inner:hover .button_spots:nth-of-type(3)  { animation: spot-3  .7s 0.3s linear infinite; }
+.button_inner:hover .button_spots:nth-of-type(4)  { animation: spot-4  .7s 0.4s linear infinite; }
+.button_inner:hover .button_spots:nth-of-type(5)  { animation: spot-5  .7s 0.5s linear infinite; }
+.button_inner:hover .button_spots:nth-of-type(6)  { animation: spot-6  .7s 0.6s linear infinite; }
+.button_inner:hover .button_spots:nth-of-type(7)  { animation: spot-7  .7s 0.7s linear infinite; }
+.button_inner:hover .button_spots:nth-of-type(8)  { animation: spot-8  .7s 0.8s linear infinite; }
+.button_inner:hover .button_spots:nth-of-type(9)  { animation: spot-9  .7s 0.9s linear infinite; }
+.button_inner:hover .button_spots:nth-of-type(10) { animation: spot-10 .7s 1.0s linear infinite; }
+.button_inner:hover .button_spots:nth-of-type(11) { animation: spot-11 .7s 0.1s linear infinite; }
+.button_inner:hover .button_spots:nth-of-type(12) { animation: spot-12 .7s 0.2s linear infinite; }
+.button_inner:hover .button_spots:nth-of-type(13) { animation: spot-13 .7s 0.3s linear infinite; }
+.button_inner:hover .button_spots:nth-of-type(14) { animation: spot-14 .7s 0.4s linear infinite; }
+.button_inner:hover .button_spots:nth-of-type(15) { animation: spot-15 .7s 0.5s linear infinite; }
+.button_inner:hover .button_spots:nth-of-type(16) { animation: spot-16 .7s 0.6s linear infinite; }
+.button_inner:hover .button_spots:nth-of-type(17) { animation: spot-17 .7s 0.7s linear infinite; }
+.button_inner:hover .button_spots:nth-of-type(18) { animation: spot-18 .7s 0.8s linear infinite; }
+.button_inner:hover .button_spots:nth-of-type(19) { animation: spot-19 .7s 0.9s linear infinite; }
+.button_inner:hover .button_spots:nth-of-type(20) { animation: spot-20 .7s 1.0s linear infinite; }
+.button_inner:hover .button_spots:nth-of-type(21) { animation: spot-21 .7s 0.1s linear infinite; }
+.button_inner:hover .button_spots:nth-of-type(22) { animation: spot-22 .7s 0.2s linear infinite; }
+.button_inner:hover .button_spots:nth-of-type(23) { animation: spot-23 .7s 0.3s linear infinite; }
+.button_inner:hover .button_spots:nth-of-type(24) { animation: spot-24 .7s 0.4s linear infinite; }
+.button_inner:hover .button_spots:nth-of-type(25) { animation: spot-25 .7s 0.5s linear infinite; }
+.button_inner:hover .button_spots:nth-of-type(26) { animation: spot-26 .7s 0.6s linear infinite; }
+.button_inner:hover .button_spots:nth-of-type(27) { animation: spot-27 .7s 0.7s linear infinite; }
+.button_inner:hover .button_spots:nth-of-type(28) { animation: spot-28 .7s 0.8s linear infinite; }
+.button_inner:hover .button_spots:nth-of-type(29) { animation: spot-29 .7s 0.9s linear infinite; }
+.button_inner:hover .button_spots:nth-of-type(30) { animation: spot-30 .7s 1.0s linear infinite; }
+.button_inner:hover .button_spots:nth-of-type(31) { animation: spot-31 .7s 0.1s linear infinite; }
+.button_inner:hover .button_spots:nth-of-type(32) { animation: spot-32 .7s 0.2s linear infinite; }
+.button_inner:hover .button_spots:nth-of-type(33) { animation: spot-33 .7s 0.3s linear infinite; }
+.button_inner:hover .button_spots:nth-of-type(34) { animation: spot-34 .7s 0.4s linear infinite; }
+.button_inner:hover .button_spots:nth-of-type(35) { animation: spot-35 .7s 0.5s linear infinite; }
+.button_inner:hover .button_spots:nth-of-type(36) { animation: spot-36 .7s 0.6s linear infinite; }
+.button_inner:hover .button_spots:nth-of-type(37) { animation: spot-37 .7s 0.7s linear infinite; }
+.button_inner:hover .button_spots:nth-of-type(38) { animation: spot-38 .7s 0.8s linear infinite; }
+.button_inner:hover .button_spots:nth-of-type(39) { animation: spot-39 .7s 0.9s linear infinite; }
+.button_inner:hover .button_spots:nth-of-type(40) { animation: spot-40 .7s 1.0s linear infinite; }
+.button_inner:hover .button_spots:nth-of-type(41) { animation: spot-41 .7s 0.1s linear infinite; }
+.button_inner:hover .button_spots:nth-of-type(42) { animation: spot-42 .7s 0.2s linear infinite; }
+.button_inner:hover .button_spots:nth-of-type(43) { animation: spot-43 .7s 0.3s linear infinite; }
+.button_inner:hover .button_spots:nth-of-type(44) { animation: spot-44 .7s 0.4s linear infinite; }
+.button_inner:hover .button_spots:nth-of-type(45) { animation: spot-45 .7s 0.5s linear infinite; }
+.button_inner:hover .button_spots:nth-of-type(46) { animation: spot-46 .7s 0.6s linear infinite; }
+.button_inner:hover .button_spots:nth-of-type(47) { animation: spot-47 .7s 0.7s linear infinite; }
+.button_inner:hover .button_spots:nth-of-type(48) { animation: spot-48 .7s 0.8s linear infinite; }
+.button_inner:hover .button_spots:nth-of-type(49) { animation: spot-49 .7s 0.9s linear infinite; }
+.button_inner:hover .button_spots:nth-of-type(50) { animation: spot-50 .7s 1.0s linear infinite; }
+.button_inner:hover .button_spots:nth-of-type(51) { animation: spot-51 .7s 0.1s linear infinite; }
+.button_inner:hover .button_spots:nth-of-type(52) { animation: spot-52 .7s 0.2s linear infinite; }
+
+/* === Tick === */
+.tick {
+    position: absolute;
+    left: 0; right: 0; bottom: 0; top: 0;
+    margin: auto;
+    width: 24px;
+    height: 24px;
+    transform: scale(0);
+    opacity: 0;
+    color: white;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.3s;
+    pointer-events: none;
+    z-index: 10;
+}
+
+/* === Spots container === */
+.b_l_quad {
+    position: absolute;
+    top: 0; left: 0;
+    width: 100%;
+    height: 100%;
+    pointer-events: none;
+}
+.b_l_quad .button_spots {
+    position: absolute;
+    border-radius: 100px;
+    background: #3aaa6a;
+    opacity: 0;
+}
+
+/* Spots: nth-child positions (rows of dots around the button) */
+.b_l_quad .button_spots:nth-child(1)  { padding:4px; left:-13px; top:70px; }
+.b_l_quad .button_spots:nth-child(2)  { padding:4px; left: -1px; top:70px; }
+.b_l_quad .button_spots:nth-child(3)  { padding:4px; left: 11px; top:70px; }
+.b_l_quad .button_spots:nth-child(4)  { padding:3px; left: 23px; top:70px; }
+.b_l_quad .button_spots:nth-child(5)  { padding:4px; left: 35px; top:70px; }
+.b_l_quad .button_spots:nth-child(6)  { padding:5px; left: 47px; top:70px; }
+.b_l_quad .button_spots:nth-child(7)  { padding:3px; left: 59px; top:70px; }
+.b_l_quad .button_spots:nth-child(8)  { padding:4px; left: 71px; top:70px; }
+.b_l_quad .button_spots:nth-child(9)  { padding:5px; left: 83px; top:70px; }
+.b_l_quad .button_spots:nth-child(10) { padding:3px; left: 95px; top:70px; }
+.b_l_quad .button_spots:nth-child(11) { padding:4px; left:107px; top:70px; }
+.b_l_quad .button_spots:nth-child(12) { padding:5px; left:119px; top:70px; }
+.b_l_quad .button_spots:nth-child(13) { padding:3px; left:131px; top:70px; }
+.b_l_quad .button_spots:nth-child(14) { padding:4px; left:143px; top:70px; }
+.b_l_quad .button_spots:nth-child(15) { padding:5px; left:155px; top:70px; }
+.b_l_quad .button_spots:nth-child(16) { padding:3px; left:167px; top:70px; }
+.b_l_quad .button_spots:nth-child(17) { padding:4px; left:179px; top:70px; }
+.b_l_quad .button_spots:nth-child(18) { padding:5px; left:191px; top:70px; }
+.b_l_quad .button_spots:nth-child(19) { padding:3px; left:203px; top:70px; }
+.b_l_quad .button_spots:nth-child(20) { padding:4px; left: -5px; top:-12px; }
+.b_l_quad .button_spots:nth-child(21) { padding:3px; left:  7px; top:-12px; }
+.b_l_quad .button_spots:nth-child(22) { padding:4px; left: 19px; top:-12px; }
+.b_l_quad .button_spots:nth-child(23) { padding:5px; left: 31px; top:-12px; }
+.b_l_quad .button_spots:nth-child(24) { padding:3px; left: 43px; top:-12px; }
+.b_l_quad .button_spots:nth-child(25) { padding:4px; left: 55px; top:-12px; }
+.b_l_quad .button_spots:nth-child(26) { padding:5px; left: 67px; top:-12px; }
+.b_l_quad .button_spots:nth-child(27) { padding:3px; left: 79px; top:-12px; }
+.b_l_quad .button_spots:nth-child(28) { padding:4px; left: 91px; top:-12px; }
+.b_l_quad .button_spots:nth-child(29) { padding:5px; left:103px; top:-12px; }
+.b_l_quad .button_spots:nth-child(30) { padding:3px; left:115px; top:-12px; }
+.b_l_quad .button_spots:nth-child(31) { padding:4px; left:127px; top:-12px; }
+.b_l_quad .button_spots:nth-child(32) { padding:5px; left:139px; top:-12px; }
+.b_l_quad .button_spots:nth-child(33) { padding:3px; left:151px; top:-12px; }
+.b_l_quad .button_spots:nth-child(34) { padding:4px; left:163px; top:-12px; }
+.b_l_quad .button_spots:nth-child(35) { padding:5px; left:175px; top:-12px; }
+.b_l_quad .button_spots:nth-child(36) { padding:3px; left:187px; top:-12px; }
+.b_l_quad .button_spots:nth-child(37) { padding:4px; left:199px; top:-12px; }
+.b_l_quad .button_spots:nth-child(38) { padding:5px; left:211px; top:-12px; }
+.b_l_quad .button_spots:nth-child(39) { padding:3px; left:223px; top:-12px; }
+.b_l_quad .button_spots:nth-child(40) { padding:4px; left:310px; top: -8px; }
+.b_l_quad .button_spots:nth-child(41) { padding:3px; left:310px; top:  4px; }
+.b_l_quad .button_spots:nth-child(42) { padding:5px; left:310px; top: 16px; }
+.b_l_quad .button_spots:nth-child(43) { padding:4px; left:310px; top: 28px; }
+.b_l_quad .button_spots:nth-child(44) { padding:3px; left:310px; top: 40px; }
+.b_l_quad .button_spots:nth-child(45) { padding:4px; left:310px; top: 52px; }
+.b_l_quad .button_spots:nth-child(46) { padding:4px; left:-10px; top:-16px; }
+.b_l_quad .button_spots:nth-child(47) { padding:3px; left:-10px; top: -4px; }
+.b_l_quad .button_spots:nth-child(48) { padding:5px; left:-10px; top:  8px; }
+.b_l_quad .button_spots:nth-child(49) { padding:4px; left:-10px; top: 20px; }
+.b_l_quad .button_spots:nth-child(50) { padding:3px; left:-10px; top: 32px; }
+.b_l_quad .button_spots:nth-child(51) { padding:4px; left:-10px; top: 44px; }
+.b_l_quad .button_spots:nth-child(52) { padding:5px; left:-10px; top: 56px; }
+
+/* Spots: nth-of-type color/origin/transition */
+.b_l_quad .button_spots:nth-of-type(1)  { transform-origin: 85px 15px; background: hsl(141,65%,52%); box-shadow: 0 0 10px rgba(58,170,106,0.2); transition: all 1.1s; }
+.b_l_quad .button_spots:nth-of-type(2)  { transform-origin: 82px 18px; background: hsl(153,72%,55%); box-shadow: 0 0 10px rgba(58,170,106,0.2); transition: all 1.3s; }
+.b_l_quad .button_spots:nth-of-type(3)  { transform-origin: 87px 12px; background: hsl(159,68%,50%); box-shadow: 0 0 10px rgba(58,170,106,0.2); transition: all 1.5s; }
+.b_l_quad .button_spots:nth-of-type(4)  { transform-origin: 83px 16px; background: hsl(146,78%,54%); box-shadow: 0 0 10px rgba(58,170,106,0.2); transition: all 1.7s; }
+.b_l_quad .button_spots:nth-of-type(5)  { transform-origin: 88px 14px; background: hsl(165,70%,53%); box-shadow: 0 0 10px rgba(58,170,106,0.2); transition: all 1.9s; }
+.b_l_quad .button_spots:nth-of-type(6)  { transform-origin: 85px 15px; background: hsl(141,65%,52%); box-shadow: 0 0 10px rgba(58,170,106,0.2); transition: all 1.1s; }
+.b_l_quad .button_spots:nth-of-type(7)  { transform-origin: 82px 18px; background: hsl(153,72%,55%); box-shadow: 0 0 10px rgba(58,170,106,0.2); transition: all 1.3s; }
+.b_l_quad .button_spots:nth-of-type(8)  { transform-origin: 87px 12px; background: hsl(159,68%,50%); box-shadow: 0 0 10px rgba(58,170,106,0.2); transition: all 1.5s; }
+.b_l_quad .button_spots:nth-of-type(9)  { transform-origin: 83px 16px; background: hsl(146,78%,54%); box-shadow: 0 0 10px rgba(58,170,106,0.2); transition: all 1.7s; }
+.b_l_quad .button_spots:nth-of-type(10) { transform-origin: 88px 14px; background: hsl(165,70%,53%); box-shadow: 0 0 10px rgba(58,170,106,0.2); transition: all 1.9s; }
+.b_l_quad .button_spots:nth-of-type(11) { transform-origin: 85px 15px; background: hsl(141,65%,52%); box-shadow: 0 0 10px rgba(58,170,106,0.2); transition: all 1.1s; }
+.b_l_quad .button_spots:nth-of-type(12) { transform-origin: 82px 18px; background: hsl(153,72%,55%); box-shadow: 0 0 10px rgba(58,170,106,0.2); transition: all 1.3s; }
+.b_l_quad .button_spots:nth-of-type(13) { transform-origin: 87px 12px; background: hsl(159,68%,50%); box-shadow: 0 0 10px rgba(58,170,106,0.2); transition: all 1.5s; }
+.b_l_quad .button_spots:nth-of-type(14) { transform-origin: 83px 16px; background: hsl(146,78%,54%); box-shadow: 0 0 10px rgba(58,170,106,0.2); transition: all 1.7s; }
+.b_l_quad .button_spots:nth-of-type(15) { transform-origin: 88px 14px; background: hsl(165,70%,53%); box-shadow: 0 0 10px rgba(58,170,106,0.2); transition: all 1.9s; }
+.b_l_quad .button_spots:nth-of-type(16) { transform-origin: 85px 15px; background: hsl(141,65%,52%); box-shadow: 0 0 10px rgba(58,170,106,0.2); transition: all 1.1s; }
+.b_l_quad .button_spots:nth-of-type(17) { transform-origin: 82px 18px; background: hsl(153,72%,55%); box-shadow: 0 0 10px rgba(58,170,106,0.2); transition: all 1.3s; }
+.b_l_quad .button_spots:nth-of-type(18) { transform-origin: 87px 12px; background: hsl(159,68%,50%); box-shadow: 0 0 10px rgba(58,170,106,0.2); transition: all 1.5s; }
+.b_l_quad .button_spots:nth-of-type(19) { transform-origin: 83px 16px; background: hsl(146,78%,54%); box-shadow: 0 0 10px rgba(58,170,106,0.2); transition: all 1.7s; }
+.b_l_quad .button_spots:nth-of-type(20) { transform-origin: 88px 14px; background: hsl(165,70%,53%); box-shadow: 0 0 10px rgba(58,170,106,0.2); transition: all 1.9s; }
+.b_l_quad .button_spots:nth-of-type(21) { transform-origin: 85px 15px; background: hsl(141,65%,52%); box-shadow: 0 0 10px rgba(58,170,106,0.2); transition: all 1.1s; }
+.b_l_quad .button_spots:nth-of-type(22) { transform-origin: 82px 18px; background: hsl(153,72%,55%); box-shadow: 0 0 10px rgba(58,170,106,0.2); transition: all 1.3s; }
+.b_l_quad .button_spots:nth-of-type(23) { transform-origin: 87px 12px; background: hsl(159,68%,50%); box-shadow: 0 0 10px rgba(58,170,106,0.2); transition: all 1.5s; }
+.b_l_quad .button_spots:nth-of-type(24) { transform-origin: 83px 16px; background: hsl(146,78%,54%); box-shadow: 0 0 10px rgba(58,170,106,0.2); transition: all 1.7s; }
+.b_l_quad .button_spots:nth-of-type(25) { transform-origin: 88px 14px; background: hsl(165,70%,53%); box-shadow: 0 0 10px rgba(58,170,106,0.2); transition: all 1.9s; }
+.b_l_quad .button_spots:nth-of-type(26) { transform-origin: 85px 15px; background: hsl(141,65%,52%); box-shadow: 0 0 10px rgba(58,170,106,0.2); transition: all 1.1s; }
+.b_l_quad .button_spots:nth-of-type(27) { transform-origin: 82px 18px; background: hsl(153,72%,55%); box-shadow: 0 0 10px rgba(58,170,106,0.2); transition: all 1.3s; }
+.b_l_quad .button_spots:nth-of-type(28) { transform-origin: 87px 12px; background: hsl(159,68%,50%); box-shadow: 0 0 10px rgba(58,170,106,0.2); transition: all 1.5s; }
+.b_l_quad .button_spots:nth-of-type(29) { transform-origin: 83px 16px; background: hsl(146,78%,54%); box-shadow: 0 0 10px rgba(58,170,106,0.2); transition: all 1.7s; }
+.b_l_quad .button_spots:nth-of-type(30) { transform-origin: 88px 14px; background: hsl(165,70%,53%); box-shadow: 0 0 10px rgba(58,170,106,0.2); transition: all 1.9s; }
+.b_l_quad .button_spots:nth-of-type(31) { transform-origin: 85px 15px; background: hsl(141,65%,52%); box-shadow: 0 0 10px rgba(58,170,106,0.2); transition: all 1.1s; }
+.b_l_quad .button_spots:nth-of-type(32) { transform-origin: 82px 18px; background: hsl(153,72%,55%); box-shadow: 0 0 10px rgba(58,170,106,0.2); transition: all 1.3s; }
+.b_l_quad .button_spots:nth-of-type(33) { transform-origin: 87px 12px; background: hsl(159,68%,50%); box-shadow: 0 0 10px rgba(58,170,106,0.2); transition: all 1.5s; }
+.b_l_quad .button_spots:nth-of-type(34) { transform-origin: 83px 16px; background: hsl(146,78%,54%); box-shadow: 0 0 10px rgba(58,170,106,0.2); transition: all 1.7s; }
+.b_l_quad .button_spots:nth-of-type(35) { transform-origin: 88px 14px; background: hsl(165,70%,53%); box-shadow: 0 0 10px rgba(58,170,106,0.2); transition: all 1.9s; }
+.b_l_quad .button_spots:nth-of-type(36) { transform-origin: 85px 15px; background: hsl(141,65%,52%); box-shadow: 0 0 10px rgba(58,170,106,0.2); transition: all 1.1s; }
+.b_l_quad .button_spots:nth-of-type(37) { transform-origin: 82px 18px; background: hsl(153,72%,55%); box-shadow: 0 0 10px rgba(58,170,106,0.2); transition: all 1.3s; }
+.b_l_quad .button_spots:nth-of-type(38) { transform-origin: 87px 12px; background: hsl(159,68%,50%); box-shadow: 0 0 10px rgba(58,170,106,0.2); transition: all 1.5s; }
+.b_l_quad .button_spots:nth-of-type(39) { transform-origin: 83px 16px; background: hsl(146,78%,54%); box-shadow: 0 0 10px rgba(58,170,106,0.2); transition: all 1.7s; }
+.b_l_quad .button_spots:nth-of-type(40) { transform-origin: 88px 14px; background: hsl(165,70%,53%); box-shadow: 0 0 10px rgba(58,170,106,0.2); transition: all 1.9s; }
+.b_l_quad .button_spots:nth-of-type(41) { transform-origin: 85px 15px; background: hsl(141,65%,52%); box-shadow: 0 0 10px rgba(58,170,106,0.2); transition: all 1.1s; }
+.b_l_quad .button_spots:nth-of-type(42) { transform-origin: 82px 18px; background: hsl(153,72%,55%); box-shadow: 0 0 10px rgba(58,170,106,0.2); transition: all 1.3s; }
+.b_l_quad .button_spots:nth-of-type(43) { transform-origin: 87px 12px; background: hsl(159,68%,50%); box-shadow: 0 0 10px rgba(58,170,106,0.2); transition: all 1.5s; }
+.b_l_quad .button_spots:nth-of-type(44) { transform-origin: 83px 16px; background: hsl(146,78%,54%); box-shadow: 0 0 10px rgba(58,170,106,0.2); transition: all 1.7s; }
+.b_l_quad .button_spots:nth-of-type(45) { transform-origin: 88px 14px; background: hsl(165,70%,53%); box-shadow: 0 0 10px rgba(58,170,106,0.2); transition: all 1.9s; }
+.b_l_quad .button_spots:nth-of-type(46) { transform-origin: 85px 15px; background: hsl(141,65%,52%); box-shadow: 0 0 10px rgba(58,170,106,0.2); transition: all 1.1s; }
+.b_l_quad .button_spots:nth-of-type(47) { transform-origin: 82px 18px; background: hsl(153,72%,55%); box-shadow: 0 0 10px rgba(58,170,106,0.2); transition: all 1.3s; }
+.b_l_quad .button_spots:nth-of-type(48) { transform-origin: 87px 12px; background: hsl(159,68%,50%); box-shadow: 0 0 10px rgba(58,170,106,0.2); transition: all 1.5s; }
+.b_l_quad .button_spots:nth-of-type(49) { transform-origin: 83px 16px; background: hsl(146,78%,54%); box-shadow: 0 0 10px rgba(58,170,106,0.2); transition: all 1.7s; }
+.b_l_quad .button_spots:nth-of-type(50) { transform-origin: 88px 14px; background: hsl(165,70%,53%); box-shadow: 0 0 10px rgba(58,170,106,0.2); transition: all 1.9s; }
+.b_l_quad .button_spots:nth-of-type(51) { transform-origin: 85px 15px; background: hsl(141,65%,52%); box-shadow: 0 0 10px rgba(58,170,106,0.2); transition: all 1.1s; }
+.b_l_quad .button_spots:nth-of-type(52) { transform-origin: 82px 18px; background: hsl(153,72%,55%); box-shadow: 0 0 10px rgba(58,170,106,0.2); transition: all 1.3s; }
+
+/* === Keyframes: spot trajectories === */
+@keyframes spot-1  { from { opacity: 0; } to { transform: translateY(30px) translateX(-18px); opacity: .6; } }
+@keyframes spot-2  { from { opacity: 0; } to { transform: translateY(30px) translateX(-16px); opacity: .6; } }
+@keyframes spot-3  { from { opacity: 0; } to { transform: translateY(30px) translateX(-14px); opacity: .6; } }
+@keyframes spot-4  { from { opacity: 0; } to { transform: translateY(30px) translateX(-12px); opacity: .6; } }
+@keyframes spot-5  { from { opacity: 0; } to { transform: translateY(30px) translateX(-10px); opacity: .6; } }
+@keyframes spot-6  { from { opacity: 0; } to { transform: translateY(30px) translateX( -8px); opacity: .6; } }
+@keyframes spot-7  { from { opacity: 0; } to { transform: translateY(30px) translateX( -6px); opacity: .6; } }
+@keyframes spot-8  { from { opacity: 0; } to { transform: translateY(30px) translateX( -4px); opacity: .6; } }
+@keyframes spot-9  { from { opacity: 0; } to { transform: translateY(30px) translateX( -2px); opacity: .6; } }
+@keyframes spot-10 { from { opacity: 0; } to { transform: translateY(30px) translateX(  0px); opacity: .6; } }
+@keyframes spot-11 { from { opacity: 0; } to { transform: translateY(30px) translateX(  2px); opacity: .6; } }
+@keyframes spot-12 { from { opacity: 0; } to { transform: translateY(30px) translateX(  4px); opacity: .6; } }
+@keyframes spot-13 { from { opacity: 0; } to { transform: translateY(30px) translateX(  6px); opacity: .6; } }
+@keyframes spot-14 { from { opacity: 0; } to { transform: translateY(30px) translateX(  8px); opacity: .6; } }
+@keyframes spot-15 { from { opacity: 0; } to { transform: translateY(30px) translateX( 10px); opacity: .6; } }
+@keyframes spot-16 { from { opacity: 0; } to { transform: translateY(30px) translateX( 12px); opacity: .6; } }
+@keyframes spot-17 { from { opacity: 0; } to { transform: translateY(30px) translateX( 14px); opacity: .6; } }
+@keyframes spot-18 { from { opacity: 0; } to { transform: translateY(30px) translateX( 16px); opacity: .6; } }
+@keyframes spot-19 { from { opacity: 0; } to { transform: translateY(30px) translateX( 18px); opacity: .6; } }
+@keyframes spot-20 { from { opacity: 0; } to { transform: translateY(-30px) translateX(-10px); opacity: .6; } }
+@keyframes spot-21 { from { opacity: 0; } to { transform: translateY(-30px) translateX( -8px); opacity: .6; } }
+@keyframes spot-22 { from { opacity: 0; } to { transform: translateY(-30px) translateX( -6px); opacity: .6; } }
+@keyframes spot-23 { from { opacity: 0; } to { transform: translateY(-30px) translateX( -4px); opacity: .6; } }
+@keyframes spot-24 { from { opacity: 0; } to { transform: translateY(-30px) translateX( -2px); opacity: .6; } }
+@keyframes spot-25 { from { opacity: 0; } to { transform: translateY(-30px) translateX(  0px); opacity: .6; } }
+@keyframes spot-26 { from { opacity: 0; } to { transform: translateY(-30px) translateX(  2px); opacity: .6; } }
+@keyframes spot-27 { from { opacity: 0; } to { transform: translateY(-30px) translateX(  4px); opacity: .6; } }
+@keyframes spot-28 { from { opacity: 0; } to { transform: translateY(-30px) translateX(  6px); opacity: .6; } }
+@keyframes spot-29 { from { opacity: 0; } to { transform: translateY(-30px) translateX(  8px); opacity: .6; } }
+@keyframes spot-30 { from { opacity: 0; } to { transform: translateY(-30px) translateX( 10px); opacity: .6; } }
+@keyframes spot-31 { from { opacity: 0; } to { transform: translateY(-30px) translateX( 12px); opacity: .6; } }
+@keyframes spot-32 { from { opacity: 0; } to { transform: translateY(-30px) translateX( 14px); opacity: .6; } }
+@keyframes spot-33 { from { opacity: 0; } to { transform: translateY(-30px) translateX( 16px); opacity: .6; } }
+@keyframes spot-34 { from { opacity: 0; } to { transform: translateY(-30px) translateX( 18px); opacity: .6; } }
+@keyframes spot-35 { from { opacity: 0; } to { transform: translateY(-30px) translateX( 20px); opacity: .6; } }
+@keyframes spot-36 { from { opacity: 0; } to { transform: translateY(-30px) translateX( 22px); opacity: .6; } }
+@keyframes spot-37 { from { opacity: 0; } to { transform: translateY(-30px) translateX( 24px); opacity: .6; } }
+@keyframes spot-38 { from { opacity: 0; } to { transform: translateY(-30px) translateX( 26px); opacity: .6; } }
+@keyframes spot-39 { from { opacity: 0; } to { transform: translateY(-30px) translateX( 28px); opacity: .6; } }
+@keyframes spot-40 { from { opacity: 0; } to { transform: translateY( -6px) translateX( 40px); opacity: .6; } }
+@keyframes spot-41 { from { opacity: 0; } to { transform: translateY( -4px) translateX( 40px); opacity: .6; } }
+@keyframes spot-42 { from { opacity: 0; } to { transform: translateY( -2px) translateX( 40px); opacity: .6; } }
+@keyframes spot-43 { from { opacity: 0; } to { transform: translateY(  0px) translateX( 40px); opacity: .6; } }
+@keyframes spot-44 { from { opacity: 0; } to { transform: translateY(  2px) translateX( 40px); opacity: .6; } }
+@keyframes spot-45 { from { opacity: 0; } to { transform: translateY(  4px) translateX( 40px); opacity: .6; } }
+@keyframes spot-46 { from { opacity: 0; } to { transform: translateY( -7px) translateX(-40px); opacity: .6; } }
+@keyframes spot-47 { from { opacity: 0; } to { transform: translateY( -5px) translateX(-40px); opacity: .6; } }
+@keyframes spot-48 { from { opacity: 0; } to { transform: translateY( -3px) translateX(-40px); opacity: .6; } }
+@keyframes spot-49 { from { opacity: 0; } to { transform: translateY( -1px) translateX(-40px); opacity: .6; } }
+@keyframes spot-50 { from { opacity: 0; } to { transform: translateY(  1px) translateX(-40px); opacity: .6; } }
+@keyframes spot-51 { from { opacity: 0; } to { transform: translateY(  3px) translateX(-40px); opacity: .6; } }
+@keyframes spot-52 { from { opacity: 0; } to { transform: translateY(  5px) translateX(-40px); opacity: .6; } }
+
+@keyframes rotate {
+    from { opacity: .8; }
+    to   { transform: rotate(360deg); opacity: .8; }
+}
+@keyframes spew {
+    from { opacity: 0; }
+    to   { opacity: 0.8; }
+}
+@keyframes final {
+    from { opacity: 1; }
+    to   { opacity: 0; }
+}
+@keyframes finalbox {
+    from { width: 80px; }
+    to   { width: 60px; height: 60px; }
+}
+@keyframes tick {
+    from { transform: scale(0) rotate(-90deg); }
+    to   { transform: scale(1) rotate(-90deg); }
+}

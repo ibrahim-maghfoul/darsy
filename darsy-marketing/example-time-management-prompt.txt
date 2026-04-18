@@ -1,0 +1,41 @@
+You are composing an editorial Instagram poster (1:1 square, full bleed, no borders, no letterboxing, no padding on any edge).
+
+⚠️ ABSOLUTE CONSTRAINTS — these override everything else:
+- The ONLY readable text on the entire image MUST be the word "DARSY" positioned in the top-right corner with exactly 5% margin from the right and top edges, set in a clean modern sans-serif, small and precise. No other words, letters, numbers, or legible characters anywhere.
+- Do NOT generate lorem ipsum, captions, watermarks, UI labels, or any readable text of any kind beyond "DARSY".
+- Do NOT add any border, frame, vignette glow, or margin around the canvas edge. The design bleeds fully to every edge.
+
+🎨 COLOR PALETTE — strict, no deviations:
+- Base: desaturated grayscale (the photographic figure and all organic elements)
+- Accent: a single bold green (#3aaa6a) applied ONLY to geometric elements — circles, arcs, thin rule lines, and overlay fills
+- Background: light off-white or soft gray (#f0faf5 or #e4e8e3 range) with subtle, fine photographic grain/noise texture
+- No other colors exist in this image
+
+📷 FOREGROUND SUBJECT:
+A high-contrast black-and-white editorial photograph of a student studying — holding papers, writing, or absorbed in focus. The figure should be partially obscured by circular or ovoid geometric masks that slice through the body, revealing and hiding sections of the form. Render in editorial fashion photography style: deep shadows, bright highlights, no midtone softness.
+
+📐 COMPOSITIONAL STRUCTURE — follow the attached reference image's spatial logic exactly:
+- Copy the reference's layout: how shapes overlap the figure, where the figure is positioned off-center, how layering creates depth
+- Use asymmetric placement — the subject MUST NOT be centered
+- Layer at minimum 2 overlapping geometric shapes (circles or partial arcs in green) across the figure
+- Rotate or tilt at least one geometric element between 5° and 30° from axis
+- Apply depth through scale difference: one large shape and one small shape at minimum
+- Leave intentional negative space — do not fill the canvas wall-to-wall with elements
+
+🔧 UI-INSPIRED MICRO DETAILS (purely decorative, no text):
+- Add 1–2 thin horizontal or diagonal rule lines in green, no thicker than 0.5% of the canvas width
+- Add small filled or hollow dot markers (not icons, just circles smaller than 0.8% of canvas)
+- Optionally include a minimal grid tick mark or crosshair element in a corner — purely geometric, no labels
+
+💡 LIGHTING:
+- Match the reference image's contrast and depth exactly
+- Hard directional light from one side only — no even studio fill
+- Shadows MUST be deep black. Highlights MUST be clean white. No soft gradients in the figure
+
+❌ WHAT TO NEVER DO:
+- Never center the main subject
+- Never use warm tones, yellow, red, blue, or any color other than the specified palette
+- Never generate text, labels, or numbers other than "DARSY" top-right
+- Never add decorative borders or frame elements around the poster edge
+- Never soften the contrast — keep the editorial hardness of the reference
+- Never fill geometric shapes with an opaque background — use partial fills, strokes, or transparent overlays only

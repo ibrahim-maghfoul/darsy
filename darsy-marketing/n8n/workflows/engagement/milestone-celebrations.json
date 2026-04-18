@@ -1,0 +1,414 @@
+{
+  "name": "Darsy - Milestone Celebrations",
+  "nodes": [
+    {
+      "parameters": {
+        "rule": {
+          "interval": [
+            {
+              "field": "hours",
+              "hoursInterval": 1
+            }
+          ]
+        }
+      },
+      "id": "cron-hourly",
+      "name": "Every Hour",
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.2,
+      "position": [
+        240,
+        400
+      ],
+      "notes": "Checks every hour for users who just hit milestones"
+    },
+    {
+      "parameters": {
+        "operation": "aggregate",
+        "collection": "users",
+        "query": "[\n  {\n    \"$match\": {\n      \"updatedAt\": {\n        \"$gte\": { \"$dateSubtract\": { \"startDate\": \"$$NOW\", \"unit\": \"hour\", \"amount\": 1 } }\n      },\n      \"role\": \"user\"\n    }\n  },\n  {\n    \"$addFields\": {\n      \"milestones\": {\n        \"$filter\": {\n          \"input\": [\n            { \"$cond\": [{ \"$and\": [{ \"$eq\": [\"$progress.completedLessons\", 1] }] }, { \"type\": \"first_lesson\", \"label\": \"First Lesson Completed\", \"labelAr\": \" \" }, null] },\n            { \"$cond\": [{ \"$and\": [{ \"$gte\": [\"$progress.completedLessons\", 10] }, { \"$lt\": [\"$progress.completedLessons\", 11] }] }, { \"type\": \"10_lessons\", \"label\": \"10 Lessons Completed\", \"labelAr\": \"10  \" }, null] },\n            { \"$cond\": [{ \"$and\": [{ \"$gte\": [\"$progress.completedLessons\", 50] }, { \"$lt\": [\"$progress.completedLessons\", 51] }] }, { \"type\": \"50_lessons\", \"label\": \"50 Lessons Completed\", \"labelAr\": \"50  \" }, null] },\n            { \"$cond\": [{ \"$and\": [{ \"$gte\": [\"$progress.completedLessons\", 100] }, { \"$lt\": [\"$progress.completedLessons\", 101] }] }, { \"type\": \"100_lessons\", \"label\": \"100 Lessons Completed\", \"labelAr\": \"100  \" }, null] },\n            { \"$cond\": [{ \"$gte\": [\"$contributionCount.count\", 1] }, { \"type\": \"first_contribution\", \"label\": \"First Contribution\", \"labelAr\": \" \" }, null] }\n          ],\n          \"as\": \"m\",\n          \"cond\": { \"$ne\": [\"$$m\", null] }\n        }\n      }\n    }\n  },\n  {\n    \"$match\": {\n      \"milestones\": { \"$ne\": [] }\n    }\n  },\n  {\n    \"$project\": {\n      \"_id\": 1,\n      \"displayName\": 1,\n      \"email\": 1,\n      \"milestones\": 1,\n      \"progress.completedLessons\": 1,\n      \"progress.learningTime\": 1,\n      \"contributionCount\": 1,\n      \"progress.timeSpentHistory\": 1\n    }\n  }\n]",
+        "options": {}
+      },
+      "id": "mongo-check-milestones",
+      "name": "MongoDB: Check Milestones",
+      "type": "n8n-nodes-base.mongoDb",
+      "typeVersion": 1.1,
+      "position": [
+        480,
+        400
+      ],
+      "credentials": {
+        "mongoDb": {
+          "id": "MONGO_CREDENTIAL_ID",
+          "name": "Darsy MongoDB"
+        }
+      },
+      "notes": "Checks users updated in the last hour for milestone achievements. Milestones: first lesson, 10/50/100 lessons, streaks, contributions."
+    },
+    {
+      "parameters": {
+        "jsCode": "const users = $input.all();\nconst results = [];\n\nfor (const user of users) {\n  const u = user.json;\n  const milestones = [];\n\n  // Lesson milestones\n  const lessons = u.progress?.completedLessons || 0;\n  if (lessons === 1) milestones.push({ type: 'first_lesson', labelAr: ' ', significant: false });\n  if (lessons >= 10 && lessons < 12) milestones.push({ type: '10_lessons', labelAr: '10  ', significant: false });\n  if (lessons >= 50 && lessons < 52) milestones.push({ type: '50_lessons', labelAr: '50  ', significant: true });\n  if (lessons >= 100 && lessons < 102) milestones.push({ type: '100_lessons', labelAr: '100  !', significant: true });\n\n  // Streak milestones (check timeSpentHistory for consecutive days)\n  const history = u.progress?.timeSpentHistory || [];\n  if (history.length >= 7) {\n    const last7 = history.slice(-7);\n    const has7DayStreak = last7.every(d => d.minutes > 0);\n    if (has7DayStreak) milestones.push({ type: '7_day_streak', labelAr: '  7 !', significant: false });\n  }\n  if (history.length >= 30) {\n    const last30 = history.slice(-30);\n    const has30DayStreak = last30.every(d => d.minutes > 0);\n    if (has30DayStreak) milestones.push({ type: '30_day_streak', labelAr: '  30 !', significant: true });\n  }\n\n  // Contribution milestones\n  const contribCount = u.contributionCount?.count || 0;\n  if (contribCount === 1) milestones.push({ type: 'first_contribution', labelAr: ' !', significant: false });\n  if (contribCount >= 10) milestones.push({ type: 'top_contributor', labelAr: '  !', significant: true });\n\n  if (milestones.length > 0) {\n    results.push({\n      json: {\n        ...u,\n        detectedMilestones: milestones,\n        hasSignificantMilestone: milestones.some(m => m.significant)\n      }\n    });\n  }\n}\n\nreturn results;"
+      },
+      "id": "code-detect-milestones",
+      "name": "Detect Milestone Types",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        720,
+        400
+      ],
+      "notes": "Processes raw user data to detect specific milestones including streaks (calculated from timeSpentHistory). Marks significant milestones for social media posting."
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://api.openai.com/v1/chat/completions",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "openAiApi",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ JSON.stringify({ model: \"gpt-4o\", messages: [{\"role\":\"system\",\"content\":\"You are a motivational writer for Darsy, a Moroccan educational platform targeting BAC and Brevet students in Morocco. Write short, heartfelt congratulation messages in Arabic (Moroccan Darija). Be enthusiastic but genuine. Output just the message body as HTML content (no full document).\"},{\"role\":\"user\",\"content\":\"=Write a personalized congratulation email body for:\\n- Name: {{ $json.displayName }}\\n- Milestones achieved: {{ $json.detectedMilestones.map(m => m.labelAr).join(', ') }}\\n- Total lessons completed: {{ $json.progress?.completedLessons || 0 }}\\n- Total learning time: {{ Math.round(($json.progress?.learningTime || 0) / 60) }} hours\\n\\nMake it celebratory and encouraging. Include a call to action to keep going.\"}], temperature: 0.8, max_tokens: 400 }) }}",
+        "options": {
+          "response": {
+            "response": {
+              "responseFormat": "json"
+            }
+          }
+        }
+      },
+      "id": "ai-congrats-message",
+      "name": "AI: Generate Congratulation",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        960,
+        400
+      ],
+      "credentials": {
+        "openAiApi": {
+          "id": "openai-api",
+          "name": "OpenAI account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "const item = $input.first().json;\nconst aiContent = item.text || item.message?.content || '';\nconst userData = $('Detect Milestone Types').first().json;\nconst milestoneLabels = userData.detectedMilestones.map(m => m.labelAr).join(' | ');\n\nconst html = `<!DOCTYPE html>\n<html dir=\"rtl\" lang=\"ar\">\n<head><meta charset=\"UTF-8\"><style>\nbody { font-family: 'Segoe UI', Tahoma, sans-serif; background: #f4f6f9; margin: 0; padding: 0; direction: rtl; }\n.container { max-width: 600px; margin: 20px auto; background: #fff; border-radius: 12px; overflow: hidden; box-shadow: 0 2px 12px rgba(0,0,0,.08); }\n.header { background: linear-gradient(135deg, #f39c12, #e67e22, #e74c3c); padding: 50px 30px; text-align: center; color: #fff; }\n.header h1 { margin: 0; font-size: 32px; text-shadow: 0 2px 4px rgba(0,0,0,.2); }\n.header .milestone-badge { display: inline-block; background: rgba(255,255,255,.2); padding: 8px 20px; border-radius: 24px; margin-top: 12px; font-size: 16px; }\n.body { padding: 30px; color: #444; line-height: 1.8; }\n.achievement-card { background: linear-gradient(135deg, #fff9e6, #fffbe6); border: 2px solid #f39c12; border-radius: 12px; padding: 20px; text-align: center; margin: 20px 0; }\n.achievement-card .icon { font-size: 48px; }\n.achievement-card .title { font-size: 20px; font-weight: 700; color: #e67e22; margin: 8px 0; }\n.cta { display: block; width: fit-content; margin: 24px auto; padding: 14px 40px; background: linear-gradient(135deg, #f39c12, #e67e22); color: #fff; text-decoration: none; border-radius: 8px; font-size: 16px; font-weight: 600; }\n.footer { text-align: center; padding: 20px; color: #999; font-size: 12px; border-top: 1px solid #eee; }\n</style></head>\n<body><div class=\"container\">\n  <div class=\"header\">\n    <h1>   !</h1>\n    <div class=\"milestone-badge\">${milestoneLabels}</div>\n  </div>\n  <div class=\"body\">\n    <div class=\"achievement-card\">\n      <div class=\"icon\">&#127942;</div>\n      <div class=\"title\">${milestoneLabels}</div>\n    </div>\n    ${aiContent}\n    <a href=\"https://darsy.dz/explore\" class=\"cta\">  </a>\n  </div>\n  <div class=\"footer\">\n    <p>Darsy - </p>\n  </div>\n</div></body></html>`;\n\nreturn [{ json: { ...userData, htmlEmail: html } }];"
+      },
+      "id": "build-milestone-email",
+      "name": "Build Milestone Email",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1200,
+        400
+      ]
+    },
+    {
+      "parameters": {
+        "fromEmail": "celebrations@darsy.dz",
+        "toEmail": "={{ $json.email }}",
+        "subject": "=  {{ $json.displayName }}! {{ $json.detectedMilestones[0].labelAr }}",
+        "html": "={{ $json.htmlEmail }}",
+        "options": {}
+      },
+      "id": "send-milestone-email",
+      "name": "Send Milestone Email",
+      "type": "n8n-nodes-base.emailSend",
+      "typeVersion": 2.1,
+      "position": [
+        1440,
+        400
+      ],
+      "credentials": {
+        "smtp": {
+          "id": "SMTP_CREDENTIAL_ID",
+          "name": "Darsy SMTP"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict"
+          },
+          "conditions": [
+            {
+              "id": "significant-check",
+              "leftValue": "={{ $json.hasSignificantMilestone }}",
+              "rightValue": true,
+              "operator": {
+                "type": "boolean",
+                "operation": "true"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "id": "if-significant",
+      "name": "IF: Significant Milestone?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2,
+      "position": [
+        1680,
+        400
+      ]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://api.openai.com/v1/chat/completions",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "openAiApi",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ JSON.stringify({ model: \"gpt-4o\", messages: [{\"role\":\"system\",\"content\":\"Write a short social media post (Twitter/X style, max 280 chars) in Arabic celebrating a user achievement on Darsy. Include the platform name and a motivational tone. Do not include hashtags.\"},{\"role\":\"user\",\"content\":\"=User {{ $json.displayName }} achieved: {{ $json.detectedMilestones.filter(m => m.significant).map(m => m.labelAr).join(', ') }}. Lessons completed: {{ $json.progress?.completedLessons || 0 }}.\"}], temperature: 0.8, max_tokens: 150 }) }}",
+        "options": {
+          "response": {
+            "response": {
+              "responseFormat": "json"
+            }
+          }
+        }
+      },
+      "id": "ai-social-post",
+      "name": "AI: Social Media Post",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        1920,
+        300
+      ],
+      "credentials": {
+        "openAiApi": {
+          "id": "openai-api",
+          "name": "OpenAI account"
+        }
+      },
+      "notes": "Generates social proof post for significant milestones (50+ lessons, 30-day streak, top contributor)"
+    },
+    {
+      "parameters": {
+        "chatId": "={{ $env.TELEGRAM_CHAT_ID }}",
+        "text": "=**Darsy Milestone Alert**\n\nUser: {{ $('Detect Milestone Types').first().json.displayName }}\nMilestones: {{ $('Detect Milestone Types').first().json.detectedMilestones.map(m => m.labelAr).join(', ') }}\n\nSocial post draft:\n{{ $json.text || $json.message?.content || 'N/A' }}",
+        "additionalFields": {
+          "parse_mode": "Markdown"
+        }
+      },
+      "id": "telegram-milestone",
+      "name": "Telegram: Milestone Notify",
+      "type": "n8n-nodes-base.telegram",
+      "typeVersion": 1.2,
+      "position": [
+        2160,
+        300
+      ],
+      "credentials": {
+        "telegramApi": {
+          "id": "XKvv8ek8iXO8xWJT",
+          "name": "Telegram account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "chatId": "={{ $env.TELEGRAM_CHAT_ID }}",
+        "text": "=**Darsy Milestone**\nUser: {{ $json.displayName }}\nMilestones: {{ $json.detectedMilestones.map(m => m.labelAr).join(', ') }}\n(Minor milestone - no social post)",
+        "additionalFields": {
+          "parse_mode": "Markdown"
+        }
+      },
+      "id": "telegram-minor-milestone",
+      "name": "Telegram: Minor Milestone",
+      "type": "n8n-nodes-base.telegram",
+      "typeVersion": 1.2,
+      "position": [
+        1920,
+        520
+      ],
+      "credentials": {
+        "telegramApi": {
+          "id": "XKvv8ek8iXO8xWJT",
+          "name": "Telegram account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "run-milestones",
+        "responseMode": "immediatelyAfterReceive",
+        "options": {}
+      },
+      "id": "webhook-trigger-bot",
+      "name": "Webhook Trigger (from Bot)",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2,
+      "position": [
+        240,
+        520
+      ],
+      "webhookId": "run-milestones"
+    },
+    {
+      "parameters": {
+        "jsCode": "// Gets chatId from Telegram command center webhook, or falls back to env var\nconst fromWebhook = $input.first().json.body?.chatId;\nconst chatId = fromWebhook || $env.TELEGRAM_CHAT_ID;\nreturn [{ json: { chatId } }];"
+      },
+      "id": "get-chat-id-bot",
+      "name": "Get ChatId",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        480,
+        460
+      ]
+    }
+  ],
+  "connections": {
+    "Every Hour": {
+      "main": [
+        [
+          {
+            "node": "Get ChatId",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "MongoDB: Check Milestones": {
+      "main": [
+        [
+          {
+            "node": "Detect Milestone Types",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Detect Milestone Types": {
+      "main": [
+        [
+          {
+            "node": "AI: Generate Congratulation",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "AI: Generate Congratulation": {
+      "main": [
+        [
+          {
+            "node": "Build Milestone Email",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Build Milestone Email": {
+      "main": [
+        [
+          {
+            "node": "Send Milestone Email",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Send Milestone Email": {
+      "main": [
+        [
+          {
+            "node": "IF: Significant Milestone?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "IF: Significant Milestone?": {
+      "main": [
+        [
+          {
+            "node": "AI: Social Media Post",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Telegram: Minor Milestone",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "AI: Social Media Post": {
+      "main": [
+        [
+          {
+            "node": "Telegram: Milestone Notify",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Webhook Trigger (from Bot)": {
+      "main": [
+        [
+          {
+            "node": "Get ChatId",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Get ChatId": {
+      "main": [
+        [
+          {
+            "node": "MongoDB: Check Milestones",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "settings": {
+    "executionOrder": "v1",
+    "saveManualExecutions": true,
+    "callerPolicy": "workflowsFromSameOwner"
+  },
+  "staticData": null,
+  "tags": [
+    {
+      "name": "darsy"
+    },
+    {
+      "name": "engagement"
+    },
+    {
+      "name": "milestones"
+    },
+    {
+      "name": "gamification"
+    }
+  ],
+  "triggerCount": 1,
+  "updatedAt": "2026-04-02T00:00:00.000Z",
+  "versionId": "1"
+}

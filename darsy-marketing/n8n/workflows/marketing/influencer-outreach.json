@@ -1,0 +1,812 @@
+{
+  "name": "Darsy Influencer Outreach Pipeline",
+  "nodes": [
+    {
+      "parameters": {
+        "rule": {
+          "interval": [
+            {
+              "field": "cronExpression",
+              "expression": "0 9 * * 1"
+            }
+          ]
+        }
+      },
+      "id": "trigger-weekly-monday",
+      "name": "Weekly Monday 9AM",
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.2,
+      "position": [
+        0,
+        300
+      ]
+    },
+    {
+      "parameters": {
+        "method": "GET",
+        "url": "https://instagram-scraper-api2.p.rapidapi.com/v1/hashtag",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "x-rapidapi-key",
+              "value": "={{ $env.RAPIDAPI_KEY }}"
+            },
+            {
+              "name": "x-rapidapi-host",
+              "value": "instagram-scraper-api2.p.rapidapi.com"
+            }
+          ]
+        },
+        "sendQuery": true,
+        "queryParameters": {
+          "parameters": [
+            {
+              "name": "hashtag",
+              "value": "education_maroc"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "ig-search-education-dz",
+      "name": "IG: Education Morocco",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        240,
+        120
+      ]
+    },
+    {
+      "parameters": {
+        "method": "GET",
+        "url": "https://instagram-scraper-api2.p.rapidapi.com/v1/hashtag",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "x-rapidapi-key",
+              "value": "={{ $env.RAPIDAPI_KEY }}"
+            },
+            {
+              "name": "x-rapidapi-host",
+              "value": "instagram-scraper-api2.p.rapidapi.com"
+            }
+          ]
+        },
+        "sendQuery": true,
+        "queryParameters": {
+          "parameters": [
+            {
+              "name": "hashtag",
+              "value": "education_maroc"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "ig-search-education-ma",
+      "name": "IG: Education Morocco",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        240,
+        300
+      ]
+    },
+    {
+      "parameters": {
+        "method": "GET",
+        "url": "https://tiktok-scraper7.p.rapidapi.com/challenge/search",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "x-rapidapi-key",
+              "value": "={{ $env.RAPIDAPI_KEY }}"
+            },
+            {
+              "name": "x-rapidapi-host",
+              "value": "tiktok-scraper7.p.rapidapi.com"
+            }
+          ]
+        },
+        "sendQuery": true,
+        "queryParameters": {
+          "parameters": [
+            {
+              "name": "keywords",
+              "value": "education maroc bac revision"
+            },
+            {
+              "name": "count",
+              "value": "30"
+            },
+            {
+              "name": "cursor",
+              "value": "0"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "tiktok-search-education",
+      "name": "TikTok: Education Search",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        240,
+        480
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "// Extract unique creator profiles from search results\nconst igMaData = $('IG: Education Morocco').first().json;\nconst tiktokData = $('TikTok: Education Search').first().json;\nconst creators = [];\nconst seen = new Set();\n\n// Process Instagram Morocco results\nif (igMaData.data?.medias) {\n  for (const post of igMaData.data.medias) {\n    const username = post.user?.username;\n    if (username && !seen.has('ig_' + username)) {\n      seen.add('ig_' + username);\n      creators.push({\n        platform: 'instagram',\n        username: username,\n        full_name: post.user?.full_name || '',\n        profile_url: `https://instagram.com/${username}`,\n        followers: post.user?.follower_count || 0,\n        bio: post.user?.biography || '',\n        is_verified: post.user?.is_verified || false,\n        region: 'morocco',\n        post_likes: post.like_count || 0,\n        post_comments: post.comment_count || 0\n      });\n    }\n  }\n}\n\n// Process TikTok results\nif (tiktokData.data?.challenge_list) {\n  for (const challenge of tiktokData.data.challenge_list) {\n    if (challenge.author) {\n      const uid = challenge.author.unique_id;\n      if (uid && !seen.has('tt_' + uid)) {\n        seen.add('tt_' + uid);\n        creators.push({\n          platform: 'tiktok',\n          username: uid,\n          full_name: challenge.author.nickname || '',\n          profile_url: `https://tiktok.com/@${uid}`,\n          followers: challenge.author.follower_count || 0,\n          bio: challenge.author.signature || '',\n          is_verified: challenge.author.verified || false,\n          region: 'north_africa',\n          post_likes: challenge.stats?.digg_count || 0,\n          post_comments: challenge.stats?.comment_count || 0\n        });\n      }\n    }\n  }\n}\n\nreturn creators.length > 0 \n  ? creators.map(c => ({ json: c }))\n  : [{ json: { _empty: true } }];"
+      },
+      "id": "extract-creators",
+      "name": "Extract Creator Profiles",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        500,
+        300
+      ]
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {},
+          "conditions": [
+            {
+              "leftValue": "={{ $json._empty }}",
+              "rightValue": true,
+              "operator": {
+                "type": "boolean",
+                "operation": "notTrue"
+              }
+            }
+          ]
+        }
+      },
+      "id": "filter-non-empty",
+      "name": "Filter Valid Profiles",
+      "type": "n8n-nodes-base.filter",
+      "typeVersion": 2,
+      "position": [
+        720,
+        300
+      ]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://api.openai.com/v1/chat/completions",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "openAiApi",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ JSON.stringify({ model: \"gpt-4o\", messages: [{\"role\":\"system\",\"content\":\"You are an influencer marketing analyst for Darsy (دارسي), a Moroccan educational platform targeting students aged 15-25 in Morocco.\\n\\nScore each influencer's relevance to Darsy on a scale of 1-10 based on:\\n- Education niche fit (0-3): Are they in education, study tips, university life, exam prep?\\n- Audience overlap (0-3): Would their audience be interested in an educational platform?\\n- Engagement quality (0-2): High-quality engagement, not bot-like\\n- Brand safety (0-2): Clean brand, no controversial content\\n\\nRespond with ONLY a JSON object:\\n{\\n  \\\"relevance_score\\\": 1-10,\\n  \\\"engagement_rate_estimate\\\": 0.0-100.0,\\n  \\\"niche_tags\\\": [\\\"education\\\", \\\"study\\\", etc],\\n  \\\"audience_age_estimate\\\": \\\"15-20\\\" or \\\"20-25\\\" or \\\"25+\\\",\\n  \\\"partnership_type\\\": \\\"sponsored_post|ambassador|content_collab|shoutout\\\",\\n  \\\"estimated_cost_usd\\\": 50-5000,\\n  \\\"notes\\\": \\\"brief assessment\\\"\\n}\"},{\"role\":\"user\",\"content\":\"=Evaluate this influencer:\\n\\nPlatform: {{ $json.platform }}\\nUsername: {{ $json.username }}\\nFull name: {{ $json.full_name }}\\nFollowers: {{ $json.followers }}\\nBio: {{ $json.bio }}\\nRegion: {{ $json.region }}\\nRecent post engagement: {{ $json.post_likes }} likes, {{ $json.post_comments }} comments\\nVerified: {{ $json.is_verified }}\"}], temperature: 0.2, max_tokens: 300 }) }}",
+        "options": {
+          "response": {
+            "response": {
+              "responseFormat": "json"
+            }
+          }
+        }
+      },
+      "id": "ai-score-relevance",
+      "name": "AI: Score Relevance",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        940,
+        300
+      ],
+      "credentials": {
+        "openAiApi": {
+          "id": "openai-api",
+          "name": "OpenAI account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "const item = $input.first().json;\nlet evaluation;\ntry {\n  const content = item.message?.content || item.choices?.[0]?.message?.content || '{}';\n  evaluation = JSON.parse(content.replace(/```json\\n?/g, '').replace(/```\\n?/g, '').trim());\n} catch (e) {\n  evaluation = { relevance_score: 0, engagement_rate_estimate: 0, niche_tags: [], partnership_type: 'shoutout', estimated_cost_usd: 0, notes: 'parse error' };\n}\n\nreturn [{\n  json: {\n    ...item,\n    relevance_score: evaluation.relevance_score,\n    engagement_rate_estimate: evaluation.engagement_rate_estimate,\n    niche_tags: evaluation.niche_tags,\n    audience_age: evaluation.audience_age_estimate,\n    partnership_type: evaluation.partnership_type,\n    estimated_cost: evaluation.estimated_cost_usd,\n    ai_notes: evaluation.notes\n  }\n}];"
+      },
+      "id": "parse-relevance-score",
+      "name": "Parse Relevance Score",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1160,
+        300
+      ]
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {},
+          "conditions": [
+            {
+              "id": "engagement-filter",
+              "leftValue": "={{ $json.engagement_rate_estimate }}",
+              "rightValue": 3,
+              "operator": {
+                "type": "number",
+                "operation": "gte"
+              }
+            },
+            {
+              "id": "followers-filter",
+              "leftValue": "={{ $json.followers }}",
+              "rightValue": 5000,
+              "operator": {
+                "type": "number",
+                "operation": "gte"
+              }
+            },
+            {
+              "id": "relevance-filter",
+              "leftValue": "={{ $json.relevance_score }}",
+              "rightValue": 6,
+              "operator": {
+                "type": "number",
+                "operation": "gte"
+              }
+            }
+          ],
+          "combinator": "and"
+        }
+      },
+      "id": "filter-qualified",
+      "name": "Filter: Engagement>3%, Followers>5K, Education Niche",
+      "type": "n8n-nodes-base.filter",
+      "typeVersion": 2,
+      "position": [
+        1380,
+        300
+      ]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://api.openai.com/v1/chat/completions",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "openAiApi",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ JSON.stringify({ model: \"gpt-4o\", messages: [{\"role\":\"system\",\"content\":\"You are a partnership manager for Darsy (دارسي), a Moroccan educational platform. Write a personalized outreach message to potential influencer partners.\\n\\nGuidelines:\\n- Be professional but friendly\\n- Reference their specific content/niche\\n- Explain Darsy briefly (free educational platform for Moroccan students)\\n- Propose a specific partnership type\\n- Keep it concise (150-200 words)\\n- Write in the language most appropriate for the influencer (Arabic for Arabic-speaking, French for French-speaking)\\n- Include a clear CTA (schedule a call, try the platform, etc.)\\n\\nProvide TWO versions:\\n1. dm_text: Short DM version (for Instagram/TikTok DM, under 500 chars)\\n2. email_text: Full email version (professional, with subject line)\\n\\nRespond as JSON:\\n{\\n  \\\"dm_text\\\": \\\"...\\\",\\n  \\\"email_subject\\\": \\\"...\\\",\\n  \\\"email_text\\\": \\\"...\\\",\\n  \\\"outreach_language\\\": \\\"ar|fr|en\\\"\\n}\"},{\"role\":\"user\",\"content\":\"=Write outreach for this influencer:\\n\\nPlatform: {{ $json.platform }}\\nUsername: {{ $json.username }}\\nName: {{ $json.full_name }}\\nFollowers: {{ $json.followers }}\\nBio: {{ $json.bio }}\\nRegion: {{ $json.region }}\\nNiche: {{ $json.niche_tags?.join(', ') || 'education' }}\\nPartnership type: {{ $json.partnership_type }}\\nEstimated budget: ${{ $json.estimated_cost }}\"}], temperature: 0.7, max_tokens: 800 }) }}",
+        "options": {
+          "response": {
+            "response": {
+              "responseFormat": "json"
+            }
+          }
+        }
+      },
+      "id": "ai-write-outreach",
+      "name": "AI: Write Outreach Message",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        1620,
+        300
+      ],
+      "credentials": {
+        "openAiApi": {
+          "id": "openai-api",
+          "name": "OpenAI account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "const item = $input.first().json;\nlet outreach;\ntry {\n  const content = item.message?.content || item.choices?.[0]?.message?.content || '{}';\n  outreach = JSON.parse(content.replace(/```json\\n?/g, '').replace(/```\\n?/g, '').trim());\n} catch (e) {\n  outreach = { dm_text: '', email_subject: '', email_text: '', outreach_language: 'en' };\n}\n\nreturn [{\n  json: {\n    ...item,\n    dm_text: outreach.dm_text,\n    email_subject: outreach.email_subject,\n    email_text: outreach.email_text,\n    outreach_language: outreach.outreach_language\n  }\n}];"
+      },
+      "id": "parse-outreach",
+      "name": "Parse Outreach",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1840,
+        300
+      ]
+    },
+    {
+      "parameters": {
+        "operation": "append",
+        "documentId": {
+          "__rl": true,
+          "mode": "id",
+          "value": "={{ $env.INFLUENCER_SHEET_ID }}"
+        },
+        "sheetName": {
+          "__rl": true,
+          "mode": "name",
+          "value": "Influencer Pipeline"
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "date_found": "={{ $now.format('yyyy-MM-dd') }}",
+            "platform": "={{ $json.platform }}",
+            "username": "={{ $json.username }}",
+            "full_name": "={{ $json.full_name }}",
+            "profile_url": "={{ $json.profile_url }}",
+            "followers": "={{ $json.followers }}",
+            "engagement_rate": "={{ $json.engagement_rate_estimate }}%",
+            "relevance_score": "={{ $json.relevance_score }}/10",
+            "region": "={{ $json.region }}",
+            "niche_tags": "={{ Array.isArray($json.niche_tags) ? $json.niche_tags.join(', ') : $json.niche_tags || '' }}",
+            "partnership_type": "={{ $json.partnership_type }}",
+            "estimated_cost": "=${{ $json.estimated_cost }}",
+            "ai_notes": "={{ $json.ai_notes }}",
+            "outreach_status": "pending_approval",
+            "dm_text": "={{ $json.dm_text }}",
+            "email_subject": "={{ $json.email_subject }}"
+          }
+        },
+        "options": {}
+      },
+      "id": "save-to-pipeline",
+      "name": "Save to Influencer Pipeline",
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.5,
+      "position": [
+        2060,
+        300
+      ],
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "google-sheets-cred",
+          "name": "Google Sheets - Darsy"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "// Sort by relevance score and pick top 5\nconst items = $input.all();\nitems.sort((a, b) => (b.json.relevance_score || 0) - (a.json.relevance_score || 0));\nreturn items.slice(0, 5);"
+      },
+      "id": "pick-top-5",
+      "name": "Pick Top 5",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        2280,
+        300
+      ]
+    },
+    {
+      "parameters": {
+        "operation": "sendMessage",
+        "chatId": "={{ $env.TELEGRAM_CHAT_ID }}",
+        "text": "=🤝 **Influencer Outreach - Top Pick**\n\n👤 {{ $json.full_name }} (@{{ $json.username }})\n📱 {{ $json.platform }} | {{ $json.region }}\n👥 {{ $json.followers }} followers\n📊 Engagement: {{ $json.engagement_rate_estimate }}%\n⭐ Relevance: {{ $json.relevance_score }}/10\n🏷️ Niche: {{ Array.isArray($json.niche_tags) ? $json.niche_tags.join(', ') : $json.niche_tags }}\n💰 Est. cost: ${{ $json.estimated_cost }}\n\n📝 DM draft:\n{{ $json.dm_text }}\n\n🔗 {{ $json.profile_url }}",
+        "additionalFields": {
+          "parse_mode": "Markdown",
+          "reply_markup": {
+            "inline_keyboard": [
+              [
+                {
+                  "text": "Approve & Send Email",
+                  "callback_data": "influencer_approve_{{ $json.username }}"
+                },
+                {
+                  "text": "Skip",
+                  "callback_data": "influencer_skip_{{ $json.username }}"
+                }
+              ]
+            ]
+          }
+        }
+      },
+      "id": "telegram-top-5",
+      "name": "Telegram: Top 5 for Approval",
+      "type": "n8n-nodes-base.telegram",
+      "typeVersion": 1.2,
+      "position": [
+        2500,
+        300
+      ],
+      "credentials": {
+        "telegramApi": {
+          "id": "telegram-cred",
+          "name": "Telegram Bot - Darsy Marketing"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "url": "={{ $env.N8N_WEBHOOK_BASE_URL }}/webhook/influencer-approval",
+        "options": {
+          "timeout": 604800000
+        },
+        "path": "run-influencer"
+      },
+      "id": "wait-approval",
+      "name": "Wait for Approval",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2,
+      "position": [
+        2720,
+        300
+      ],
+      "webhookId": "run-influencer-id"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {},
+          "conditions": [
+            {
+              "leftValue": "={{ $json.body.approved }}",
+              "rightValue": true,
+              "operator": {
+                "type": "boolean",
+                "operation": "true"
+              }
+            }
+          ]
+        }
+      },
+      "id": "check-approved",
+      "name": "If Approved",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2,
+      "position": [
+        2940,
+        300
+      ]
+    },
+    {
+      "parameters": {
+        "fromEmail": "={{ $env.SENDGRID_FROM_EMAIL }}",
+        "toEmail": "={{ $json.body.email || $json.username + '@gmail.com' }}",
+        "subject": "={{ $json.email_subject }}",
+        "contentHtml": "={{ $json.email_text.replace(/\\n/g, '<br>') }}",
+        "additionalFields": {
+          "replyTo": "partnerships@darsy.app"
+        }
+      },
+      "id": "sendgrid-outreach",
+      "name": "SendGrid: Send Outreach",
+      "type": "n8n-nodes-base.sendGrid",
+      "typeVersion": 1,
+      "position": [
+        3180,
+        200
+      ],
+      "credentials": {
+        "sendGridApi": {
+          "id": "sendgrid-cred",
+          "name": "SendGrid - Darsy"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "update",
+        "documentId": {
+          "__rl": true,
+          "mode": "id",
+          "value": "={{ $env.INFLUENCER_SHEET_ID }}"
+        },
+        "sheetName": {
+          "__rl": true,
+          "mode": "name",
+          "value": "Influencer Pipeline"
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "username": "={{ $json.username }}",
+            "outreach_status": "email_sent",
+            "email_sent_date": "={{ $now.toISO() }}"
+          },
+          "matchingColumns": [
+            "username"
+          ]
+        },
+        "options": {}
+      },
+      "id": "update-pipeline-status",
+      "name": "Update Pipeline: Email Sent",
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.5,
+      "position": [
+        3400,
+        200
+      ],
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "google-sheets-cred",
+          "name": "Google Sheets - Darsy"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "sendMessage",
+        "chatId": "={{ $env.TELEGRAM_CHAT_ID }}",
+        "text": "=📧 Outreach email sent to @{{ $json.username }}!\nPipeline updated.",
+        "additionalFields": {}
+      },
+      "id": "telegram-confirm-sent",
+      "name": "Telegram: Confirm Sent",
+      "type": "n8n-nodes-base.telegram",
+      "typeVersion": 1.2,
+      "position": [
+        3620,
+        200
+      ],
+      "credentials": {
+        "telegramApi": {
+          "id": "telegram-cred",
+          "name": "Telegram Bot - Darsy Marketing"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "run-influencer",
+        "responseMode": "immediatelyAfterReceive",
+        "options": {}
+      },
+      "id": "webhook-trigger-bot",
+      "name": "Webhook Trigger (from Bot)",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2,
+      "position": [
+        0,
+        420
+      ],
+      "webhookId": "run-influencer"
+    },
+    {
+      "parameters": {
+        "jsCode": "// Gets chatId from Telegram command center webhook, or falls back to env var\nconst fromWebhook = $input.first().json.body?.chatId;\nconst chatId = fromWebhook || $env.TELEGRAM_CHAT_ID;\nreturn [{ json: { chatId } }];"
+      },
+      "id": "get-chat-id-bot",
+      "name": "Get ChatId",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        240,
+        360
+      ]
+    }
+  ],
+  "connections": {
+    "Weekly Monday 9AM": {
+      "main": [
+        [
+          {
+            "node": "Get ChatId",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "IG: Education Morocco": {
+      "main": [
+        [
+          {
+            "node": "Extract Creator Profiles",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "TikTok: Education Search": {
+      "main": [
+        [
+          {
+            "node": "Extract Creator Profiles",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Extract Creator Profiles": {
+      "main": [
+        [
+          {
+            "node": "Filter Valid Profiles",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Filter Valid Profiles": {
+      "main": [
+        [
+          {
+            "node": "AI: Score Relevance",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "AI: Score Relevance": {
+      "main": [
+        [
+          {
+            "node": "Parse Relevance Score",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Parse Relevance Score": {
+      "main": [
+        [
+          {
+            "node": "Filter: Engagement>3%, Followers>5K, Education Niche",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Filter: Engagement>3%, Followers>5K, Education Niche": {
+      "main": [
+        [
+          {
+            "node": "AI: Write Outreach Message",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "AI: Write Outreach Message": {
+      "main": [
+        [
+          {
+            "node": "Parse Outreach",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Parse Outreach": {
+      "main": [
+        [
+          {
+            "node": "Save to Influencer Pipeline",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Pick Top 5",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Save to Influencer Pipeline": {
+      "main": []
+    },
+    "Pick Top 5": {
+      "main": [
+        [
+          {
+            "node": "Telegram: Top 5 for Approval",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Telegram: Top 5 for Approval": {
+      "main": [
+        [
+          {
+            "node": "Wait for Approval",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Wait for Approval": {
+      "main": [
+        [
+          {
+            "node": "If Approved",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "If Approved": {
+      "main": [
+        [
+          {
+            "node": "SendGrid: Send Outreach",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        []
+      ]
+    },
+    "SendGrid: Send Outreach": {
+      "main": [
+        [
+          {
+            "node": "Update Pipeline: Email Sent",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Update Pipeline: Email Sent": {
+      "main": [
+        [
+          {
+            "node": "Telegram: Confirm Sent",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Webhook Trigger (from Bot)": {
+      "main": [
+        [
+          {
+            "node": "Get ChatId",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Get ChatId": {
+      "main": [
+        [
+          {
+            "node": "IG: Education Morocco",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "settings": {
+    "executionOrder": "v1",
+    "saveManualExecutions": true,
+    "callerPolicy": "workflowsFromSameOwner"
+  },
+  "staticData": null,
+  "tags": [
+    {
+      "name": "marketing"
+    },
+    {
+      "name": "influencer"
+    },
+    {
+      "name": "outreach"
+    },
+    {
+      "name": "darsy"
+    }
+  ],
+  "triggerCount": 1,
+  "updatedAt": "2026-04-02T00:00:00.000Z",
+  "versionId": "1.0.0"
+}

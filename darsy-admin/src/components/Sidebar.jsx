@@ -1,58 +1,62 @@
 import {
-    BarChart2, Upload, FileText, Settings, Database, X, Wrench, Newspaper,
+    BarChart2, Upload, Settings, Database, X, Wrench, Newspaper,
     GraduationCap, ShieldCheck, Users, MessageSquare, BookOpen, Calendar,
-    Heart, Star, Video, Flag, Menu, LogOut, ChevronDown, Image as ImageIcon
+    Heart, Star, Video, Flag, LogOut, ImageIcon, FileText, Rocket, Sparkles
 } from 'lucide-react';
+import { NavLink } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
-import { useState } from 'react';
 
 const SECTIONS = [
     { type: 'label', text: 'Overview' },
-    { id: 'dashboard', label: 'Dashboard', icon: BarChart2 },
-    { id: 'users', label: 'Users', icon: Users },
+    { path: '/',       label: 'Dashboard',          icon: BarChart2 },
+    { path: '/users',  label: 'Users',              icon: Users },
 
     { type: 'label', text: 'Applications' },
-    { id: 'instructor-apps', label: 'Instructor Apps', icon: GraduationCap },
-    { id: 'teacher-verifications', label: 'Teacher Verifs', icon: ShieldCheck },
-    { id: 'instructor-courses', label: 'Courses Review', icon: Video },
+    { path: '/instructor-apps',       label: 'Instructor Apps',   icon: GraduationCap },
+    { path: '/teacher-verifications', label: 'Teacher Verifs',    icon: ShieldCheck },
+    { path: '/instructor-courses',    label: 'Courses Review',    icon: Video },
 
     { type: 'label', text: 'Content' },
-    { id: 'content', label: 'Curriculum', icon: BookOpen },
-    { id: 'news', label: 'News', icon: Newspaper },
-    { id: 'services', label: 'Services', icon: Star },
+    { path: '/content',   label: 'Curriculum', icon: BookOpen },
+    { path: '/news',      label: 'News',        icon: Newspaper },
+    { path: '/services',  label: 'Services',    icon: Star },
 
     { type: 'label', text: 'Community' },
-    { id: 'chat-rooms', label: 'Chat Rooms', icon: MessageSquare },
-    { id: 'contributions', label: 'Contributions', icon: Heart },
-    { id: 'feedback', label: 'Reports & Feedback', icon: Flag },
+    { path: '/chat-rooms',     label: 'Chat Rooms',         icon: MessageSquare },
+    { path: '/contributions',  label: 'Contributions',      icon: Heart },
+    { path: '/feedback',       label: 'Reports & Feedback', icon: Flag },
+
+    { type: 'label', text: 'Content Creation' },
+    { path: '/poster-generation',   label: 'Poster Generation',    icon: ImageIcon },
+    { path: '/launch-ideas',        label: 'Launch Ideas',         icon: Rocket },
+    { path: '/content-management',  label: 'Content Management',   icon: FileText },
+    { path: '/analytics',           label: 'Analytics',            icon: BarChart2 },
+    { path: '/logo-generator',      label: 'Logo Generator',       icon: Sparkles },
 
     { type: 'label', text: 'Tools' },
-    { id: 'upload', label: 'Batch Upload', icon: Upload },
-    { id: 'database', label: 'Firebase View', icon: Database },
-    { id: 'mongo-sync', label: 'Sync to Mongo', icon: Database },
-    { id: 'tools', label: 'YouTube Tool', icon: Wrench },
-    { id: 'poster-generator', label: 'Poster Generator', icon: ImageIcon },
-    { id: 'calendar', label: 'Global Events', icon: Calendar },
+    { path: '/upload',           label: 'Batch Upload',     icon: Upload },
+    { path: '/database',         label: 'Firebase View',    icon: Database },
+    { path: '/mongo-sync',       label: 'Sync to Mongo',    icon: Database },
+    { path: '/tools',            label: 'YouTube Tool',     icon: Wrench },
+    { path: '/calendar',         label: 'Global Events',    icon: Calendar },
 
     { type: 'label', text: 'System' },
-    { id: 'settings', label: 'Settings', icon: Settings },
+    { path: '/settings', label: 'Settings', icon: Settings },
 ];
 
-const Sidebar = ({ isOpen, toggleSidebar, activeTab, setActiveTab }) => {
-    const { logout, user } = useAuth();
+const Sidebar = ({ isOpen, toggleSidebar }) => {
+    const { logout } = useAuth();
 
     return (
         <>
-            {/* Mobile overlay */}
             {isOpen && (
                 <div
                     onClick={toggleSidebar}
+                    className="sidebar-overlay-el"
                     style={{
                         position: 'fixed', inset: 0, background: 'rgba(26,46,53,0.4)',
-                        backdropFilter: 'blur(4px)', zIndex: 998,
-                        display: 'none',
+                        backdropFilter: 'blur(4px)', zIndex: 998, display: 'none',
                     }}
-                    className="sidebar-overlay-el"
                 />
             )}
 
@@ -71,7 +75,7 @@ const Sidebar = ({ isOpen, toggleSidebar, activeTab, setActiveTab }) => {
                 overflowY: 'auto',
                 overflowX: 'hidden',
             }}>
-                {/* Header */}
+                {/* Logo */}
                 <div style={{
                     padding: '20px 20px 16px',
                     display: 'flex', alignItems: 'center', justifyContent: 'space-between',
@@ -100,7 +104,7 @@ const Sidebar = ({ isOpen, toggleSidebar, activeTab, setActiveTab }) => {
                     </button>
                 </div>
 
-                {/* Navigation */}
+                {/* Nav */}
                 <nav style={{ flex: 1, padding: '8px 10px', overflowY: 'auto' }}>
                     {SECTIONS.map((item, i) => {
                         if (item.type === 'label') {
@@ -116,66 +120,24 @@ const Sidebar = ({ isOpen, toggleSidebar, activeTab, setActiveTab }) => {
                         }
 
                         const Icon = item.icon;
-                        const active = activeTab === item.id;
-
                         return (
-                            <button
-                                key={item.id}
-                                onClick={() => {
-                                    setActiveTab(item.id);
-                                    if (window.innerWidth < 1024) toggleSidebar();
-                                }}
-                                style={{
-                                    width: '100%',
-                                    display: 'flex', alignItems: 'center', gap: 10,
-                                    padding: '9px 12px',
-                                    borderRadius: 10,
-                                    background: active ? 'var(--green-100)' : 'transparent',
-                                    color: active ? 'var(--green)' : 'var(--text-secondary)',
-                                    border: 'none',
-                                    cursor: 'pointer',
-                                    fontSize: '0.82rem',
-                                    fontWeight: active ? 700 : 500,
-                                    transition: 'all 0.15s ease',
-                                    marginBottom: 2,
-                                    textAlign: 'left',
-                                }}
-                                onMouseEnter={e => {
-                                    if (!active) {
-                                        e.currentTarget.style.background = 'var(--green-50)';
-                                        e.currentTarget.style.color = 'var(--text-primary)';
-                                    }
-                                }}
-                                onMouseLeave={e => {
-                                    if (!active) {
-                                        e.currentTarget.style.background = 'transparent';
-                                        e.currentTarget.style.color = 'var(--text-secondary)';
-                                    }
-                                }}
+                            <NavLink
+                                key={item.path}
+                                to={item.path}
+                                end={item.path === '/'}
+                                onClick={() => { if (window.innerWidth < 1024) toggleSidebar(); }}
+                                className={({ isActive }) => `sidebar-link${isActive ? ' sidebar-link--active' : ''}`}
                             >
                                 <Icon size={17} />
                                 <span>{item.label}</span>
-                            </button>
+                            </NavLink>
                         );
                     })}
                 </nav>
 
-                {/* Footer / User */}
-                <div style={{
-                    padding: '12px 14px',
-                    borderTop: '1px solid var(--border-light)',
-                    flexShrink: 0,
-                }}>
-                    <button onClick={logout} style={{
-                        width: '100%', display: 'flex', alignItems: 'center', gap: 10,
-                        padding: '10px 12px', borderRadius: 10,
-                        background: 'none', border: 'none',
-                        color: 'var(--text-secondary)', fontSize: '0.82rem', fontWeight: 500,
-                        cursor: 'pointer',
-                    }}
-                    onMouseEnter={e => { e.currentTarget.style.background = '#fee2e2'; e.currentTarget.style.color = '#ef4444'; }}
-                    onMouseLeave={e => { e.currentTarget.style.background = 'none'; e.currentTarget.style.color = 'var(--text-secondary)'; }}
-                    >
+                {/* Footer */}
+                <div style={{ padding: '12px 14px', borderTop: '1px solid var(--border-light)', flexShrink: 0 }}>
+                    <button onClick={logout} className="sidebar-link sidebar-link--logout" style={{ width: '100%', background: 'none', border: 'none' }}>
                         <LogOut size={17} />
                         <span>Sign Out</span>
                     </button>
@@ -183,6 +145,35 @@ const Sidebar = ({ isOpen, toggleSidebar, activeTab, setActiveTab }) => {
             </aside>
 
             <style>{`
+                .sidebar-link {
+                    width: 100%;
+                    display: flex;
+                    align-items: center;
+                    gap: 10px;
+                    padding: 9px 12px;
+                    border-radius: 10px;
+                    background: transparent;
+                    color: var(--text-secondary);
+                    cursor: pointer;
+                    font-size: 0.82rem;
+                    font-weight: 500;
+                    transition: all 0.15s ease;
+                    margin-bottom: 2px;
+                    text-decoration: none;
+                }
+                .sidebar-link:hover {
+                    background: var(--green-50);
+                    color: var(--text-primary);
+                }
+                .sidebar-link--active {
+                    background: var(--green-100) !important;
+                    color: var(--green) !important;
+                    font-weight: 700;
+                }
+                .sidebar-link--logout:hover {
+                    background: #fee2e2 !important;
+                    color: #ef4444 !important;
+                }
                 @media (max-width: 1023px) {
                     .sidebar-overlay-el { display: block !important; }
                     .sidebar-mobile-close { display: block !important; }
