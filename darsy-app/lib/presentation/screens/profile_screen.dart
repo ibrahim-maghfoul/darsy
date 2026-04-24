@@ -33,6 +33,7 @@ import 'downloaded_screen.dart';
 import '../widgets/styled_snackbar.dart';
 import '../widgets/shimmer_widgets.dart';
 import 'school_services_screen.dart';
+import 'leaderboard_screen.dart';
 
 class ProfileScreen extends ConsumerStatefulWidget {
   const ProfileScreen({super.key});
@@ -209,6 +210,12 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen>
               _buildSectionTitle(Icons.newspaper_rounded, 'Saved News'),
               const SizedBox(height: 12),
               _buildSavedNewsSection(),
+              const SizedBox(height: 24),
+
+              // Leaderboard
+              _buildSectionTitle(Icons.leaderboard_rounded, 'Leaderboard'),
+              const SizedBox(height: 12),
+              _buildLeaderboardCard(),
               const SizedBox(height: 24),
 
               // Quick actions
@@ -920,8 +927,73 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen>
     );
   }
 
+  Widget _buildLeaderboardCard() {
+    final authState = ref.watch(authProvider);
+    final user = authState.user;
+    final points = user?.points ?? 0;
+
+    // Map points to tier color
+    Color tierColor;
+    String tierEmoji;
+    String tierName;
+    if (points >= 50000)      { tierColor = const Color(0xFFE5A000); tierEmoji = '👑'; tierName = 'Legend • أسطورة'; }
+    else if (points >= 20000) { tierColor = const Color(0xFF00B4D8); tierEmoji = '💎'; tierName = 'Diamond • ماسة'; }
+    else if (points >= 10000) { tierColor = const Color(0xFF7209B7); tierEmoji = '🏅'; tierName = 'Platinum • بلاتين'; }
+    else if (points >= 5000)  { tierColor = const Color(0xFFF59E0B); tierEmoji = '🥇'; tierName = 'Gold • ذهب'; }
+    else if (points >= 2000)  { tierColor = const Color(0xFF64748B); tierEmoji = '🥈'; tierName = 'Silver • فضة'; }
+    else if (points >= 500)   { tierColor = const Color(0xFF92400E); tierEmoji = '🥉'; tierName = 'Bronze • برونز'; }
+    else                       { tierColor = AppColors.primary;        tierEmoji = '🌱'; tierName = 'Starter • مبتدئ'; }
+
+    return GestureDetector(
+      onTap: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const LeaderboardScreen())),
+      child: Container(
+        padding: const EdgeInsets.all(16),
+        decoration: BoxDecoration(
+          borderRadius: BorderRadius.circular(20),
+          gradient: LinearGradient(
+            begin: Alignment.topLeft,
+            end: Alignment.bottomRight,
+            colors: [const Color(0xFF1A1A2E), const Color(0xFF16213E)],
+          ),
+          boxShadow: [BoxShadow(color: tierColor.withOpacity(0.3), blurRadius: 16, offset: const Offset(0, 6))],
+        ),
+        child: Row(
+          children: [
+            Text(tierEmoji, style: const TextStyle(fontSize: 44)),
+            const SizedBox(width: 16),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(tierName,
+                      style: TextStyle(color: tierColor, fontWeight: FontWeight.bold, fontSize: 16)),
+                  const SizedBox(height: 4),
+                  Text('$points XP Points',
+                      style: const TextStyle(color: Colors.white70, fontSize: 13)),
+                  const SizedBox(height: 8),
+                  const Text('Tap to see the monthly rankings →',
+                      style: TextStyle(color: Colors.white38, fontSize: 11)),
+                ],
+              ),
+            ),
+            const Icon(Icons.arrow_forward_ios_rounded, color: Colors.white24, size: 16),
+          ],
+        ),
+      ),
+    ).animate().fadeIn(delay: 300.ms).slideY(begin: 0.1);
+  }
+
   Widget _buildQuickActions(BuildContext context, WidgetRef ref) {
     final items = [
+      _QuickAction(
+        'Leaderboard',
+        Icons.leaderboard_rounded,
+        AppColors.primary,
+        () => Navigator.push(
+          context,
+          MaterialPageRoute(builder: (_) => const LeaderboardScreen()),
+        ),
+      ),
       _QuickAction(
         'Share App',
         Icons.share_rounded,

@@ -14,7 +14,7 @@
         "me": "Moi"
     },
     "Hero": {
-        "badge": "Plateforme d'Éducation IA",
+        "badge": "Plateforme Éducative Marocaine",
         "subtitle": "Accédez à des cours gratuits, suivez vos progrès et préparez vos examens.",
         "title1": "Votre ",
         "title_highlight": "École en Ligne",
@@ -652,5 +652,26 @@
         "new_password": "Nouveau mot de passe",
         "subscription_management": "Gestion de l'abonnement",
         "coming_soon": "Les fonctionnalités de paiement et d'abonnement seront bientôt disponibles."
+    },
+    "NotFound": {
+        "badge": "Page introuvable",
+        "title": "Oops! Mauvais chemin.",
+        "description": "La page que vous cherchez n'existe pas ou a été déplacée.",
+        "back_home": "Retour à l'accueil",
+        "explore": "Explorer les cours"
+    },
+    "JoinRoom": {
+        "classroom": "Salle de classe",
+        "members": "membres",
+        "request_join": "Demander à rejoindre",
+        "joining": "Envoi en cours...",
+        "request_sent": "Demande envoyée !",
+        "request_desc": "L'enseignant examinera votre demande et vous acceptera bientôt.",
+        "already_member": "Vous êtes déjà membre de cette salle.",
+        "room_full": "Cette salle est complète.",
+        "join_error": "Échec de l'envoi de la demande.",
+        "not_found_title": "Salle introuvable",
+        "not_found_desc": "Ce lien d'invitation est invalide ou la salle a été fermée.",
+        "back_home": "Retour à l'accueil"
     }
 }

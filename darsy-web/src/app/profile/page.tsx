@@ -55,6 +55,10 @@ export default function ProfilePage() {
     const [isChangingPath, setIsChangingPath] = useState(false);
     const [approvedApplication, setApprovedApplication] = useState<any>(null);
     const [instructorNames, setInstructorNames] = useState<{ guidance: string; subject: string }>({ guidance: '', subject: '' });
+    const [teacherVerification, setTeacherVerification] = useState<any>(null);
+    const [profileDataLoading, setProfileDataLoading] = useState(true);
+    const [redirecting, setRedirecting] = useState(false);
+    const [activeRoleTab, setActiveRoleTab] = useState<'instructor' | 'teacher'>('instructor');
 
     const fileInputRef = useRef<HTMLInputElement>(null);
     const router = useRouter();
@@ -65,7 +69,9 @@ export default function ProfilePage() {
             router.push('/login');
         } else if (user) {
             fetchLastVisitedLesson();
-            fetchApprovedApplication();
+            setProfileDataLoading(true);
+            Promise.all([fetchApprovedApplication(), fetchTeacherVerification()])
+                .finally(() => setProfileDataLoading(false));
         }
     }, [authLoading, user, router]);
 
@@ -89,7 +95,6 @@ export default function ProfilePage() {
             const approved = apps.find((app: any) => app.status === 'approved');
             if (approved) {
                 setApprovedApplication(approved);
-                // Resolve guidance and subject names
                 const [guidances, subjects] = await Promise.all([
                     getGuidances(approved.targetLevelId),
                     getSubjects(approved.targetGuidanceId),
@@ -107,6 +112,29 @@ export default function ProfilePage() {
             console.error('Failed to fetch applications', err);
         }
     };
+
+    const fetchTeacherVerification = async () => {
+        try {
+            const res = await api.get('/teacher/verify/me');
+            if (res.data?.status === 'approved') setTeacherVerification(res.data);
+        } catch { }
+    };
+
+    useEffect(() => {
+        if (profileDataLoading) return;
+        const _isInstructor = user?.role === 'instructor' || user?.role === 'admin';
+        const _isTeacher = user?.role === 'teacher' || user?.role === 'admin';
+        const _showIns = _isInstructor || (_isTeacher && !!approvedApplication);
+        const _showTea = _isTeacher || (_isInstructor && !!teacherVerification);
+        if (_showIns && _showTea) {
+            setRedirecting(true);
+            router.replace('/instructor-dashboard');
+            return;
+        }
+        if (_showIns) { setRedirecting(true); router.replace('/instructor-dashboard'); return; }
+        if (_showTea) { setRedirecting(true); router.replace('/teacher/dashboard'); }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [profileDataLoading]);
 
     const handlePhotoClick = () => {
         fileInputRef.current?.click();
@@ -214,6 +242,24 @@ export default function ProfilePage() {
 
     const currentPhoto = photoPreview || getPhotoURL(user?.photoURL);
 
+    const isInstructor = user?.role === 'instructor' || user?.role === 'admin';
+    const isTeacher = user?.role === 'teacher' || user?.role === 'admin';
+    const showInstructorSection = isInstructor || (isTeacher && !!approvedApplication);
+    const showTeacherSection = isTeacher || (isInstructor && !!teacherVerification);
+    const hasBothRoles = showInstructorSection && showTeacherSection;
+
+    // While deciding whether to redirect, show a clean loading screen for role users
+    if ((isInstructor || isTeacher) && (profileDataLoading || redirecting)) {
+        return (
+            <div className="min-h-screen flex items-center justify-center bg-[#F8F9FA]">
+                <div className="flex flex-col items-center gap-4">
+                    <div className="w-12 h-12 border-[3px] border-green border-t-transparent rounded-full animate-spin" />
+                    <p className="text-sm font-bold text-dark/40">Loading your dashboard…</p>
+                </div>
+            </div>
+        );
+    }
+
     return (
         <motion.div
             initial={{ opacity: 0, y: 10 }}
@@ -234,8 +280,119 @@ export default function ProfilePage() {
                     />
                 )}
             </AnimatePresence>
-            {/* Hero Section — desktop only */}
-            <div className="max-w-5xl mx-auto px-4 md:px-6 relative z-10">
+            <div className="max-w-5xl mx-auto px-4 md:px-6 relative z-10 space-y-6">
+
+                {/* ── Role Banners (Instructor / Teacher) ── */}
+                {(showInstructorSection || showTeacherSection) && (
+                    <motion.div
+                        initial={{ opacity: 0, y: -8 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        transition={{ duration: 0.35, ease: [0.16, 1, 0.3, 1] }}
+                        className="space-y-3"
+                    >
+                        {/* Tab switcher — only shown when user has both roles */}
+                        {hasBothRoles && (
+                            <div className="flex gap-2 p-1 bg-white rounded-2xl border border-green/10 shadow-sm w-fit">
+                                <button
+                                    onClick={() => setActiveRoleTab('instructor')}
+                                    className={`flex items-center gap-2 px-5 py-2.5 rounded-xl text-sm font-black transition-all ${activeRoleTab === 'instructor' ? 'bg-green text-white shadow-md shadow-green/20' : 'text-dark/50 hover:text-dark/80'}`}
+                                >
+                                    <GraduationCap size={14} /> Instructor
+                                </button>
+                                <button
+                                    onClick={() => setActiveRoleTab('teacher')}
+                                    className={`flex items-center gap-2 px-5 py-2.5 rounded-xl text-sm font-black transition-all ${activeRoleTab === 'teacher' ? 'bg-indigo-600 text-white shadow-md shadow-indigo-200' : 'text-dark/50 hover:text-dark/80'}`}
+                                >
+                                    <MessageSquare size={14} /> Teacher
+                                </button>
+                            </div>
+                        )}
+
+                        <AnimatePresence mode="wait">
+                            {/* Instructor Banner */}
+                            {showInstructorSection && (!hasBothRoles || activeRoleTab === 'instructor') && (
+                                <motion.div
+                                    key="instructor"
+                                    initial={{ opacity: 0, y: 6 }}
+                                    animate={{ opacity: 1, y: 0 }}
+                                    exit={{ opacity: 0, y: -6 }}
+                                    transition={{ duration: 0.22 }}
+                                    className="relative overflow-hidden rounded-[28px]"
+                                    style={{ background: 'repeating-linear-gradient(45deg,rgba(255,255,255,0.03) 0px,rgba(255,255,255,0.03) 2px,transparent 2px,transparent 8px),linear-gradient(135deg,#1e7a46 0%,#0f4428 100%)' }}
+                                >
+                                    <div className="absolute inset-0 pointer-events-none" style={{ backgroundImage: 'radial-gradient(circle, rgba(255,255,255,0.18) 1px, transparent 1px)', backgroundSize: '18px 18px', opacity: 0.35 }} />
+                                    <div className="relative z-10 p-6 md:p-8">
+                                        <div className="flex items-start gap-4 mb-5">
+                                            <div className="w-14 h-14 rounded-[16px] overflow-hidden flex-shrink-0" style={{ background: 'rgba(255,255,255,0.15)' }}>
+                                                {currentPhoto
+                                                    // eslint-disable-next-line @next/next/no-img-element
+                                                    ? <img src={currentPhoto} alt="" className="w-full h-full object-cover" />
+                                                    : <div className="w-full h-full flex items-center justify-center"><GraduationCap size={28} className="text-white" /></div>}
+                                            </div>
+                                            <div className="flex-1 min-w-0">
+                                                <span className="inline-flex items-center gap-1.5 text-[10px] font-black tracking-[0.14em] text-green-300 bg-white/10 border border-white/15 rounded-full px-2.5 py-1 mb-1.5">
+                                                    <GraduationCap size={10} /> INSTRUCTOR
+                                                </span>
+                                                <h2 className="text-lg font-black text-white leading-tight">{user?.displayName}</h2>
+                                                {approvedApplication && (
+                                                    <p className="text-sm text-white/50 line-clamp-1 mt-0.5">
+                                                        {approvedApplication.specialist}{instructorNames.subject ? ` · ${instructorNames.subject}` : ''}
+                                                    </p>
+                                                )}
+                                            </div>
+                                        </div>
+                                        <Link href="/instructor-dashboard" className="inline-flex items-center gap-1.5 px-6 py-3 bg-white text-green font-black rounded-[14px] text-sm hover:bg-green/5 transition-colors shadow-md">
+                                            <GraduationCap size={15} /> Go to Instructor Dashboard
+                                        </Link>
+                                    </div>
+                                </motion.div>
+                            )}
+
+                            {/* Teacher Banner */}
+                            {showTeacherSection && (!hasBothRoles || activeRoleTab === 'teacher') && (
+                                <motion.div
+                                    key="teacher"
+                                    initial={{ opacity: 0, y: 6 }}
+                                    animate={{ opacity: 1, y: 0 }}
+                                    exit={{ opacity: 0, y: -6 }}
+                                    transition={{ duration: 0.22 }}
+                                    className="relative overflow-hidden rounded-[28px]"
+                                    style={{ background: 'repeating-linear-gradient(45deg,rgba(255,255,255,0.03) 0px,rgba(255,255,255,0.03) 2px,transparent 2px,transparent 8px),linear-gradient(135deg,#1e3a8a 0%,#0f2260 100%)' }}
+                                >
+                                    <div className="absolute inset-0 pointer-events-none" style={{ backgroundImage: 'radial-gradient(circle, rgba(255,255,255,0.18) 1px, transparent 1px)', backgroundSize: '18px 18px', opacity: 0.35 }} />
+                                    <div className="relative z-10 p-6 md:p-8">
+                                        <div className="flex items-start gap-4 mb-5">
+                                            <div className="w-14 h-14 rounded-[16px] overflow-hidden flex-shrink-0" style={{ background: 'rgba(255,255,255,0.15)' }}>
+                                                {currentPhoto
+                                                    // eslint-disable-next-line @next/next/no-img-element
+                                                    ? <img src={currentPhoto} alt="" className="w-full h-full object-cover" />
+                                                    : <div className="w-full h-full flex items-center justify-center"><MessageSquare size={28} className="text-white" /></div>}
+                                            </div>
+                                            <div className="flex-1 min-w-0">
+                                                <span className="inline-flex items-center gap-1.5 text-[10px] font-black tracking-[0.14em] text-indigo-300 bg-white/10 border border-white/15 rounded-full px-2.5 py-1 mb-1.5">
+                                                    <MessageSquare size={10} /> TEACHER
+                                                </span>
+                                                <h2 className="text-lg font-black text-white leading-tight">{user?.displayName}</h2>
+                                                {teacherVerification && (
+                                                    <p className="text-sm text-white/50 line-clamp-1 mt-0.5">
+                                                        {teacherVerification.subject}{teacherVerification.schoolName ? ` · ${teacherVerification.schoolName}` : ''}
+                                                    </p>
+                                                )}
+                                            </div>
+                                        </div>
+                                        <Link href="/teacher/dashboard" className="inline-flex items-center gap-1.5 px-6 py-3 bg-white text-indigo-700 font-black rounded-[14px] text-sm hover:bg-indigo-50 transition-colors shadow-md">
+                                            <MessageSquare size={15} /> Go to Teacher Dashboard
+                                        </Link>
+                                    </div>
+                                </motion.div>
+                            )}
+                        </AnimatePresence>
+                    </motion.div>
+                )}
+
+                {/* ── Student Profile Card ── */}
+                <div>
+                {/* Hero Section — desktop only */}
                 <div className="md:bg-white md:rounded-[40px] md:border md:border-green/10 md:p-10 md:shadow-2xl md:shadow-green/5 p-0 space-y-8">
                     {/* Header */}
                     <div className="flex flex-col md:flex-row items-center md:items-start justify-between gap-8">
@@ -525,7 +682,75 @@ export default function ProfilePage() {
                     )}
 
                     {/* Services Grid */}
-                    <div className="space-y-6 pt-10 border-t border-green/8">
+                    {/* ── Darsy Programs (separated section) ── */}
+                    <div className="pt-10 border-t border-green/8 space-y-4">
+                        <div>
+                            <h2 className="text-2xl font-black text-dark">Darsy Programs</h2>
+                            <p className="text-sm mt-1" style={{ color: 'rgba(26,58,42,0.4)' }}>Two ways to share your knowledge with students.</p>
+                        </div>
+                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                            {/* Teacher Program */}
+                            <div className="rounded-2xl border border-indigo-100 bg-indigo-50/50 p-4 flex flex-col gap-3">
+                                <div className="flex items-center gap-3">
+                                    <div className="w-10 h-10 rounded-xl bg-indigo-100 flex items-center justify-center shrink-0">
+                                        <MessageSquare size={20} className="text-indigo-500" />
+                                    </div>
+                                    <div>
+                                        <h4 className="font-black text-dark text-sm">Teacher</h4>
+                                        <p className="text-[11px] text-indigo-500 font-bold">Real-time classroom chat</p>
+                                    </div>
+                                </div>
+                                <p className="text-xs text-dark/50 leading-relaxed">
+                                    Create private chat rooms for your students. Share files, answer questions live, and manage up to 50 students per room — all in real time.
+                                </p>
+                                {user?.role === 'teacher' || user?.role === 'admin' ? (
+                                    <Link href="/teacher/dashboard" className="w-full py-2 bg-indigo-500 text-white font-bold rounded-xl text-xs text-center hover:bg-indigo-600 transition-colors">
+                                        Go to Dashboard
+                                    </Link>
+                                ) : profileCompletion < 100 ? (
+                                    <div className="w-full py-2 bg-indigo-100 text-indigo-300 font-bold rounded-xl text-xs text-center cursor-not-allowed">
+                                        Complete profile first ({profileCompletion}%)
+                                    </div>
+                                ) : (
+                                    <Link href="/apply-teacher" className="w-full py-2 bg-indigo-100 text-indigo-600 font-bold rounded-xl text-xs text-center hover:bg-indigo-200 transition-colors">
+                                        Apply as Teacher
+                                    </Link>
+                                )}
+                            </div>
+
+                            {/* Instructor Program */}
+                            <div className="rounded-2xl border border-green/20 bg-green/5 p-4 flex flex-col gap-3">
+                                <div className="flex items-center gap-3">
+                                    <div className="w-10 h-10 rounded-xl bg-green/15 flex items-center justify-center shrink-0">
+                                        <GraduationCap size={20} className="text-green" />
+                                    </div>
+                                    <div>
+                                        <h4 className="font-black text-dark text-sm">Instructor</h4>
+                                        <p className="text-[11px] text-green font-bold">On-demand video courses</p>
+                                    </div>
+                                </div>
+                                <p className="text-xs text-dark/50 leading-relaxed">
+                                    Upload recorded video lessons and PDF documents. Students discover and watch your courses anytime. Best for structured, self-paced learning.
+                                </p>
+                                {user?.role === 'instructor' || user?.role === 'admin' ? (
+                                    <Link href="/instructor-dashboard" className="w-full py-2 bg-green text-white font-bold rounded-xl text-xs text-center hover:bg-green/90 transition-colors">
+                                        Go to Dashboard
+                                    </Link>
+                                ) : profileCompletion < 100 ? (
+                                    <div className="w-full py-2 bg-green/10 text-green/40 font-bold rounded-xl text-xs text-center cursor-not-allowed">
+                                        Complete profile first ({profileCompletion}%)
+                                    </div>
+                                ) : (
+                                    <Link href="/apply-instructor" className="w-full py-2 bg-green/10 text-green font-bold rounded-xl text-xs text-center hover:bg-green/20 transition-colors">
+                                        Apply as Instructor
+                                    </Link>
+                                )}
+                            </div>
+                        </div>
+                    </div>
+
+                    {/* ── Services Grid ── */}
+                    <div className="space-y-4 pt-10 border-t border-green/8">
                         <div>
                             <h2 className="text-2xl font-black text-dark">Services</h2>
                             <p className="text-sm mt-1" style={{ color: 'rgba(26,58,42,0.4)' }}>Access useful tools and services quickly.</p>
@@ -568,75 +793,7 @@ export default function ProfilePage() {
                                 </div>
                             </Link>
 
-                            {/* 4. Instructor Program */}
-                            {user?.role === 'instructor' ? (
-                                <Link href="/instructor-dashboard" className="svc-card">
-                                    <div className="svc-icon" style={{ background: 'rgba(58,170,106,0.1)', color: '#3aaa6a' }}>
-                                        <GraduationCap size={22} />
-                                    </div>
-                                    <div>
-                                        <h4 className="font-bold text-dark text-sm leading-tight">Instructor</h4>
-                                        <p className="text-xs mt-1" style={{ color: 'rgba(26,58,42,0.38)' }}>Upload & manage</p>
-                                    </div>
-                                </Link>
-                            ) : profileCompletion < 100 ? (
-                                <div className="svc-card opacity-60 relative" style={{ cursor: 'not-allowed' }}>
-                                    <div className="svc-icon" style={{ background: 'rgba(0,0,0,0.04)', color: 'rgba(0,0,0,0.2)' }}>
-                                        <GraduationCap size={22} />
-                                    </div>
-                                    <div>
-                                        <h4 className="text-sm leading-tight" style={{ fontWeight: 700, color: 'rgba(26,58,42,0.35)' }}>Instructor</h4>
-                                        <p className="text-xs mt-1" style={{ color: 'rgba(26,58,42,0.25)' }}>Complete profile ({profileCompletion}%)</p>
-                                    </div>
-                                    <Link href="/settings" className="absolute inset-0" />
-                                </div>
-                            ) : (
-                                <Link href="/apply-instructor" className="svc-card">
-                                    <div className="svc-icon" style={{ background: 'rgba(58,170,106,0.1)', color: '#3aaa6a' }}>
-                                        <GraduationCap size={22} />
-                                    </div>
-                                    <div>
-                                        <h4 className="font-bold text-dark text-sm leading-tight">Instructor</h4>
-                                        <p className="text-xs mt-1" style={{ color: 'rgba(26,58,42,0.38)' }}>Upload & teach online</p>
-                                    </div>
-                                </Link>
-                            )}
-
-                            {/* 5. Teacher Program */}
-                            {user?.role === 'teacher' ? (
-                                <Link href="/teacher/dashboard" className="svc-card">
-                                    <div className="svc-icon" style={{ background: 'rgba(99,102,241,0.1)', color: '#6366f1' }}>
-                                        <MessageSquare size={22} />
-                                    </div>
-                                    <div>
-                                        <h4 className="font-bold text-dark text-sm leading-tight">Teacher</h4>
-                                        <p className="text-xs mt-1" style={{ color: 'rgba(26,58,42,0.38)' }}>Manage chat rooms</p>
-                                    </div>
-                                </Link>
-                            ) : profileCompletion < 100 ? (
-                                <div className="svc-card opacity-60 relative" style={{ cursor: 'not-allowed' }}>
-                                    <div className="svc-icon" style={{ background: 'rgba(0,0,0,0.04)', color: 'rgba(0,0,0,0.2)' }}>
-                                        <MessageSquare size={22} />
-                                    </div>
-                                    <div>
-                                        <h4 className="text-sm leading-tight" style={{ fontWeight: 700, color: 'rgba(26,58,42,0.35)' }}>Teacher</h4>
-                                        <p className="text-xs mt-1" style={{ color: 'rgba(26,58,42,0.25)' }}>Complete profile ({profileCompletion}%)</p>
-                                    </div>
-                                    <Link href="/settings" className="absolute inset-0" />
-                                </div>
-                            ) : (
-                                <Link href="/apply-teacher" className="svc-card">
-                                    <div className="svc-icon" style={{ background: 'rgba(99,102,241,0.1)', color: '#6366f1' }}>
-                                        <MessageSquare size={22} />
-                                    </div>
-                                    <div>
-                                        <h4 className="font-bold text-dark text-sm leading-tight">Teacher</h4>
-                                        <p className="text-xs mt-1" style={{ color: 'rgba(26,58,42,0.38)' }}>Class chat rooms</p>
-                                    </div>
-                                </Link>
-                            )}
-
-                            {/* 6. Favorite Courses */}
+                            {/* 4. Favorite Courses */}
                             <Link href="/favorites/courses" className="svc-card">
                                 <div className="svc-icon" style={{ background: 'rgba(239,68,68,0.1)', color: '#ef4444' }}>
                                     <Heart size={22} />
@@ -727,77 +884,6 @@ export default function ProfilePage() {
                         </div>
                     </div>
 
-                    {/* Instructor Card — shown if user has approved application */}
-                    {approvedApplication && (
-                        <div className="pt-8 border-t border-green/6">
-                            <div
-                                className="relative overflow-hidden rounded-[22px] p-6 md:p-8"
-                                style={{ backgroundImage: `repeating-linear-gradient(45deg, rgba(255,255,255,0.03) 0px, rgba(255,255,255,0.03) 2px, transparent 2px, transparent 8px), linear-gradient(135deg, #1e7a46 0%, #0f4428 100%)` }}
-                            >
-                                {/* Dot texture */}
-                                <div
-                                    className="absolute inset-0 pointer-events-none"
-                                    style={{ backgroundImage: 'radial-gradient(circle, rgba(255,255,255,0.18) 1px, transparent 1px)', backgroundSize: '18px 18px', opacity: 0.35 }}
-                                />
-                                <div className="relative z-10">
-                                    <div className="flex items-start justify-between gap-4 mb-5">
-                                        <div>
-                                            <div className="inline-flex items-center gap-2 mb-3">
-                                                <span className="px-3 py-1 bg-white/15 text-white text-[11px] font-bold rounded-full tracking-wide">
-                                                    ✓ {t('approved_instructor') || 'Approved Instructor'}
-                                                </span>
-                                            </div>
-                                            <h3 className="text-xl font-black text-white leading-tight mb-1">
-                                                {t('instructor_approved') || "You're an Approved Instructor!"}
-                                            </h3>
-                                            <p className="text-sm" style={{ color: 'rgba(255,255,255,0.55)' }}>
-                                                {t('instructor_approved_desc') || 'Upload courses and share your expertise.'}
-                                            </p>
-                                        </div>
-                                        <div className="w-12 h-12 rounded-[16px] flex items-center justify-center flex-shrink-0" style={{ background: 'rgba(255,255,255,0.12)' }}>
-                                            <GraduationCap className="text-white" size={24} />
-                                        </div>
-                                    </div>
-
-                                    <div className="rounded-[16px] p-4 mb-5 space-y-2.5" style={{ background: 'rgba(255,255,255,0.08)', border: '1px solid rgba(255,255,255,0.12)' }}>
-                                        <div className="flex items-center gap-3">
-                                            <span className="text-[10px] font-black uppercase tracking-wider min-w-[72px]" style={{ color: 'rgba(255,255,255,0.4)' }}>{t('specialist') || 'Specialist'}</span>
-                                            <span className="font-semibold text-white text-sm">{approvedApplication.specialist}</span>
-                                        </div>
-                                        <div className="flex items-center gap-3">
-                                            <span className="text-[10px] font-black uppercase tracking-wider min-w-[72px]" style={{ color: 'rgba(255,255,255,0.4)' }}>{t('target_course') || 'Course'}</span>
-                                            <span className="font-semibold text-white text-sm">{instructorNames.subject || approvedApplication.targetSubjectId}</span>
-                                        </div>
-                                        {instructorNames.guidance && (
-                                            <div className="flex items-center gap-3">
-                                                <span className="text-[10px] font-black uppercase tracking-wider min-w-[72px]" style={{ color: 'rgba(255,255,255,0.4)' }}>{t('guidance') || 'Track'}</span>
-                                                <span className="font-semibold text-white text-sm">{instructorNames.guidance}</span>
-                                            </div>
-                                        )}
-                                    </div>
-
-                                    <div className="flex gap-3">
-                                        <Link
-                                            href="/instructor-dashboard"
-                                            className="flex-1 py-2.5 bg-white text-green font-bold rounded-[14px] text-sm text-center hover:scale-[1.02] active:scale-95 transition-transform shadow-md"
-                                        >
-                                            {t('instructor_dashboard') || 'Dashboard'}
-                                        </Link>
-                                        <Link
-                                            href="/instructors"
-                                            className="flex-1 py-2.5 font-bold rounded-[14px] text-sm text-center text-white transition-colors"
-                                            style={{ background: 'rgba(255,255,255,0.1)', border: '1px solid rgba(255,255,255,0.15)' }}
-                                            onMouseEnter={e => (e.currentTarget.style.background = 'rgba(255,255,255,0.18)')}
-                                            onMouseLeave={e => (e.currentTarget.style.background = 'rgba(255,255,255,0.1)')}
-                                        >
-                                            {t('view_profile') || 'View Profile'}
-                                        </Link>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                    )}
-
                     <div className="pt-8 border-t border-green/6 flex flex-col items-center gap-3">
                         <p className="text-[10px] font-black uppercase tracking-widest" style={{ color: 'rgba(26,58,42,0.25)' }}>Account</p>
                         <button
@@ -812,7 +898,8 @@ export default function ProfilePage() {
                         </button>
                     </div>
                 </div>
-            </div>
+                </div>{/* end Student Profile Card wrapper */}
+            </div>{/* end max-w-5xl */}
 
             <AnimatePresence>
                 {isCropping && cropImage && (

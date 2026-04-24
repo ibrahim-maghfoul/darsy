@@ -17,6 +17,8 @@ interface AuthContextType {
     refreshUser: () => void;
     getPhotoURL: (url: string | undefined | null) => string | null;
     getResourceURL: (url: string | undefined | null) => string | null;
+    sessionError: string | null;
+    clearSessionError: () => void;
 }
 
 const AuthContext = createContext<AuthContextType | null>(null);
@@ -24,12 +26,21 @@ const AuthContext = createContext<AuthContextType | null>(null);
 // Throttle: only allow checkAuth once per interval
 const CHECK_AUTH_THROTTLE = 10_000; // 10 seconds
 
+function getDashboardPath(role: string) {
+    if (role === 'teacher') return '/teacher/dashboard';
+    if (role === 'instructor') return '/instructor-dashboard';
+    return '/explore';
+}
+
 export function AuthProvider({ children }: { children: React.ReactNode }) {
     const [user, setUser] = useState<User | null>(null);
     const [loading, setLoading] = useState(true);
+    const [sessionError, setSessionError] = useState<string | null>(null);
     const router = useRouter();
     const lastCheckRef = useRef(0);
     const refreshTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+    const clearSessionError = useCallback(() => setSessionError(null), []);
 
     const checkAuth = useCallback(async () => {
         if (typeof window === 'undefined') return;
@@ -52,9 +63,12 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
             const res = await api.get('/user/profile', { signal: controller.signal });
             setUser(res.data);
         } catch (error: any) {
-            // Network errors (backend down) are expected when not logged in — don't spam console
             if (error?.code !== 'ERR_NETWORK' && error?.code !== 'ERR_CANCELED') {
                 console.error("Auth check failed:", error);
+            }
+            if (error?.response?.data?.code === 'SESSION_INVALIDATED') {
+                setSessionError('Your account was logged in from another device. You have been signed out.');
+                router.push('/');
             }
             localStorage.removeItem('token');
             setUser(null);
@@ -62,7 +76,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
             clearTimeout(timeout);
             setLoading(false);
         }
-    }, []);
+    }, [router]);
 
     /**
      * Debounced refresh: call this instead of checkAuth() after mutations.
@@ -93,7 +107,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
             }
 
             setUser(userData);
-            router.push('/explore');
+            router.push(getDashboardPath(userData.role));
         } catch (error: any) {
             const errorMsg = error.response?.data?.error || 'Login failed';
             console.error("Login attempt failed:", errorMsg);
@@ -135,6 +149,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
                 localStorage.removeItem('token');
             }
             setUser(null);
+            setSessionError(null);
             router.push('/');
         }
     }, [router]);
@@ -153,7 +168,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
             if (isNewUser) {
                 router.push('/onboarding');
             } else {
-                router.push('/explore');
+                router.push(getDashboardPath(userData.role));
             }
         } catch (error: any) {
             const errorMsg = error.response?.data?.error || 'Google Login failed';
@@ -188,7 +203,9 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         refreshUser,
         getPhotoURL,
         getResourceURL,
-    }), [user, loading, login, register, googleLogin, logout, checkAuth, refreshUser, getPhotoURL, getResourceURL]);
+        sessionError,
+        clearSessionError,
+    }), [user, loading, login, register, googleLogin, logout, checkAuth, refreshUser, getPhotoURL, getResourceURL, sessionError, clearSessionError]);
 
     return (
         <AuthContext.Provider value={contextValue}>

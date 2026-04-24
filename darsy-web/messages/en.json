@@ -14,7 +14,7 @@
         "me": "Me"
     },
     "Hero": {
-        "badge": "AI-Powered Education Platform",
+        "badge": "Morocco's Education Platform",
         "subtitle": "Access free courses, track your progress, and prepare for your exams.",
         "title1": "Your complete ",
         "title_highlight": "Online School",
@@ -653,5 +653,26 @@
         "new_password": "New Password",
         "subscription_management": "Subscription Management",
         "coming_soon": "Payment and subscription features are coming soon."
+    },
+    "NotFound": {
+        "badge": "Page not found",
+        "title": "Oops! Wrong path.",
+        "description": "The page you're looking for doesn't exist or has been moved.",
+        "back_home": "Back to Home",
+        "explore": "Explore Courses"
+    },
+    "JoinRoom": {
+        "classroom": "Classroom",
+        "members": "members",
+        "request_join": "Request to Join",
+        "joining": "Sending request...",
+        "request_sent": "Request sent!",
+        "request_desc": "The teacher will review your request and accept you soon.",
+        "already_member": "You're already in this room.",
+        "room_full": "This room is full.",
+        "join_error": "Failed to send join request.",
+        "not_found_title": "Room not found",
+        "not_found_desc": "This invite link is invalid or the room has been closed.",
+        "back_home": "Back to Home"
     }
 }

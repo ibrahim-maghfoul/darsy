@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { ShieldCheck, Check, X, Eye, FileText, Filter, RefreshCw, MapPin, BookOpen, Phone } from 'lucide-react';
+import { ShieldCheck, Check, X, Eye, FileText, Filter, RefreshCw, MapPin, BookOpen, Phone, Trash2, Shield } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import './TeacherApplications.css';
 
@@ -15,10 +15,13 @@ export default function TeacherVerifications() {
     const [reviewNote, setReviewNote] = useState('');
     const [reviewing, setReviewing] = useState(false);
 
+    const [roleModal, setRoleModal] = useState(null);
+    const [newRole, setNewRole] = useState('teacher');
+    const [roleChanging, setRoleChanging] = useState(false);
+
     const authHeader = token ? { Authorization: `Bearer ${token}` } : {};
 
     const fetchVerifications = async () => {
-        if (!token) return;
         setLoading(true);
         setError('');
         try {
@@ -39,7 +42,7 @@ export default function TeacherVerifications() {
         }
     };
 
-    useEffect(() => { fetchVerifications(); }, [token]);
+    useEffect(() => { fetchVerifications(); }, []);
 
     const handleReview = async (id, status) => {
         setReviewing(true);
@@ -62,6 +65,43 @@ export default function TeacherVerifications() {
         } finally {
             setReviewing(false);
         }
+    };
+
+    const handleDelete = async (v) => {
+        if (!confirm(`Delete verification from "${v.userId?.displayName || v.schoolName}"? This cannot be undone.`)) return;
+        try {
+            const res = await fetch(`${API}/teacher/verifications/${v._id}`, {
+                method: 'DELETE',
+                headers: { ...authHeader },
+                credentials: 'include',
+            });
+            if (!res.ok) { const d = await res.json(); alert(d.error || 'Delete failed'); return; }
+            setVerifications(prev => prev.filter(x => x._id !== v._id));
+            if (selected?._id === v._id) setSelected(null);
+        } catch (err) { alert('Error: ' + err.message); }
+    };
+
+    const openRoleModal = (v) => {
+        setRoleModal({ verificationId: v._id, userId: v.userId?._id, name: v.userId?.displayName || v.schoolName });
+        setNewRole('teacher');
+    };
+
+    const handleRoleChange = async () => {
+        if (!roleModal?.userId) { alert('No user linked to this verification'); return; }
+        setRoleChanging(true);
+        try {
+            const res = await fetch(`${API}/user/admin/${roleModal.userId}/role`, {
+                method: 'PATCH',
+                headers: { ...authHeader, 'Content-Type': 'application/json' },
+                credentials: 'include',
+                body: JSON.stringify({ role: newRole }),
+            });
+            const data = await res.json();
+            if (!res.ok) throw new Error(data.error || 'Role change failed');
+            alert(`✅ Role updated to "${newRole}" for ${roleModal.name}.\nThe change is saved — go to the Users page to confirm.`);
+            setRoleModal(null);
+        } catch (err) { alert('Error: ' + err.message); }
+        finally { setRoleChanging(false); }
     };
 
     const filtered = statusFilter === 'all'
@@ -211,6 +251,21 @@ export default function TeacherVerifications() {
                                                     </button>
                                                 </>
                                             )}
+                                            <button
+                                                className="btn-icon"
+                                                title="Change user role"
+                                                style={{ color: '#6366f1' }}
+                                                onClick={() => openRoleModal(v)}
+                                            >
+                                                <Shield size={15} />
+                                            </button>
+                                            <button
+                                                className="btn-icon btn-reject"
+                                                title="Delete verification"
+                                                onClick={() => handleDelete(v)}
+                                            >
+                                                <Trash2 size={15} />
+                                            </button>
                                         </div>
                                     </td>
                                 </tr>
@@ -293,6 +348,43 @@ export default function TeacherVerifications() {
                                     </div>
                                 </div>
                             )}
+                        </div>
+                    </div>
+                </div>
+            )}
+
+            {/* Role Change Modal */}
+            {roleModal && (
+                <div className="ta-modal-overlay" onClick={() => setRoleModal(null)}>
+                    <div className="ta-modal" style={{ maxWidth: 360 }} onClick={e => e.stopPropagation()}>
+                        <div className="ta-modal-header">
+                            <h3>Change Role — {roleModal.name}</h3>
+                            <button className="btn-icon" onClick={() => setRoleModal(null)}><X size={18} /></button>
+                        </div>
+                        <div className="ta-modal-body">
+                            <label style={{ display: 'block', marginBottom: 8, fontWeight: 600, fontSize: '0.85rem' }}>New Role</label>
+                            <select
+                                value={newRole}
+                                onChange={e => setNewRole(e.target.value)}
+                                style={{ width: '100%', padding: '0.5rem 0.75rem', borderRadius: 8, border: '1px solid #e2e8f0', marginBottom: 16, fontSize: '0.9rem' }}
+                            >
+                                <option value="user">User</option>
+                                <option value="teacher">Teacher</option>
+                                <option value="instructor">Instructor</option>
+                                <option value="admin">Admin</option>
+                            </select>
+                            <div style={{ display: 'flex', gap: 10 }}>
+                                <button className="btn-icon btn-reject" style={{ flex: 1, padding: '0.6rem', borderRadius: 8, fontSize: '0.85rem' }} onClick={() => setRoleModal(null)}>Cancel</button>
+                                <button
+                                    className="btn-approve-full"
+                                    style={{ flex: 1, padding: '0.6rem', borderRadius: 8, fontSize: '0.85rem', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6 }}
+                                    disabled={roleChanging}
+                                    onClick={handleRoleChange}
+                                >
+                                    <Shield size={14} />
+                                    {roleChanging ? 'Saving...' : 'Set Role'}
+                                </button>
+                            </div>
                         </div>
                     </div>
                 </div>

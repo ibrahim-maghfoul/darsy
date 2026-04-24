@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { Facebook, Twitter, Instagram, Youtube, Send, Loader2, CheckCircle } from "lucide-react";
 import Link from "next/link";
+import { DarsyLogo } from "./DarsyLogo";
 
 import { useTranslations } from "next-intl";
 import { SOCIALS } from "@/lib/constants";
@@ -51,8 +52,8 @@ export function Footer() {
                     {/* Brand Column */}
                     <div className="col-span-2 md:col-span-1 flex flex-col gap-4">
                         <div className="flex items-center gap-2.5">
-                            <div className="w-[34px] h-[34px] bg-gradient-to-br from-green to-[#2a8a50] rounded-[10px] flex items-center justify-center text-white font-black text-base shadow-[0_2px_12px_rgba(58,170,106,0.4)]">
-                                D
+                            <div className="w-[34px] h-[34px] bg-gradient-to-br from-green to-[#2a8a50] rounded-[10px] flex items-center justify-center shadow-[0_2px_12px_rgba(58,170,106,0.4)] p-1.5">
+                                <DarsyLogo className="w-full h-full" color="white" />
                             </div>
                             <span className="text-[15px] font-bold text-white tracking-tight">Darsy</span>
                         </div>

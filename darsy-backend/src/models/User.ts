@@ -98,6 +98,8 @@ export interface IUser extends Document {
         resetAt: Date;
     };
     refreshToken?: string;
+    sessionId?: string;
+    aiLastRegenDate?: Date;
     createdAt: Date;
     updatedAt: Date;
     isPremium: boolean; // virtual
@@ -172,6 +174,8 @@ const UserSchema = new Schema<IUser>({
         resetAt: { type: Date, default: () => new Date() },
     },
     refreshToken: { type: String, select: false },
+    sessionId: { type: String, select: false },
+    aiLastRegenDate: { type: Date },
 }, {
     timestamps: true,
 });

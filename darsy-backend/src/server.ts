@@ -26,6 +26,9 @@ import calendarRoutes from './routes/calendar';
 import teacherRoutes from './routes/teacher';
 import instructorRoutes from './routes/instructor';
 import posterRoutes from './routes/poster';
+import leaderboardRoutes from './routes/leaderboard';
+import notificationRoutes from './routes/notifications';
+import aiRoutes from './routes/ai';
 import { handleChatConnection } from './sockets/chat';
 import { verifyAccessToken } from './utils/auth';
 
@@ -111,6 +114,7 @@ app.use('/data/videos', express.static(path.join(process.cwd(), 'data/videos'), 
 app.use('/data/documents', express.static(path.join(process.cwd(), 'data/documents'), staticOpts));
 app.use('/data/verifications', express.static(path.join(process.cwd(), 'data/verifications'), staticOpts));
 app.use('/data/posters', express.static(path.join(process.cwd(), 'data/posters'), { ...staticOpts, maxAge: '0' }));
+app.use('/data/room-files', express.static(path.join(process.cwd(), 'data/room-files'), staticOpts));
 
 // Health check endpoint
 app.get('/health', (_req: Request, res: Response) => {
@@ -130,6 +134,9 @@ app.use('/api/calendar', calendarRoutes);
 app.use('/api/teacher', teacherRoutes);
 app.use('/api/instructor', instructorRoutes);
 app.use('/api/poster', posterRoutes);
+app.use('/api/leaderboard', leaderboardRoutes);
+app.use('/api/notifications', notificationRoutes);
+app.use('/api/ai', aiRoutes);
 
 // 404 handler
 app.use((_req: Request, res: Response) => {

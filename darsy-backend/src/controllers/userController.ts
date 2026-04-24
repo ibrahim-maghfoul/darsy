@@ -14,12 +14,6 @@ export class UserController {
     // Admin: Get all users (paginated)
     static async getAllUsers(req: AuthRequest, res: Response): Promise<void> {
         try {
-            const caller = await User.findById(req.userId);
-            if (!caller || caller.role !== 'admin') {
-                res.status(403).json({ error: 'Admin only' });
-                return;
-            }
-
             const page = Math.max(1, parseInt(req.query.page as string) || 1);
             const limit = Math.min(200, Math.max(1, parseInt(req.query.limit as string) || 100));
             const skip = (page - 1) * limit;
@@ -44,8 +38,6 @@ export class UserController {
     // Admin: set user role
     static async setUserRole(req: AuthRequest, res: Response): Promise<void> {
         try {
-            const caller = await User.findById(req.userId);
-            if (!caller || caller.role !== 'admin') { res.status(403).json({ error: 'Admin only' }); return; }
             const { role } = req.body;
             if (!['user', 'admin', 'instructor', 'teacher'].includes(role)) { res.status(400).json({ error: 'Invalid role' }); return; }
             const user = await User.findByIdAndUpdate(req.params.id, { role }, { new: true }).select('-password -refreshToken');
@@ -57,8 +49,6 @@ export class UserController {
     // Admin: set user subscription
     static async setUserSubscription(req: AuthRequest, res: Response): Promise<void> {
         try {
-            const caller = await User.findById(req.userId);
-            if (!caller || caller.role !== 'admin') { res.status(403).json({ error: 'Admin only' }); return; }
             const { plan, billingCycle, expiresAt } = req.body;
             if (!['free', 'premium', 'pro'].includes(plan)) { res.status(400).json({ error: 'Invalid plan' }); return; }
             const user = await User.findByIdAndUpdate(req.params.id, { subscription: { plan, billingCycle: billingCycle || 'none', expiresAt } }, { new: true }).select('-password -refreshToken');
@@ -70,8 +60,6 @@ export class UserController {
     // Admin: delete any user
     static async deleteUserAdmin(req: AuthRequest, res: Response): Promise<void> {
         try {
-            const caller = await User.findById(req.userId);
-            if (!caller || caller.role !== 'admin') { res.status(403).json({ error: 'Admin only' }); return; }
             if (req.params.id === req.userId) { res.status(400).json({ error: 'Cannot delete yourself' }); return; }
             const user = await User.findByIdAndDelete(req.params.id);
             if (!user) { res.status(404).json({ error: 'User not found' }); return; }
@@ -381,9 +369,6 @@ export class UserController {
     // Admin: Get all feedback/reports (paginated, O(1) user lookup)
     static async getAllFeedback(req: AuthRequest, res: Response): Promise<void> {
         try {
-            const caller = await User.findById(req.userId);
-            if (!caller || caller.role !== 'admin') { res.status(403).json({ error: 'Admin only' }); return; }
-
             const page = Math.max(1, parseInt(req.query.page as string) || 1);
             const limit = Math.min(200, Math.max(1, parseInt(req.query.limit as string) || 50));
             const skip = (page - 1) * limit;
@@ -410,8 +395,6 @@ export class UserController {
     // Admin: Update feedback status
     static async updateFeedbackStatus(req: AuthRequest, res: Response): Promise<void> {
         try {
-            const caller = await User.findById(req.userId);
-            if (!caller || caller.role !== 'admin') { res.status(403).json({ error: 'Admin only' }); return; }
             const { status } = req.body;
             if (!['pending', 'reviewed', 'resolved'].includes(status)) { res.status(400).json({ error: 'Invalid status' }); return; }
             const fb = await Feedback.findByIdAndUpdate(req.params.id, { status }, { new: true });
@@ -425,8 +408,6 @@ export class UserController {
     // Admin: Delete feedback
     static async deleteFeedback(req: AuthRequest, res: Response): Promise<void> {
         try {
-            const caller = await User.findById(req.userId);
-            if (!caller || caller.role !== 'admin') { res.status(403).json({ error: 'Admin only' }); return; }
             await Feedback.findByIdAndDelete(req.params.id);
             res.json({ message: 'Deleted' });
         } catch (error) {
@@ -565,15 +546,8 @@ export class UserController {
     }
 
     // Admin: Random Giveaway — grant 1 month premium to a random free user
-    static async runGiveaway(req: AuthRequest, res: Response): Promise<void> {
+    static async runGiveaway(_req: AuthRequest, res: Response): Promise<void> {
         try {
-            // Only admins can trigger this
-            const caller = await User.findById(req.userId);
-            if (!caller || caller.role !== 'admin') {
-                res.status(403).json({ error: 'Admin only' });
-                return;
-            }
-
             // Find all free users
             const freeUsers = await User.find({ 'subscription.plan': 'free' }, '_id displayName email').lean();
             if (freeUsers.length === 0) {

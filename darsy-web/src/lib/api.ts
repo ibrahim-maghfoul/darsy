@@ -35,7 +35,9 @@ api.interceptors.response.use(
             if (typeof window !== 'undefined') {
                 localStorage.removeItem('token');
                 localStorage.removeItem('refreshToken');
-                // We could redirect here but we'll let the AuthContext handle it
+                if (error.response?.data?.code === 'SESSION_INVALIDATED') {
+                    sessionStorage.setItem('auth_error', 'SESSION_INVALIDATED');
+                }
             }
         }
         return Promise.reject(error);

@@ -15,7 +15,7 @@ const values = [
     {
         icon: Lightbulb,
         title: "Innovation First",
-        description: "We constantly push the boundaries of how learning can be delivered, mixing AI with interactive content.",
+        description: "We constantly push the boundaries of how learning can be delivered, mixing modern technology with interactive content.",
         color: "text-amber-500",
         bg: "bg-amber-50",
     },
@@ -56,7 +56,7 @@ const milestones = [
     { year: "2022", title: "First 1,000 Students", desc: "Word spread quickly. Within months, students across Algeria were using Darsy to prepare for exams." },
     { year: "2023", title: "National Expansion", desc: "We partnered with 20 schools and launched our mobile apps, reaching 10,000 active users." },
     { year: "2024", title: "Kingdom Success", desc: "Darsy expanded into Morocco, serving students across the kingdom and beyond." },
-    { year: "2025", title: "AI Learning", desc: "Launched personalized AI modules that adapt to every student's pace and style." },
+    { year: "2025", title: "Smart Learning", desc: "Launched personalized learning modules that adapt to every student's pace and learning style." },
     { year: "2026", title: "Vision 2026", desc: "Aiming to become the leading digital education hub in Africa, reaching 1 million learners." },
 ];
 

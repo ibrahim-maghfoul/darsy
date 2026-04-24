@@ -16,23 +16,17 @@ const buildImagePrompt = ({ title, designPrompt, stylePhrase, theme = 'white', h
     const bgColor = theme === 'green' ? 'green (#3aaa6a)' : 'white (#ffffff)';
     const accentColor = theme === 'green' ? 'white (#ffffff)' : 'green (#3aaa6a)';
     const textColor = theme === 'green' ? 'white (#ffffff)' : 'black (#111111)';
-    const styleLine = stylePhrase || 'Flat 2D graphic design';
+    const styleLine = stylePhrase || '2D design';
 
-    return `${styleLine}. Square 1:1 format. Solid ${bgColor} background.
+    return `${styleLine}, Solid ${bgColor} background.
 
 PRIMARY COLOR PALETTE — green (#3aaa6a) is the primary brand color:
-- Background: ${bgColor} (solid, fills all edges)
 - Primary accent & shapes: ${accentColor}
 - Characters, figures, and organic elements: styled as described in the scene — use the green (#3aaa6a) palette, NOT forced grayscale
 - FORBIDDEN: orange, yellow, red, blue, brown, any warm tone whatsoever
 
 OUTPUT FORMAT — STRICT:
-- SQUARE 1:1 aspect ratio — width equals height, no exceptions
-- FULL BLEED — design fills every pixel from edge to edge, all four sides
-- Elements, shapes, and figures must touch or bleed off the canvas edges — nothing floats in the center with empty space around it
-- No margins, no padding, no white/empty borders around the design
-- No frame, no mockup, no poster-in-scene, no grey edges, no drop shadows
-- No letterboxing, no pillarboxing, no empty bands on any side
+- Elements, shapes, and figures must touch or bleed off the edges — nothing floats in the center with empty space around it
 
 SCENE:
 Topic: ${title}
@@ -97,6 +91,7 @@ const ContentCreator = () => {
     const [designPrompt, setDesignPrompt] = useState('');
     const [stylePhrase, setStylePhrase] = useState('');
     const [theme, setTheme] = useState('green');
+    const [manualPromptOverride, setManualPromptOverride] = useState(null);
 
     // Step 3 — posters stored as { url, theme } so DARSY color is always correct
     const [posters, setPosters] = useState([]); // [{ url, theme }]
@@ -207,6 +202,7 @@ Return ONLY valid JSON — no markdown, no extra text.
             setSubline(parsed.subline || '');
             setStylePhrase(parsed.stylePhrase || '');
             setDesignPrompt(parsed.designPrompt || '');
+            setManualPromptOverride(null);
             setProgress(100);
             setStatus('Content ready!');
             setStep(2);
@@ -232,7 +228,9 @@ Return ONLY valid JSON — no markdown, no extra text.
 
         try {
             const n = Math.min(Math.max(parseInt(imagesPerTheme) || 1, 1), 4);
-            const imagePrompt = buildImagePrompt({ title, designPrompt, stylePhrase, theme, headline, subline });
+            const imagePrompt = manualPromptOverride !== null 
+                ? manualPromptOverride 
+                : buildImagePrompt({ title, designPrompt, stylePhrase, theme, headline, subline });
 
             const modelLabel = imageModel === 'ghost' ? 'Ghost API'
                 : imageModel === 'gpt-image-1' ? 'GPT-Image-1'
@@ -263,7 +261,7 @@ Write one engaging social media caption that works across Instagram, Facebook an
                         role: 'user',
                         content: `Write a caption for:\nTopic: ${topic}\nHeadline: ${headline}\nSubline: ${subline || '(none)'}`,
                     },
-                ], { keys, addLog: () => {}, setCurrentProvider: () => {} })
+                ], { keys, addLog: () => { }, setCurrentProvider: () => { } })
                     .then(r => r?.choices?.[0]?.message?.content?.trim() || '')
                     .catch(() => ''),
             ]);
@@ -308,7 +306,7 @@ Write one engaging social media caption that works across Instagram, Facebook an
                     role: 'user',
                     content: `Write a caption for:\nTopic: ${topic}\nHeadline: ${headline}\nSubline: ${subline || '(none)'}`,
                 },
-            ], { keys, addLog: () => {}, setCurrentProvider: () => {} });
+            ], { keys, addLog: () => { }, setCurrentProvider: () => { } });
             const text = response?.choices?.[0]?.message?.content?.trim();
             if (!text) throw new Error('Empty response');
             setCaption(text);
@@ -409,6 +407,7 @@ Write one engaging social media caption that works across Instagram, Facebook an
         setPosters([]); setSelectedPoster(null); setCompositedUrl('');
         setLogoFile(null); setLogoPreview('');
         setError(''); setSavedCount(0); setCaption('');
+        setManualPromptOverride(null);
     };
 
     const previewPrompt = (title || designPrompt)
@@ -612,11 +611,19 @@ Write one engaging social media caption that works across Instagram, Facebook an
                             </label>
                             <textarea
                                 className="pg-textarea"
-                                rows={8}
-                                readOnly
-                                value={previewPrompt}
-                                style={{ fontFamily: 'monospace', fontSize: '0.72rem', opacity: 0.7, cursor: 'default', resize: 'vertical' }}
+                                rows={10}
+                                value={manualPromptOverride !== null ? manualPromptOverride : previewPrompt}
+                                onChange={e => setManualPromptOverride(e.target.value)}
+                                style={{ fontFamily: 'monospace', fontSize: '0.78rem', resize: 'vertical', background: '#fafafa', border: '1.5px solid var(--border)' }}
                             />
+                            {manualPromptOverride !== null && (
+                                <button
+                                    onClick={() => setManualPromptOverride(null)}
+                                    style={{ background: 'none', border: 'none', color: 'var(--green)', fontSize: '0.65rem', fontWeight: 700, padding: 0, marginTop: 6, cursor: 'pointer', textAlign: 'right', display: 'block', width: '100%' }}
+                                >
+                                    Reset to Auto-Generated Prompt
+                                </button>
+                            )}
                         </div>
                     </div>
 

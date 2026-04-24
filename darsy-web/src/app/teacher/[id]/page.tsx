@@ -1,384 +1,373 @@
-"use client";
+'use client';
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from 'react';
+import { useParams, useRouter } from 'next/navigation';
+import Image from 'next/image';
+import Link from 'next/link';
+import api from '@/lib/api';
+import { useAuth } from '@/contexts/AuthContext';
 import {
-    Star, Users, Award, MessageCircle,
-    MapPin, Loader2, Send, Shield, ChevronRight
-} from "lucide-react";
-import { useAuth } from "@/contexts/AuthContext";
-import { useSnackbar } from "@/contexts/SnackbarContext";
-import api from "@/lib/api";
-import Image from "next/image";
-import { useParams } from "next/navigation";
-import type { TeacherProfile, TeacherRoom } from "@/types";
+    ArrowLeft, Star, Users, BookOpen, GraduationCap,
+    MapPin, CheckCircle2, MessageCircle, Loader2, Copy, Check,
+} from 'lucide-react';
 
-const FONT_IMPORT = `@import url('https://fonts.googleapis.com/css2?family=Syne:wght@600;700;800&family=DM+Sans:ital,opsz,wght@0,9..40,400;0,9..40,500;0,9..40,600&display=swap');`;
+function imgURL(url?: string | null, type: 'avatar' | 'cover' = 'avatar') {
+    if (!url) return null;
+    if (url.startsWith('http')) return url;
+    const dir = type === 'avatar' ? 'profile-picture' : 'cover-photos';
+    return `/data/images/${dir}/${url}`;
+}
 
-export default function TeacherProfilePage() {
-    const { id } = useParams();
+function Stars({ value, max = 5, interactive = false, onChange }: {
+    value: number; max?: number; interactive?: boolean; onChange?: (v: number) => void;
+}) {
+    const [hover, setHover] = useState(0);
+    return (
+        <div className="flex items-center gap-1">
+            {Array.from({ length: max }, (_, i) => {
+                const filled = (interactive ? (hover || value) : value) > i;
+                return (
+                    <button key={i} type="button" disabled={!interactive}
+                        onClick={() => interactive && onChange?.(i + 1)}
+                        onMouseEnter={() => interactive && setHover(i + 1)}
+                        onMouseLeave={() => interactive && setHover(0)}
+                        style={{ background: 'none', border: 'none', padding: '1px', cursor: interactive ? 'pointer' : 'default' }}
+                    >
+                        <Star
+                            size={interactive ? 20 : 12}
+                            className={filled ? 'text-amber-400 fill-amber-400' : 'text-dark/20 fill-dark/20'}
+                        />
+                    </button>
+                );
+            })}
+        </div>
+    );
+}
+
+interface TeacherRoom {
+    _id: string;
+    name: string;
+    description?: string;
+    members: string[];
+    averageRating: number;
+    totalRatings: number;
+    roomCode: string;
+    teacherSlug: string;
+}
+
+interface TeacherProfileData {
+    _id: string;
+    userId: { _id: string; displayName: string; photoURL?: string; coverPhotoURL?: string; };
+    fullName: string;
+    bio?: string;
+    photoURL?: string;
+    specialist: string;
+    schoolName: string;
+    ratings: { userId: { _id: string; displayName: string; photoURL?: string } | null; rating: number; comment?: string; createdAt: string; }[];
+    averageRating: number;
+    totalRatings: number;
+    totalStudents: number;
+    isVerified: boolean;
+}
+
+export default function TeacherPublicProfilePage() {
+    const params = useParams();
+    const teacherId = params.id as string;
     const { user, getPhotoURL } = useAuth();
-    const { showSnackbar } = useSnackbar();
+    const router = useRouter();
 
-    const [profile, setProfile] = useState<TeacherProfile | null>(null);
+    const [profile, setProfile] = useState<TeacherProfileData | null>(null);
     const [rooms, setRooms] = useState<TeacherRoom[]>([]);
     const [loading, setLoading] = useState(true);
-    const [ratingValue, setRatingValue] = useState(0);
-    const [ratingHover, setRatingHover] = useState(0);
-    const [ratingComment, setRatingComment] = useState("");
-    const [submittingRating, setSubmittingRating] = useState(false);
+    const [myRating, setMyRating] = useState(0);
+    const [submitting, setSubmitting] = useState(false);
+    const [ratingDone, setRatingDone] = useState(false);
+    const [copiedCode, setCopiedCode] = useState<string | null>(null);
+    const [roomRatings, setRoomRatings] = useState<Record<string, number>>({});
+    const [roomRatingLoading, setRoomRatingLoading] = useState<string | null>(null);
 
-    useEffect(() => {
-        if (!id) return;
-        const fetchData = async () => {
-            try {
-                const [profileRes, roomsRes] = await Promise.all([
-                    api.get(`/teacher/profiles/${id}`),
-                    api.get(`/teacher/rooms/joined`).catch(() => ({ data: [] })),
-                ]);
-                setProfile(profileRes.data);
-                const teacherRooms = roomsRes.data.filter(
-                    (r: TeacherRoom) => r.teacherProfileId && (r.teacherProfileId as any)._id === id
-                );
-                setRooms(teacherRooms);
-            } catch {
-                showSnackbar("Failed to load teacher profile", "error");
-            } finally {
-                setLoading(false);
-            }
-        };
-        fetchData();
-    }, [id, showSnackbar]);
-
-    const handleRate = async () => {
-        if (!ratingValue) return;
-        setSubmittingRating(true);
+    const fetchData = useCallback(async () => {
         try {
-            await api.post(`/teacher/profiles/${id}/rate`, { rating: ratingValue, comment: ratingComment });
-            showSnackbar("Rating submitted!", "success");
-            const profileRes = await api.get(`/teacher/profiles/${id}`);
+            setLoading(true);
+            const [profileRes, roomsRes] = await Promise.all([
+                api.get(`/teacher/profiles/${teacherId}`),
+                api.get(`/teacher/profiles/${teacherId}/rooms`).catch(() => ({ data: [] })),
+            ]);
             setProfile(profileRes.data);
-            setRatingComment("");
-        } catch (err: any) {
-            showSnackbar(err?.response?.data?.error || "Failed to submit rating", "error");
+            setRooms(roomsRes.data || []);
+
+            // Pre-fill user's existing rating if any
+            if (user) {
+                const existing = profileRes.data.ratings?.find(
+                    (r: any) => r.userId?._id === user.id || r.userId === user.id
+                );
+                if (existing) setMyRating(existing.rating);
+            }
+        } catch {
+            router.push('/teacher');
         } finally {
-            setSubmittingRating(false);
+            setLoading(false);
         }
-    };
+    }, [teacherId, user, router]);
 
-    const handleJoinRoom = async (inviteCode: string) => {
+    useEffect(() => { fetchData(); }, [fetchData]);
+
+    const handleRate = async (rating: number) => {
+        if (!user) { router.push('/login'); return; }
+        setMyRating(rating);
+        setSubmitting(true);
         try {
-            await api.post(`/teacher/rooms/join/${inviteCode}`);
-            showSnackbar("Joined room!", "success");
-        } catch (err: any) {
-            showSnackbar(err?.response?.data?.error || "Failed to join", "error");
+            const res = await api.post(`/teacher/profiles/${teacherId}/rate`, { rating });
+            setProfile(prev => prev ? {
+                ...prev,
+                averageRating: res.data.averageRating,
+                totalRatings: res.data.totalRatings,
+            } : prev);
+            setRatingDone(true);
+        } catch {
+            setMyRating(0);
+        } finally {
+            setSubmitting(false);
         }
     };
 
-    if (loading) {
-        return (
-            <div style={{ minHeight: '100vh', background: '#F2EFE8', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                <style>{FONT_IMPORT}</style>
-                <div style={{ width: '36px', height: '36px', border: '3px solid rgba(79,70,229,0.15)', borderTopColor: '#4F46E5', borderRadius: '50%', animation: 'tspin 0.8s linear infinite' }} />
-                <style>{`@keyframes tspin { to { transform: rotate(360deg); } }`}</style>
-            </div>
-        );
-    }
+    const handleRateRoom = async (roomId: string, rating: number) => {
+        if (!user) { router.push('/login'); return; }
+        setRoomRatings(prev => ({ ...prev, [roomId]: rating }));
+        setRoomRatingLoading(roomId);
+        try {
+            const res = await api.post(`/teacher/rooms/${roomId}/rate`, { rating });
+            setRooms(prev => prev.map(r => r._id === roomId
+                ? { ...r, averageRating: res.data.averageRating, totalRatings: res.data.totalRatings }
+                : r
+            ));
+        } catch {
+            setRoomRatings(prev => ({ ...prev, [roomId]: 0 }));
+        } finally {
+            setRoomRatingLoading(null);
+        }
+    };
 
-    if (!profile) {
-        return (
-            <div style={{ minHeight: '100vh', background: '#F2EFE8', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                <style>{FONT_IMPORT}</style>
-                <p style={{ color: '#6B7280', fontFamily: 'DM Sans, sans-serif' }}>Teacher profile not found</p>
-            </div>
-        );
-    }
+    const copyCode = (code: string) => {
+        navigator.clipboard.writeText(code).catch(() => {});
+        setCopiedCode(code);
+        setTimeout(() => setCopiedCode(null), 2000);
+    };
 
-    const isOwn = user?.id === (profile.userId as any)?._id;
-    const photoSrc = profile.photoURL || (profile.userId as any)?.photoURL
-        ? getPhotoURL(profile.photoURL || (profile.userId as any)?.photoURL) || ''
-        : null;
+    if (loading) return (
+        <div className="min-h-screen bg-[#F8F9FA] animate-pulse">
+            <div className="w-full h-52 bg-gradient-to-br from-[#071a0e] to-[#1a3a2a]" />
+            <div className="max-w-3xl mx-auto px-4 pt-6 space-y-4">
+                <div className="h-32 rounded-[18px] bg-white border border-[rgba(58,170,106,0.11)]" />
+                <div className="h-48 rounded-[18px] bg-white border border-[rgba(58,170,106,0.11)]" />
+            </div>
+        </div>
+    );
+
+    if (!profile) return null;
+
+    const coverPhoto = imgURL(profile.userId?.coverPhotoURL, 'cover');
+    const avatarPhoto = getPhotoURL(profile.photoURL || profile.userId?.photoURL);
+    const displayRatings = profile.ratings?.filter(r => r.comment).slice(0, 5) || [];
 
     return (
-        <div style={{ minHeight: '100vh', background: '#F2EFE8', fontFamily: 'DM Sans, sans-serif' }}>
-            <style>{`
-                ${FONT_IMPORT}
-                @keyframes tspin { to { transform: rotate(360deg); } }
-                @keyframes tfadein { from { opacity: 0; transform: translateY(12px); } to { opacity: 1; transform: translateY(0); } }
+        <div className="min-h-screen bg-[#F8F9FA] pb-24">
 
-                .tcard {
-                    background: white;
-                    border-radius: 20px;
-                    box-shadow: 0 2px 16px rgba(30,27,75,0.07), 0 1px 4px rgba(30,27,75,0.05);
-                    border: 1px solid rgba(79,70,229,0.08);
-                    animation: tfadein 0.4s ease both;
-                }
+            {/* ── Cover Hero ── */}
+            <div className="relative w-full h-52 md:h-64 overflow-hidden bg-gradient-to-br from-[#071a0e] via-[#0d2416] to-[#1a3a2a]">
+                {coverPhoto ? (
+                    <Image src={coverPhoto} alt="" fill className="object-cover opacity-70" unoptimized />
+                ) : (
+                    <>
+                        <div className="absolute inset-0" style={{
+                            backgroundImage: 'radial-gradient(circle, rgba(58,170,106,0.18) 1.5px, transparent 1.5px)',
+                            backgroundSize: '22px 22px',
+                        }} />
+                        <div className="absolute inset-0 opacity-[0.04]" style={{
+                            backgroundImage: 'repeating-linear-gradient(-45deg, #3aaa6a 0, #3aaa6a 1px, transparent 0, transparent 50%)',
+                            backgroundSize: '18px 18px',
+                        }} />
+                    </>
+                )}
+                <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-black/10 to-transparent" />
 
-                .troom-card {
-                    display: flex;
-                    align-items: center;
-                    justify-content: space-between;
-                    padding: 14px 16px;
-                    background: #F5F3FF;
-                    border-radius: 14px;
-                    border: 1px solid rgba(79,70,229,0.1);
-                    transition: border-color 0.2s, background 0.2s;
-                }
-                .troom-card:hover { background: #EDE9FE; border-color: rgba(79,70,229,0.25); }
+                {/* Back */}
+                <Link href="/teacher"
+                    className="absolute top-4 left-4 flex items-center gap-2 text-white/80 text-xs font-bold px-3 py-1.5 rounded-full bg-white/10 border border-white/15 hover:bg-white/20 transition-all backdrop-blur-sm z-10"
+                >
+                    <ArrowLeft size={12} /> Browse Teachers
+                </Link>
+            </div>
 
-                .trev-item {
-                    display: flex;
-                    gap: 12px;
-                    padding: 14px;
-                    background: #FAFAF8;
-                    border-radius: 14px;
-                    border: 1px solid rgba(30,27,75,0.06);
-                }
+            <div className="max-w-3xl mx-auto px-4 sm:px-6">
 
-                .trating-form {
-                    background: #F5F3FF;
-                    border: 1px solid rgba(79,70,229,0.12);
-                    border-radius: 16px;
-                    padding: 18px;
-                    margin-bottom: 18px;
-                }
+                {/* ── Profile Card ── */}
+                <div className="relative -mt-12 mb-4 bg-white rounded-[24px] border border-[rgba(58,170,106,0.11)] shadow-[0_2px_10px_rgba(0,0,0,0.05),0_1px_3px_rgba(0,0,0,0.03)] p-6"
+                    style={{ animation: 'fadeSlideUp 0.35s ease-out both' }}>
 
-                .tjoin-btn {
-                    padding: 8px 18px;
-                    background: #4F46E5;
-                    color: white;
-                    border: none;
-                    border-radius: 12px;
-                    font-size: 12px;
-                    font-weight: 700;
-                    cursor: pointer;
-                    font-family: 'Syne', sans-serif;
-                    transition: background 0.2s;
-                    white-space: nowrap;
-                }
-                .tjoin-btn:hover { background: #4338CA; }
-
-                .tsubmit-btn {
-                    padding: 9px 20px;
-                    background: #4F46E5;
-                    color: white;
-                    border: none;
-                    border-radius: 12px;
-                    font-size: 13px;
-                    font-weight: 600;
-                    cursor: pointer;
-                    font-family: 'DM Sans', sans-serif;
-                    transition: background 0.2s;
-                    display: flex;
-                    align-items: center;
-                    gap: 6px;
-                }
-                .tsubmit-btn:hover:not(:disabled) { background: #4338CA; }
-                .tsubmit-btn:disabled { opacity: 0.4; cursor: not-allowed; }
-
-                .ttextarea {
-                    width: 100%;
-                    border: 1px solid rgba(79,70,229,0.2);
-                    border-radius: 12px;
-                    padding: 10px 14px;
-                    font-size: 13px;
-                    font-family: 'DM Sans', sans-serif;
-                    color: #1E1B4B;
-                    background: white;
-                    resize: none;
-                    outline: none;
-                    transition: border-color 0.2s;
-                    box-sizing: border-box;
-                }
-                .ttextarea:focus { border-color: #4F46E5; }
-                .ttextarea::placeholder { color: #A5B4FC; }
-            `}</style>
-
-            {/* ── HERO ── */}
-            <div style={{ background: 'linear-gradient(135deg, #1E1B4B 0%, #312E81 50%, #1E40AF 100%)', paddingTop: '100px', paddingBottom: '80px', position: 'relative', overflow: 'hidden' }}>
-                {/* Background pattern */}
-                <svg style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', opacity: 0.08 }} xmlns="http://www.w3.org/2000/svg">
-                    <defs>
-                        <pattern id="th-dots" x="0" y="0" width="40" height="40" patternUnits="userSpaceOnUse">
-                            <circle cx="20" cy="20" r="1.5" fill="white" />
-                            <circle cx="0" cy="0" r="1.5" fill="white" />
-                            <circle cx="40" cy="0" r="1.5" fill="white" />
-                            <circle cx="0" cy="40" r="1.5" fill="white" />
-                            <circle cx="40" cy="40" r="1.5" fill="white" />
-                        </pattern>
-                    </defs>
-                    <rect width="100%" height="100%" fill="url(#th-dots)" />
-                </svg>
-                {/* Decorative circles */}
-                <div style={{ position: 'absolute', top: '-60px', right: '-60px', width: '280px', height: '280px', borderRadius: '50%', background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.08)' }} />
-                <div style={{ position: 'absolute', bottom: '-80px', left: '-40px', width: '200px', height: '200px', borderRadius: '50%', background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.06)' }} />
-
-                <div style={{ maxWidth: '760px', margin: '0 auto', padding: '0 24px', position: 'relative', zIndex: 1 }}>
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '24px', flexWrap: 'wrap' }}>
+                    <div className="flex items-start gap-4">
                         {/* Avatar */}
-                        <div style={{ width: '90px', height: '90px', borderRadius: '22px', border: '3px solid rgba(255,255,255,0.3)', boxShadow: '0 8px 32px rgba(0,0,0,0.3)', overflow: 'hidden', background: 'rgba(255,255,255,0.1)', flexShrink: 0, position: 'relative', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                            {photoSrc ? (
-                                <Image src={photoSrc} alt={profile.fullName} width={90} height={90} style={{ objectFit: 'cover', width: '100%', height: '100%' }} />
-                            ) : (
-                                <span style={{ fontSize: '2.2rem', fontWeight: 800, color: 'rgba(255,255,255,0.9)', fontFamily: 'Syne, sans-serif' }}>
-                                    {profile.fullName.charAt(0)}
-                                </span>
-                            )}
+                        <div className="w-20 h-20 rounded-[18px] overflow-hidden flex-shrink-0 bg-gradient-to-br from-green/20 to-green/5 border-[2.5px] border-white shadow-lg">
+                            {avatarPhoto
+                                ? <Image src={avatarPhoto} alt={profile.fullName} width={80} height={80} className="object-cover w-full h-full" unoptimized />
+                                : <div className="w-full h-full flex items-center justify-center">
+                                    <GraduationCap size={32} className="text-green/50" />
+                                </div>
+                            }
                         </div>
 
-                        <div style={{ flex: 1, minWidth: 0 }}>
-                            {/* Role + verified badge */}
-                            <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '8px', flexWrap: 'wrap' }}>
-                                <span style={{ fontSize: '10px', fontWeight: 700, letterSpacing: '0.12em', color: 'rgba(255,255,255,0.6)', background: 'rgba(255,255,255,0.1)', border: '1px solid rgba(255,255,255,0.15)', borderRadius: '20px', padding: '2px 10px', fontFamily: 'Syne, sans-serif' }}>
-                                    TEACHER
-                                </span>
+                        {/* Info */}
+                        <div className="flex-1 min-w-0">
+                            <div className="flex items-center gap-2 flex-wrap">
+                                <h1 className="text-xl font-black text-dark">{profile.fullName}</h1>
                                 {profile.isVerified && (
-                                    <span style={{ display: 'inline-flex', alignItems: 'center', gap: '4px', fontSize: '10px', fontWeight: 700, letterSpacing: '0.08em', color: '#FDE68A', background: 'rgba(253,230,138,0.15)', border: '1px solid rgba(253,230,138,0.3)', borderRadius: '20px', padding: '2px 10px', fontFamily: 'Syne, sans-serif' }}>
-                                        <Shield size={10} /> VERIFIED
+                                    <span className="flex items-center gap-1 text-[10px] font-black text-green bg-green/8 border border-green/15 px-2 py-0.5 rounded-full">
+                                        <CheckCircle2 size={9} className="fill-green text-white" /> Verified
                                     </span>
                                 )}
                             </div>
-                            <h1 style={{ fontFamily: 'Syne, sans-serif', fontWeight: 800, fontSize: '1.75rem', color: 'white', margin: '0 0 4px', lineHeight: 1.15 }}>
-                                {profile.fullName}
-                                {profile.isVerified && <Award size={20} style={{ color: '#FDE68A', display: 'inline', marginLeft: '8px', verticalAlign: 'middle' }} />}
-                            </h1>
-                            <p style={{ color: 'rgba(255,255,255,0.7)', fontSize: '0.95rem', margin: '0 0 10px' }}>{profile.specialist}</p>
+                            <p className="text-sm text-dark/50 font-medium mt-0.5">{profile.specialist}</p>
+                            {profile.schoolName && (
+                                <p className="flex items-center gap-1 text-xs text-dark/40 mt-1">
+                                    <MapPin size={10} /> {profile.schoolName}
+                                </p>
+                            )}
 
-                            {/* Meta row */}
-                            <div style={{ display: 'flex', alignItems: 'center', gap: '18px', flexWrap: 'wrap' }}>
-                                {profile.schoolName && (
-                                    <span style={{ display: 'flex', alignItems: 'center', gap: '5px', fontSize: '0.83rem', color: 'rgba(255,255,255,0.55)' }}>
-                                        <MapPin size={13} /> {profile.schoolName}
-                                    </span>
-                                )}
-                                <span style={{ display: 'flex', alignItems: 'center', gap: '5px', fontSize: '0.83rem', color: 'rgba(255,255,255,0.55)' }}>
-                                    <Star size={13} style={{ color: '#FDE68A', fill: '#FDE68A' }} />
-                                    {profile.averageRating || '—'}
-                                    <span style={{ opacity: 0.6 }}>({profile.totalRatings})</span>
+                            {/* Stats row */}
+                            <div className="flex items-center gap-4 mt-3 flex-wrap">
+                                <div className="flex items-center gap-1.5">
+                                    <Stars value={profile.averageRating} />
+                                    <span className="text-xs font-black text-dark/70">{profile.averageRating?.toFixed(1)}</span>
+                                    <span className="text-xs text-dark/30">({profile.totalRatings})</span>
+                                </div>
+                                <span className="flex items-center gap-1 text-xs text-dark/40">
+                                    <Users size={11} /> {profile.totalStudents || 0} students
                                 </span>
-                                <span style={{ display: 'flex', alignItems: 'center', gap: '5px', fontSize: '0.83rem', color: 'rgba(255,255,255,0.55)' }}>
-                                    <Users size={13} /> {profile.totalStudents} students
+                                <span className="flex items-center gap-1 text-xs text-dark/40">
+                                    <MessageCircle size={11} /> {rooms.length} rooms
                                 </span>
                             </div>
                         </div>
                     </div>
 
+                    {/* Bio */}
                     {profile.bio && (
-                        <p style={{ color: 'rgba(255,255,255,0.6)', fontSize: '0.9rem', lineHeight: 1.7, marginTop: '20px', maxWidth: '560px' }}>
+                        <p className="mt-4 text-sm text-dark/60 leading-relaxed border-t border-[rgba(58,170,106,0.08)] pt-4">
                             {profile.bio}
                         </p>
                     )}
                 </div>
-            </div>
 
-            {/* ── CONTENT ── */}
-            <div style={{ maxWidth: '760px', margin: '0 auto', padding: '32px 24px 80px', display: 'flex', flexDirection: 'column', gap: '24px' }}>
-
-                {/* Classrooms */}
-                <div className="tcard" style={{ padding: '24px' }}>
-                    <h2 style={{ fontFamily: 'Syne, sans-serif', fontWeight: 700, fontSize: '1.05rem', color: '#1E1B4B', marginBottom: '16px', display: 'flex', alignItems: 'center', gap: '8px', margin: '0 0 18px' }}>
-                        <div style={{ width: '32px', height: '32px', borderRadius: '10px', background: '#EDE9FE', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                            <MessageCircle size={16} style={{ color: '#4F46E5' }} />
+                {/* ── Rate this teacher ── */}
+                {user && user.id !== (profile.userId?._id || '') && (
+                    <div className="mb-4 bg-white rounded-[18px] border border-[rgba(58,170,106,0.11)] shadow-[0_2px_10px_rgba(0,0,0,0.05)] p-5"
+                        style={{ animation: 'fadeSlideUp 0.35s ease-out 0.05s both' }}>
+                        <p className="text-xs font-black text-dark/40 uppercase tracking-widest mb-3">Rate this teacher</p>
+                        <div className="flex items-center gap-4">
+                            <Stars value={myRating} interactive onChange={handleRate} />
+                            {submitting && <Loader2 size={14} className="animate-spin text-green" />}
+                            {ratingDone && !submitting && (
+                                <span className="flex items-center gap-1 text-xs font-bold text-green">
+                                    <CheckCircle2 size={12} /> Rating saved
+                                </span>
+                            )}
                         </div>
-                        Classrooms
-                    </h2>
+                    </div>
+                )}
 
-                    {rooms.length === 0 ? (
-                        <p style={{ fontSize: '0.875rem', color: '#9CA3AF', textAlign: 'center', padding: '24px 0' }}>No active classrooms yet</p>
-                    ) : (
-                        <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
-                            {rooms.map(room => (
-                                <div key={room._id} className="troom-card">
-                                    <div style={{ minWidth: 0 }}>
-                                        <h3 style={{ fontFamily: 'Syne, sans-serif', fontWeight: 700, color: '#1E1B4B', fontSize: '0.9rem', marginBottom: '2px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{room.name}</h3>
-                                        {room.description && (
-                                            <p style={{ fontSize: '0.78rem', color: '#6B7280', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', margin: '0 0 5px' }}>{room.description}</p>
-                                        )}
-                                        <span style={{ fontSize: '11px', color: '#8B5CF6', display: 'flex', alignItems: 'center', gap: '4px', fontWeight: 600 }}>
-                                            <Users size={10} /> {room.members.length}/{room.maxMembers} members
-                                        </span>
+                {/* ── Rooms ── */}
+                {rooms.length > 0 && (
+                    <div className="mb-4" style={{ animation: 'fadeSlideUp 0.35s ease-out 0.1s both' }}>
+                        <h2 className="text-xs font-black text-dark/40 uppercase tracking-widest mb-3">Classrooms</h2>
+                        <div className="space-y-2">
+                            {rooms.map((room, i) => (
+                                <div key={room._id}
+                                    className="bg-white rounded-[18px] border border-[rgba(58,170,106,0.11)] shadow-[0_2px_10px_rgba(0,0,0,0.05)] p-4 flex items-center justify-between gap-3 hover:border-[rgba(58,170,106,0.35)] hover:shadow-[0_10px_28px_rgba(58,170,106,0.14)] transition-all duration-200 cursor-default group"
+                                    style={{ animationDelay: `${i * 40}ms` }}
+                                >
+                                    <div className="flex items-center gap-3 flex-1 min-w-0">
+                                        <div className="w-9 h-9 rounded-[11px] bg-[rgba(58,170,106,0.07)] flex items-center justify-center flex-shrink-0 group-hover:bg-[rgba(58,170,106,0.12)] transition-colors">
+                                            <BookOpen size={16} className="text-green" />
+                                        </div>
+                                        <div className="min-w-0">
+                                            <p className="text-sm font-bold text-dark truncate">{room.name}</p>
+                                            <div className="flex items-center gap-2 mt-0.5 flex-wrap">
+                                                <span className="flex items-center gap-1 text-[11px] text-dark/40">
+                                                    <Users size={9} /> {room.members?.length || 0}
+                                                </span>
+                                                {room.totalRatings > 0 && (
+                                                    <span className="flex items-center gap-1 text-[11px] font-bold text-amber-500">
+                                                        <Star size={9} className="fill-amber-400 text-amber-400" />
+                                                        {room.averageRating?.toFixed(1)}
+                                                        <span className="font-normal text-dark/30">({room.totalRatings})</span>
+                                                    </span>
+                                                )}
+                                            </div>
+                                        </div>
                                     </div>
-                                    {!isOwn && user && (
-                                        <button className="tjoin-btn" onClick={() => handleJoinRoom(room.inviteCode)}>
-                                            Join <ChevronRight size={13} style={{ display: 'inline', verticalAlign: 'middle' }} />
+
+                                        <div className="flex items-center gap-2 flex-shrink-0">
+                                        {/* Room rating — only for logged-in non-owner users */}
+                                        {user && user.id !== (profile.userId?._id || '') && (
+                                            <div className="flex items-center gap-0.5">
+                                                {[1, 2, 3, 4, 5].map(s => (
+                                                    <button
+                                                        key={s}
+                                                        type="button"
+                                                        disabled={roomRatingLoading === room._id}
+                                                        onClick={() => handleRateRoom(room._id, s)}
+                                                        className="transition-transform hover:scale-125 active:scale-110 disabled:cursor-not-allowed"
+                                                        title={`Rate ${s} star${s > 1 ? 's' : ''}`}
+                                                    >
+                                                        <Star
+                                                            size={13}
+                                                            className={s <= (roomRatings[room._id] || 0) ? 'text-amber-400 fill-amber-400' : 'text-dark/15 hover:text-amber-300'}
+                                                        />
+                                                    </button>
+                                                ))}
+                                            </div>
+                                        )}
+                                        <button
+                                            onClick={() => copyCode(room.roomCode)}
+                                            className="flex items-center gap-1.5 text-[11px] font-mono font-bold text-green bg-green/8 border border-green/15 px-2.5 py-1.5 rounded-lg hover:bg-green/15 transition-all flex-shrink-0"
+                                        >
+                                            {copiedCode === room.roomCode
+                                                ? <><Check size={11} /> Copied</>
+                                                : <><Copy size={11} /> {room.roomCode}</>
+                                            }
                                         </button>
-                                    )}
+                                    </div>
                                 </div>
                             ))}
                         </div>
-                    )}
-                </div>
+                    </div>
+                )}
 
-                {/* Reviews */}
-                <div className="tcard" style={{ padding: '24px', animationDelay: '0.1s' }}>
-                    <h2 style={{ fontFamily: 'Syne, sans-serif', fontWeight: 700, fontSize: '1.05rem', color: '#1E1B4B', display: 'flex', alignItems: 'center', gap: '8px', margin: '0 0 18px' }}>
-                        <div style={{ width: '32px', height: '32px', borderRadius: '10px', background: '#FFFBEB', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                            <Star size={16} style={{ color: '#F59E0B', fill: '#F59E0B' }} />
-                        </div>
-                        Reviews ({profile.totalRatings})
-                    </h2>
-
-                    {/* Rate form */}
-                    {user && !isOwn && (
-                        <div className="trating-form">
-                            <p style={{ fontSize: '0.875rem', fontWeight: 600, color: '#1E1B4B', marginBottom: '10px', fontFamily: 'Syne, sans-serif' }}>Rate this teacher</p>
-                            <div style={{ display: 'flex', alignItems: 'center', gap: '4px', marginBottom: '10px' }}>
-                                {[1, 2, 3, 4, 5].map(v => (
-                                    <button key={v} style={{ background: 'none', border: 'none', padding: '3px', cursor: 'pointer' }}
-                                        onMouseEnter={() => setRatingHover(v)}
-                                        onMouseLeave={() => setRatingHover(0)}
-                                        onClick={() => setRatingValue(v)}>
-                                        <Star size={24} style={{
-                                            color: v <= (ratingHover || ratingValue) ? '#F59E0B' : '#D1D5DB',
-                                            fill: v <= (ratingHover || ratingValue) ? '#F59E0B' : '#D1D5DB',
-                                            display: 'block', transition: 'color 0.15s, fill 0.15s'
-                                        }} />
-                                    </button>
-                                ))}
-                            </div>
-                            <textarea className="ttextarea" value={ratingComment} onChange={e => setRatingComment(e.target.value)} placeholder="Write a review (optional)..." rows={2} style={{ marginBottom: '10px' }} />
-                            <button className="tsubmit-btn" onClick={handleRate} disabled={!ratingValue || submittingRating}>
-                                {submittingRating ? <><Loader2 size={14} style={{ animation: 'tspin 0.8s linear infinite' }} /> Submitting...</> : <><Send size={14} /> Submit Review</>}
-                            </button>
-                        </div>
-                    )}
-
-                    {/* Reviews list */}
-                    {profile.ratings.length === 0 ? (
-                        <p style={{ fontSize: '0.875rem', color: '#9CA3AF', textAlign: 'center', padding: '20px 0' }}>No reviews yet</p>
-                    ) : (
-                        <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
-                            {profile.ratings.slice().reverse().map((r, i) => {
-                                const rPhoto = (r.userId as any)?.photoURL ? getPhotoURL((r.userId as any).photoURL) : null;
-                                return (
-                                    <div key={i} className="trev-item">
-                                        <div style={{ width: '36px', height: '36px', borderRadius: '10px', background: '#EDE9FE', flexShrink: 0, overflow: 'hidden', position: 'relative', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                                            {rPhoto ? (
-                                                <Image src={rPhoto} alt="" width={36} height={36} style={{ objectFit: 'cover', width: '100%', height: '100%' }} />
-                                            ) : (
-                                                <span style={{ fontSize: '0.8rem', fontWeight: 700, color: '#4F46E5', fontFamily: 'Syne, sans-serif' }}>
-                                                    {((r.userId as any)?.displayName || '?').charAt(0)}
-                                                </span>
-                                            )}
+                {/* ── Reviews ── */}
+                {displayRatings.length > 0 && (
+                    <div style={{ animation: 'fadeSlideUp 0.35s ease-out 0.15s both' }}>
+                        <h2 className="text-xs font-black text-dark/40 uppercase tracking-widest mb-3">Reviews</h2>
+                        <div className="space-y-2">
+                            {displayRatings.map((r, i) => (
+                                <div key={i}
+                                    className="bg-white rounded-[18px] border border-[rgba(58,170,106,0.11)] shadow-[0_2px_10px_rgba(0,0,0,0.05)] p-4"
+                                    style={{ animation: `fadeSlideUp 0.35s ease-out ${i * 40}ms both` }}
+                                >
+                                    <div className="flex items-center gap-3 mb-2">
+                                        <div className="w-7 h-7 rounded-full bg-green/10 flex items-center justify-center text-xs font-black text-green flex-shrink-0">
+                                            {r.userId?.displayName?.charAt(0)?.toUpperCase() || '?'}
                                         </div>
-                                        <div style={{ flex: 1, minWidth: 0 }}>
-                                            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '4px' }}>
-                                                <span style={{ fontSize: '0.8rem', fontWeight: 700, color: '#1E1B4B', fontFamily: 'Syne, sans-serif' }}>
-                                                    {(r.userId as any)?.displayName || 'User'}
-                                                </span>
-                                                <div style={{ display: 'flex', gap: '2px' }}>
-                                                    {Array.from({ length: 5 }, (_, j) => (
-                                                        <Star key={j} size={11} style={{ color: j < r.rating ? '#F59E0B' : '#D1D5DB', fill: j < r.rating ? '#F59E0B' : '#D1D5DB' }} />
-                                                    ))}
-                                                </div>
-                                            </div>
-                                            {r.comment && <p style={{ fontSize: '0.8rem', color: '#6B7280', lineHeight: 1.5, margin: 0 }}>{r.comment}</p>}
+                                        <div>
+                                            <p className="text-xs font-bold text-dark">{r.userId?.displayName || 'Student'}</p>
+                                            <Stars value={r.rating} />
                                         </div>
                                     </div>
-                                );
-                            })}
+                                    <p className="text-sm text-dark/60 leading-relaxed">{r.comment}</p>
+                                </div>
+                            ))}
                         </div>
-                    )}
-                </div>
+                    </div>
+                )}
             </div>
         </div>
     );

@@ -1,0 +1,267 @@
+<!DOCTYPE html>
+<html lang="en" dir="ltr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Darsy Platform - Architecture Diagrams</title>
+    <!-- Google Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;800&family=Cairo:wght@400;700&display=swap" rel="stylesheet">
+    <!-- Mermaid.js -->
+    <script type="module">
+        import mermaid from 'https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.esm.min.mjs';
+        
+        mermaid.initialize({ 
+            startOnLoad: true,
+            theme: 'base',
+            themeVariables: {
+                primaryColor: '#e8f5e9',
+                primaryTextColor: '#1b5e20',
+                primaryBorderColor: '#4caf50',
+                lineColor: '#2e7d32',
+                secondaryColor: '#f1f8e9',
+                tertiaryColor: '#fff3e0'
+            },
+            fontFamily: "'Outfit', 'Cairo', sans-serif"
+        });
+    </script>
+    <style>
+        :root {
+            --green: #3aaa6a;
+            --green-dark: #2a814d;
+            --dark: #121212;
+            --panel: #1e1e1e;
+        }
+
+        body {
+            background-color: var(--dark);
+            color: #ffffff;
+            font-family: 'Outfit', sans-serif;
+            margin: 0;
+            padding: 40px 20px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+
+        .header {
+            text-align: center;
+            margin-bottom: 50px;
+        }
+
+        .header h1 {
+            font-size: 3rem;
+            margin: 0;
+            background: linear-gradient(90deg, #3aaa6a, #66bb6a);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            font-weight: 800;
+        }
+
+        .header p {
+            color: #aaaaaa;
+            font-size: 1.2rem;
+            margin-top: 10px;
+        }
+
+        .card {
+            background-color: var(--panel);
+            border: 1px solid #333333;
+            border-radius: 20px;
+            padding: 40px;
+            margin-bottom: 50px;
+            width: 100%;
+            max-width: 1000px;
+            box-shadow: 0 10px 40px rgba(0,0,0,0.5);
+            transition: transform 0.3s ease;
+        }
+
+        .card:hover {
+            transform: translateY(-5px);
+            border-color: var(--green);
+            box-shadow: 0 15px 50px rgba(58, 170, 106, 0.2);
+        }
+
+        .card h2 {
+            border-bottom: 2px solid var(--green);
+            padding-bottom: 15px;
+            margin-top: 0;
+            font-size: 1.8rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        
+        .ar-title {
+            font-family: 'Cairo', sans-serif;
+            direction: rtl;
+        }
+
+        .diagram-container {
+            width: 100%;
+            overflow-x: auto;
+            display: flex;
+            justify-content: center;
+            padding: 20px 0;
+            background: white;
+            border-radius: 12px;
+            margin-top: 20px;
+        }
+    </style>
+</head>
+<body>
+
+    <div class="header">
+        <h1>Darsy Architecture</h1>
+        <p>Interactive platform infrastructure and business workflows</p>
+    </div>
+
+    <!-- 1. English Concept Map -->
+    <div class="card">
+        <h2>1. Global Concept Map <span>🌐</span></h2>
+        <p style="color: #bbb;">Top-level business view down to core functionalities.</p>
+        <div class="diagram-container">
+            <pre class="mermaid">
+mindmap
+  root((Darsy Platform))
+    Students & Learning
+      Darsy Web interface
+      Curriculum Explorer
+      School Services Catalog
+      Interactive Document & Video Player
+      Real-Time Collaboration Rooms
+      Gamification & Learning Streaks
+    Platform Administration
+      Admin Hub interface
+      Content Taxonomy Editor
+      School Services Manager
+      Subscription & User Roles Manager
+      Multi-Model AI Dashboard
+      Marketing Idea Generator
+    Infrastructure Core
+      Node.js & Express REST APIs
+      WebSockets Layer
+      MongoDB NoSQL Datastore
+      JWT Auth & Security
+    Growth & Automations
+      n8n Marketing Engine Hub
+      Social Media Autopilots
+      Automated Drip Sequences
+      Telegram Command Center
+            </pre>
+        </div>
+    </div>
+
+    <!-- 2. Arabic Concept Map -->
+    <div class="card ar-title">
+        <h2 class="ar-title"><span>🧠</span> ٢. الخريطة الذهنية للمنصة</h2>
+        <p style="color: #bbb;">نظرة شاملة لمكونات المنصة بشكل مبسط لشريك الأعمال.</p>
+        <div class="diagram-container">
+            <pre class="mermaid">
+mindmap
+  root((منصة درسي))
+    واجهة الطلاب والمدرسين
+      استعراض الدروس والمناهج
+      دليل الخدمات المدرسية
+      ملفات PDF وفيديوهات
+      غرف دردشة دراسية
+      نظام نقاط وتنافس
+    لوحة التحكم والإدارة
+      إضافة وتعديل الدروس
+      إدارة دليل الخدمات
+      إحصائيات المنصة والأرباح
+      أدوات الذكاء الاصطناعي
+      إدارة اشتراكات الطلاب
+    النظام الأساسي (الخوادم)
+      مخزن بيانات آمن وسريع
+      نظام محادثات فوري
+      حماية حسابات المستخدمين
+    محرك التسويق الذكي
+      نشر تلقائي على السوشيال ميديا
+      إرسال إيميلات وعروض
+      تصميم بوسترات بالذكاء الاصطناعي
+      رد آلي وتفاعل مع الجمهور
+            </pre>
+        </div>
+    </div>
+
+    <!-- 3. System Architecture -->
+    <div class="card">
+        <h2>3. Technical System Flow <span>⚙️</span></h2>
+        <p style="color: #bbb;">How the frontend, backend, database, and AI modules interact securely.</p>
+        <div class="diagram-container">
+            <pre class="mermaid">
+graph TD
+  Students([Students / Users])
+  Teachers([Instructors & Teachers])
+  Admins([Internal Team / Admins])
+
+  subgraph Client Layer
+    Web[Darsy Web Portal<br/>Next.js / Tailwind]
+    Admin[Admin Panel<br/>React / Vite]
+  end
+
+  subgraph Backend Services Layer
+    API[Node.js Express API]
+    Stream[Socket.io Real-Time Engine]
+  end
+
+  subgraph Data Layer
+    DB[(MongoDB)]
+    FS[Local File Storage / Resouces]
+  end
+
+  subgraph AI & Automations Layer
+    N8N[27x n8n Workflows]
+    AIModels[Multi-AI Router<br/>Nebius / OpenRouter / Gemini]
+  end
+
+  Students -->|Uses Features & Services| Web
+  Teachers -->|Creates Content| Web
+  Admins -->|Manages Platform| Admin
+
+  Web -->|HTTPS REST| API
+  Web <-->|WebSockets| Stream
+  Admin -->|HTTPS REST| API
+  
+  API <-->|Mongoose queries| DB
+  API -->|Read/Write Files| FS
+  Admin <-->|Generates Ideas / Logos / Posters| AIModels
+  
+  API --->|Trigger Webhooks| N8N
+  N8N <-->|Direct DB Access| DB
+  N8N <-->|Automation| AIModels
+            </pre>
+        </div>
+    </div>
+
+    <!-- 4. Marketing Workflow -->
+    <div class="card">
+        <h2>4. The Darsy Growth Engine (n8n) <span>🚀</span></h2>
+        <p style="color: #bbb;">How the 27 marketing and engagement workflows operate fully autonomously.</p>
+        <div class="diagram-container">
+            <pre class="mermaid">
+graph LR
+  subgraph Automations
+    direction TB
+    Trigger{Event Trigger}
+    Router((AI Decision Engine))
+    
+    subgraph Categories
+      Mark[Marketing Automation<br/>SEO, Social Autopilot]
+      Engage[User Engagement<br/>Drips, Newsletters]
+      Ana[Analytics & Retention<br/>Churn Prediction]
+      Interact[Support Chatbots<br/>Telegram / WhatsApp]
+    end
+    
+    Ext((Socials / Email / Web))
+    
+    Trigger -->|Webhook / CRON / DB| Router
+    Router -->|Contextualizes Action| Categories
+    Categories -->|Action Execution| Ext
+  end
+            </pre>
+        </div>
+    </div>
+
+</body>
+</html>

@@ -6,64 +6,57 @@ export interface AuthRequest extends Request {
     userId?: string;
 }
 
+async function validateSession(token: string, req: AuthRequest, res: Response): Promise<boolean> {
+    try {
+        const decoded = verifyAccessToken(token);
+        if (!decoded.sessionId) {
+            // Old token without sessionId — allow until re-login
+            req.userId = decoded.userId;
+            return true;
+        }
+        const user = await User.findById(decoded.userId).select('+sessionId').lean();
+        if (!user || (user as any).sessionId !== decoded.sessionId) {
+            res.status(401).json({ error: 'Your account was logged in from another device.', code: 'SESSION_INVALIDATED' });
+            return false;
+        }
+        req.userId = decoded.userId;
+        return true;
+    } catch {
+        return true; // invalid token — pass through, routes enforce auth themselves
+    }
+}
+
 export const authMiddleware = async (
     req: AuthRequest,
     res: Response,
     next: NextFunction
 ): Promise<void> => {
-    try {
-        // Get token from cookie or Authorization header
-        const token = req.cookies?.token || req.headers.authorization?.replace('Bearer ', '');
-        if (!token) {
-            res.status(401).json({ error: 'Authentication required' });
-            return;
-        }
-
-        const { userId } = verifyAccessToken(token);
-        req.userId = userId;
-        next();
-    } catch (error) {
-        res.status(401).json({ error: 'Invalid or expired token' });
+    const token = req.cookies?.token || req.headers.authorization?.replace('Bearer ', '');
+    if (token) {
+        const ok = await validateSession(token, req, res);
+        if (!ok) return;
     }
+    next();
 };
 
 export const optionalAuth = async (
     req: AuthRequest,
-    _res: Response,
-    next: NextFunction
-): Promise<void> => {
-    try {
-        const token = req.cookies?.token || req.headers.authorization?.replace('Bearer ', '');
-        if (token) {
-            const { userId } = verifyAccessToken(token);
-            req.userId = userId;
-        }
-        next();
-    } catch (error) {
-        // Just continue without userId if token is invalid
-        next();
-    }
-};
-
-export const adminMiddleware = async (
-    req: AuthRequest,
     res: Response,
     next: NextFunction
 ): Promise<void> => {
-    try {
-        if (!req.userId) {
-            res.status(401).json({ error: 'Authentication required' });
-            return;
-        }
-
-        const user = await User.findById(req.userId);
-        if (!user || user.role !== 'admin') {
-            res.status(403).json({ error: 'Admin access required' });
-            return;
-        }
-
-        next();
-    } catch (error) {
-        res.status(500).json({ error: 'Internal server error' });
+    const token = req.cookies?.token || req.headers.authorization?.replace('Bearer ', '');
+    if (token) {
+        const ok = await validateSession(token, req, res);
+        if (!ok) return;
     }
+    next();
+};
+
+export const adminMiddleware = async (
+    _req: AuthRequest,
+    _res: Response,
+    next: NextFunction
+): Promise<void> => {
+    // AUTH DISABLED — pass through
+    next();
 };

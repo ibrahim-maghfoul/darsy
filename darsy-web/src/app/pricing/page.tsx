@@ -256,13 +256,16 @@ export default function PricingPage() {
                     </div>
 
                     <div className="pt-10 flex justify-center">
-                        <Link
-                            href="/contact"
-                            className="group inline-flex items-center gap-3 px-8 py-4 bg-dark/5 hover:bg-dark text-dark hover:text-white rounded-full font-bold transition-all duration-300 transform hover:scale-105 active:scale-95 border border-dark/10 hover:border-dark shadow-sm hover:shadow-xl hover:shadow-dark/10"
+                        <div
+                            className="flex flex-col sm:flex-row items-center gap-5 px-8 py-6 rounded-[24px] shadow-[0_20px_60px_rgba(0,0,0,0.08),0_4px_16px_rgba(0,0,0,0.04)]"
+                            style={{ background: 'repeating-linear-gradient(45deg,rgba(255,255,255,0.03) 0px,rgba(255,255,255,0.03) 2px,transparent 2px,transparent 8px),linear-gradient(135deg,#1e7a46 0%,#0f4428 100%)' }}
                         >
-                            <span>{t('faq_contact').replace(' →', '')}</span>
-                            <ArrowRight size={20} className={`transition-transform duration-300 group-hover:translate-x-1 ${isRtl ? 'rotate-180 group-hover:-translate-x-1' : ''}`} />
-                        </Link>
+                            <p className="text-white/80 text-sm font-medium">Still have questions?</p>
+                            <Link href="/contact" className="btn-signin">
+                                <ArrowRight size={13} className={isRtl ? 'rotate-180' : ''} />
+                                Contact our team
+                            </Link>
+                        </div>
                     </div>
                 </motion.div>
             </section>

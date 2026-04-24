@@ -101,7 +101,7 @@ export interface TeacherRoom {
     description?: string;
     guidanceId: string;
     subjectId: string;
-    inviteCode: string;
+    roomCode: string;
     members: { _id: string; displayName: string; photoURL?: string }[];
     maxMembers: number;
     isActive: boolean;

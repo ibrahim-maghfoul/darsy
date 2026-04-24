@@ -1,7 +1,7 @@
 import {
     BarChart2, Upload, Settings, Database, X, Wrench, Newspaper,
     GraduationCap, ShieldCheck, Users, MessageSquare, BookOpen, Calendar,
-    Heart, Star, Video, Flag, LogOut, ImageIcon, FileText, Rocket, Sparkles
+    Heart, Star, Video, Flag, LogOut, ImageIcon, FileText, Rocket, Sparkles, FlaskConical, Presentation
 } from 'lucide-react';
 import { NavLink } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
@@ -22,13 +22,17 @@ const SECTIONS = [
     { path: '/services',  label: 'Services',    icon: Star },
 
     { type: 'label', text: 'Community' },
-    { path: '/chat-rooms',     label: 'Chat Rooms',         icon: MessageSquare },
-    { path: '/contributions',  label: 'Contributions',      icon: Heart },
-    { path: '/feedback',       label: 'Reports & Feedback', icon: Flag },
+    { path: '/chat-rooms',       label: 'Chat Rooms',         icon: MessageSquare },
+    { path: '/contributions',    label: 'Contributions',      icon: Heart },
+    { path: '/feedback',         label: 'Reports & Feedback', icon: Flag },
+    { path: '/ai-explanations',  label: 'AI Explanations',    icon: Sparkles },
 
     { type: 'label', text: 'Content Creation' },
     { path: '/poster-generation',   label: 'Poster Generation',    icon: ImageIcon },
+    { path: '/ghost-tester',        label: 'Ghost API Tester',     icon: FlaskConical },
+    { path: '/dalle-tester',        label: 'OpenAI Image Gen',     icon: Sparkles },
     { path: '/launch-ideas',        label: 'Launch Ideas',         icon: Rocket },
+    { path: '/slider-generator',    label: 'Slider Generator',     icon: Presentation },
     { path: '/content-management',  label: 'Content Management',   icon: FileText },
     { path: '/analytics',           label: 'Analytics',            icon: BarChart2 },
     { path: '/logo-generator',      label: 'Logo Generator',       icon: Sparkles },

@@ -11,13 +11,19 @@ import {
     CreditCard,
     Plus,
     ChevronRight,
+    ChevronLeft,
     Save,
     Loader2,
     GraduationCap,
     MapPin,
     Phone,
     Calendar,
-    Users
+    Users,
+    Check,
+    Sparkles,
+    Zap,
+    Star,
+    Crown,
 } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { useRouter } from "next/navigation";
@@ -183,9 +189,9 @@ export default function SettingsPage() {
                 <div className="space-y-4">
                     <button
                         onClick={() => router.back()}
-                        className="flex items-center gap-3 px-6 py-3 bg-white border border-green/10 rounded-2xl text-lg font-bold text-dark/60 hover:text-green hover:border-green hover:shadow-lg hover:shadow-green/5 transition-all group"
+                        className="flex items-center gap-2 text-dark/60 hover:text-dark text-xs font-black uppercase tracking-widest w-fit px-4 py-2 rounded-full border border-dark/15 hover:border-dark/30 hover:bg-dark/5 group transition-all"
                     >
-                        <ChevronRight size={20} className="rotate-180 group-hover:-translate-x-1 transition-transform" />
+                        <ChevronLeft size={14} className="group-hover:-translate-x-0.5 transition-transform" />
                         {t("back")}
                     </button>
                     <h1 className="text-4xl font-bold tracking-tight text-dark flex items-center gap-4">
@@ -496,112 +502,189 @@ export default function SettingsPage() {
                                             </div>
                                         </div>
 
-                                        <div className="grid grid-cols-1 md:grid-cols-3 gap-8 pb-10">
-                                            {[
+                                        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 pb-10 items-start">
+                                            {([
                                                 {
-                                                    name: "Free",
-                                                    price: "0",
-                                                    period: tp('forever') || "forever",
-                                                    description: "Perfect for students just starting out",
-                                                    color: "border-green/20",
-                                                    buttonStyle: "bg-green/5 text-green border border-green/20",
-                                                    badge: null,
                                                     id: "free",
+                                                    name: "Free",
+                                                    tagline: "Get started for free",
+                                                    price: "0",
+                                                    numPrice: 0,
+                                                    period: "forever",
+                                                    icon: Sparkles,
+                                                    isPremium: false,
+                                                    borderColor: "border-green/20",
+                                                    accentColor: "#3aaa6a",
+                                                    badge: null,
+                                                    badgeClass: "",
                                                     features: [
-                                                        "Access to 50k+ free lessons",
+                                                        "50k+ free lessons",
                                                         "Basic progress tracking",
-                                                        "Community forum access",
+                                                        "Community chat access",
                                                         "Mobile app access",
-                                                        "Email support",
                                                     ]
                                                 },
                                                 {
-                                                    name: "Pro",
-                                                    price: billingCycle === 'monthly' ? "100" : "900",
-                                                    period: billingCycle === 'monthly' ? "month" : "year",
-                                                    description: "For serious learners who want everything",
-                                                    color: "border-green/60",
-                                                    buttonStyle: "bg-green text-white shadow-lg shadow-green/20",
-                                                    badge: "Most Popular",
                                                     id: "pro",
+                                                    name: "Pro",
+                                                    tagline: "For serious learners",
+                                                    price: billingCycle === 'monthly' ? "100" : "900",
+                                                    numPrice: billingCycle === 'monthly' ? 100 : 900,
+                                                    period: billingCycle === 'monthly' ? "/ month" : "/ year",
+                                                    icon: Zap,
+                                                    isPremium: false,
+                                                    borderColor: "border-green/60",
+                                                    accentColor: "#3aaa6a",
+                                                    badge: "Most Popular",
+                                                    badgeClass: "bg-green text-white shadow-green/20",
                                                     features: [
-                                                        "Access premium lessons",
-                                                        "No ads",
-                                                        "Offline downloads",
                                                         "Everything in Free",
-                                                        "Full lesson library",
+                                                        "Premium lesson library",
+                                                        "No ads — ever",
+                                                        "100 offline downloads",
                                                         "Progress analytics",
+                                                        "AI explanations (multilingual)",
                                                         "Priority support",
                                                     ]
                                                 },
                                                 {
-                                                    name: "Premium",
-                                                    price: billingCycle === 'monthly' ? "200" : "1900",
-                                                    period: billingCycle === 'monthly' ? "month" : "year",
-                                                    description: "The complete Darsy experience",
-                                                    color: "border-[#D4AF37]/30",
-                                                    buttonStyle: "bg-gradient-to-r from-[#D4AF37] to-[#F9D423] text-white",
-                                                    badge: "Best Value",
-                                                    isPremium: true,
                                                     id: "premium",
+                                                    name: "Premium",
+                                                    tagline: "The complete Darsy experience",
+                                                    price: billingCycle === 'monthly' ? "200" : "1900",
+                                                    numPrice: billingCycle === 'monthly' ? 200 : 1900,
+                                                    period: billingCycle === 'monthly' ? "/ month" : "/ year",
+                                                    icon: Crown,
+                                                    isPremium: true,
+                                                    borderColor: "border-[#D4AF37]/30",
+                                                    accentColor: "#D4AF37",
+                                                    badge: "Best Value",
+                                                    badgeClass: "bg-gradient-to-r from-[#D4AF37] to-[#F9D423] text-white shadow-[#D4AF37]/30",
                                                     features: [
                                                         "Everything in Pro",
-                                                        "Unlimited offline downloads",
+                                                        "Unlimited downloads",
                                                         "1-on-1 mentoring sessions",
                                                         "Early access to new features",
                                                         "Dedicated success manager",
                                                     ]
                                                 }
-                                            ].map((plan) => (
-                                                <div
-                                                    key={plan.id}
-                                                    className={`relative p-8 rounded-[36px] border-2 ${plan.color} bg-white shadow-xl flex flex-col transition-all duration-300 ${plan.id === user?.subscription?.plan ? "scale-[1.02] ring-4 ring-green/10" : ""}`}
-                                                >
-                                                    {plan.badge && (
-                                                        <div className={`absolute -top-3 left-1/2 -translate-x-1/2 px-4 py-1 text-[10px] font-black rounded-full shadow-lg ${plan.isPremium ? 'bg-gradient-to-r from-[#D4AF37] to-[#F9D423] text-white' : 'bg-green text-white'}`}>
-                                                            {plan.badge}
-                                                        </div>
-                                                    )}
-
-                                                    <div className="space-y-2 mb-6 text-center">
-                                                        <h3 className="text-xl font-black text-dark">{plan.name}</h3>
-                                                        <p className="text-muted-foreground text-[11px] leading-tight">{plan.description}</p>
-                                                    </div>
-
-                                                    <div className="flex flex-col mb-8 text-center items-center">
-                                                        <div className="flex items-end gap-1">
-                                                            <span className={`text-4xl font-black leading-none ${plan.isPremium ? 'text-[#D4AF37]' : 'text-dark'}`}>{plan.price}</span>
-                                                            <span className="text-muted-foreground font-bold text-sm">DH</span>
-                                                            <span className="text-muted-foreground font-medium text-[10px] mb-1">/{plan.period}</span>
-                                                        </div>
-                                                    </div>
-
-                                                    <div className="space-y-4 flex-1 mb-8">
-                                                        {plan.features.map((f, j) => (
-                                                            <div key={j} className="flex items-start gap-3">
-                                                                <div className="mt-1 w-4 h-4 rounded-full bg-green/10 flex items-center justify-center shrink-0">
-                                                                    <Plus size={10} className="text-green font-black" />
-                                                                </div>
-                                                                <span className="text-[12px] text-dark/70 font-medium">{f}</span>
-                                                            </div>
-                                                        ))}
-                                                    </div>
-
-                                                    <button
-                                                        disabled={true}
-                                                        className={`w-full py-4 rounded-2xl font-black text-sm text-center flex items-center justify-center gap-2 opacity-60 cursor-not-allowed ${plan.buttonStyle}`}
+                                            ] as const).map((plan) => {
+                                                const isCurrentPlan = user?.subscription?.plan === plan.id;
+                                                const PlanIcon = plan.icon;
+                                                return (
+                                                    <div
+                                                        key={plan.id}
+                                                        className={`relative bg-white flex flex-col rounded-[36px] border-2 ${plan.borderColor} p-8 shadow-xl transition-all duration-300 group ${isCurrentPlan ? "md:-translate-y-3 md:scale-[1.02]" : ""} ${plan.id === "pro" ? "md:-translate-y-2" : ""}`}
                                                     >
-                                                        {user?.subscription?.plan === plan.id ? "Current Plan" : "Coming Soon"}
-                                                    </button>
-                                                </div>
-                                            ))}
+                                                        {/* Badge */}
+                                                        {plan.badge && (
+                                                            <div className={`absolute -top-4 left-1/2 -translate-x-1/2 flex items-center gap-1.5 px-4 py-1.5 text-xs font-bold rounded-full shadow-lg whitespace-nowrap ${plan.badgeClass}`}>
+                                                                {plan.badge}
+                                                            </div>
+                                                        )}
+
+                                                        {/* Contour animation */}
+                                                        <div
+                                                            className="pointer-events-none absolute inset-0 rounded-[36px] opacity-0 group-hover:opacity-100 transition-opacity duration-300"
+                                                            style={{
+                                                                border: `1.5px solid ${plan.accentColor}`,
+                                                                clipPath: 'inset(0 50% 100% 0)',
+                                                                transition: 'opacity 0.3s, clip-path 0.45s cubic-bezier(0.34,1.2,0.64,1)',
+                                                            }}
+                                                        />
+                                                        <div
+                                                            className="pointer-events-none absolute inset-0 rounded-[36px] opacity-0 group-hover:opacity-100 transition-opacity duration-300"
+                                                            style={{
+                                                                border: `1.5px solid ${plan.accentColor}`,
+                                                                clipPath: 'inset(0 0 100% 50%)',
+                                                                transition: 'opacity 0.3s, clip-path 0.45s cubic-bezier(0.34,1.2,0.64,1) 0.05s',
+                                                            }}
+                                                        />
+
+                                                        <div className="flex flex-col flex-1">
+                                                            {/* Header */}
+                                                            <div className="flex items-start justify-between mb-5">
+                                                                <div
+                                                                    className="w-11 h-11 rounded-2xl flex items-center justify-center"
+                                                                    style={plan.isPremium
+                                                                        ? { background: 'linear-gradient(135deg, #D4AF37, #F9D423)', boxShadow: '0 6px 20px rgba(212,175,55,0.3)' }
+                                                                        : { background: `${plan.accentColor}15` }
+                                                                    }
+                                                                >
+                                                                    <PlanIcon size={20} style={{ color: plan.isPremium ? '#fff' : plan.accentColor }} />
+                                                                </div>
+                                                                {isCurrentPlan && (
+                                                                    <span className="text-[10px] font-black px-3 py-1 rounded-full bg-green/10 text-green border border-green/20">
+                                                                        ✓ Current
+                                                                    </span>
+                                                                )}
+                                                            </div>
+
+                                                            {/* Name & tagline */}
+                                                            <h3 className="text-2xl font-black text-dark mb-1">{plan.name}</h3>
+                                                            <p className="text-xs font-medium text-dark/40 mb-6">{plan.tagline}</p>
+
+                                                            {/* Price */}
+                                                            <div className="flex items-end gap-1 mb-6">
+                                                                <span
+                                                                    className="text-[52px] font-black leading-none tracking-tight tabular-nums"
+                                                                    style={{ color: plan.isPremium ? '#D4AF37' : plan.accentColor }}
+                                                                >
+                                                                    {plan.price}
+                                                                </span>
+                                                                <div className="flex flex-col mb-2 gap-0.5">
+                                                                    <span className="text-sm font-bold text-dark/40">DH</span>
+                                                                    <span className="text-[11px] text-dark/30">{plan.period}</span>
+                                                                </div>
+                                                            </div>
+
+                                                            {/* Divider */}
+                                                            <div className="h-px mb-5 bg-dark/[0.05]" />
+
+                                                            {/* Features */}
+                                                            <div className="space-y-3 flex-1 mb-7">
+                                                                {plan.features.map((f, j) => (
+                                                                    <div key={j} className="flex items-center gap-3">
+                                                                        <div
+                                                                            className="w-5 h-5 rounded-full flex items-center justify-center shrink-0"
+                                                                            style={{ background: `${plan.accentColor}15` }}
+                                                                        >
+                                                                            <Check size={10} strokeWidth={3} style={{ color: plan.accentColor }} />
+                                                                        </div>
+                                                                        <span className="text-[12.5px] font-medium text-dark/60">{f}</span>
+                                                                    </div>
+                                                                ))}
+                                                            </div>
+
+                                                            {/* CTA */}
+                                                            <button
+                                                                disabled
+                                                                className={`w-full py-3.5 rounded-2xl font-black text-sm flex items-center justify-center gap-2 cursor-not-allowed transition-all ${
+                                                                    isCurrentPlan
+                                                                        ? plan.isPremium
+                                                                            ? 'bg-gradient-to-r from-[#D4AF37] to-[#F9D423] text-white shadow-lg shadow-[#D4AF37]/20'
+                                                                            : 'bg-green text-white shadow-lg shadow-green/20'
+                                                                        : 'bg-green/5 text-green/50 border border-green/15'
+                                                                }`}
+                                                            >
+                                                                {isCurrentPlan
+                                                                    ? <><Check size={14} strokeWidth={3} /> Current Plan</>
+                                                                    : "Coming Soon"
+                                                                }
+                                                            </button>
+                                                        </div>
+                                                    </div>
+                                                );
+                                            })}
                                         </div>
 
-                                        <div className="p-8 rounded-[32px] bg-dark text-white text-center space-y-4 shadow-2xl shadow-dark/20 relative overflow-hidden group">
-                                            <div className="absolute inset-0 bg-[url('/hive.png')] opacity-[0.05] group-hover:scale-110 transition-transform duration-[10s]"></div>
+                                        <div
+                                            className="p-8 rounded-[28px] text-white text-center space-y-4 shadow-2xl relative overflow-hidden group"
+                                            style={{ background: 'repeating-linear-gradient(45deg,rgba(255,255,255,0.03) 0px,rgba(255,255,255,0.03) 2px,transparent 2px,transparent 8px),linear-gradient(135deg,#1e7a46 0%,#0f4428 100%)' }}
+                                        >
                                             <div className="relative z-10 flex flex-col items-center gap-4">
                                                 <div className="w-16 h-16 rounded-[2rem] bg-white/10 flex items-center justify-center backdrop-blur-md">
-                                                    <CreditCard size={32} className="text-green" />
+                                                    <CreditCard size={32} className="text-white" />
                                                 </div>
                                                 <div className="space-y-2">
                                                     <h3 className="text-2xl font-black">{t("subscription_management")}</h3>

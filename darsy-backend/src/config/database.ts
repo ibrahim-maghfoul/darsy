@@ -24,6 +24,14 @@ export const connectDatabase = async (): Promise<void> => {
 
         console.log('✅ MongoDB connected successfully');
 
+        // Drop stale index left from schema rename inviteCode → roomCode
+        try {
+            await mongoose.connection.collection('teacherrooms').dropIndex('inviteCode_1');
+            console.log('🔧 Dropped stale teacherrooms.inviteCode_1 index');
+        } catch {
+            // Index doesn't exist — nothing to do
+        }
+
         mongoose.connection.on('error', (err) => {
             console.error('❌ MongoDB connection error:', err);
         });

@@ -21,7 +21,7 @@ export const makeLLMRequest = async (messages, options = {}) => {
         config = {}
     } = options;
 
-    const defaultProviders = ['nebius', 'openrouter'];
+    const defaultProviders = ['nebius', 'openai', 'openrouter'];
     const mode = forceProvider || 'auto';
 
     const params = {
@@ -78,6 +78,27 @@ export const makeLLMRequest = async (messages, options = {}) => {
                     if (!response.ok) throw new Error(`Nebius Error: ${data.error?.message || response.statusText}`);
                     const content = data.choices?.[0]?.message?.content;
                     if (!content) throw new Error('Nebius returned empty response');
+                    return { choices: [{ message: { content } }], provider };
+                }
+                case 'openai': {
+                    if (!keys.openai) throw new Error("OpenAI API Key missing");
+                    const response = await fetch('https://api.openai.com/v1/chat/completions', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                            'Authorization': `Bearer ${keys.openai}`,
+                        },
+                        body: JSON.stringify({
+                            model: 'gpt-4o-mini',
+                            messages,
+                            temperature: params.temperature,
+                            max_tokens: params.max_tokens,
+                        })
+                    });
+                    const data = await response.json();
+                    if (!response.ok) throw new Error(`OpenAI Error: ${data.error?.message || response.statusText}`);
+                    const content = data.choices?.[0]?.message?.content;
+                    if (!content) throw new Error('OpenAI returned empty response');
                     return { choices: [{ message: { content } }], provider };
                 }
 
@@ -137,3 +158,5 @@ export const makeLLMRequest = async (messages, options = {}) => {
 
     throw new Error(`All AI providers failed. Last error: ${lastError?.message}`);
 };
+
+

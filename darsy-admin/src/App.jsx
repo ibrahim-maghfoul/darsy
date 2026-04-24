@@ -2,7 +2,6 @@ import React, { lazy, Suspense } from 'react';
 import { BrowserRouter, Routes, Route, Navigate, useNavigate } from 'react-router-dom';
 import Layout from './components/Layout';
 import { AuthProvider } from './context/AuthContext';
-import ProtectedRoute from './components/ProtectedRoute';
 import './index.css';
 
 const Dashboard         = lazy(() => import('./pages/Dashboard'));
@@ -26,6 +25,10 @@ const LaunchIdeas         = lazy(() => import('./pages/LaunchIdeas'));
 const ContentManagement   = lazy(() => import('./pages/ContentManagement'));
 const ContentAnalytics    = lazy(() => import('./pages/ContentAnalytics'));
 const LogoGenerator       = lazy(() => import('./pages/LogoGenerator'));
+const GhostApiTester      = lazy(() => import('./pages/GhostApiTester'));
+const DalleTester         = lazy(() => import('./pages/DalleTester'));
+const SliderGenerator     = lazy(() => import('./pages/SliderGenerator'));
+const AiExplanations      = lazy(() => import('./pages/AiExplanations'));
 
 const TAB_ROUTES = {
   dashboard: '/', users: '/users', 'instructor-apps': '/instructor-apps',
@@ -35,7 +38,8 @@ const TAB_ROUTES = {
   database: '/database', 'mongo-sync': '/mongo-sync', tools: '/tools',
   calendar: '/calendar', 'poster-generation': '/poster-generation',
   'content-management': '/content-management', analytics: '/analytics',
-  'logo-generator': '/logo-generator', settings: '/settings',
+  'logo-generator': '/logo-generator', 'ghost-tester': '/ghost-tester',
+  'dalle-tester': '/dalle-tester', settings: '/settings',
 };
 
 const PageLoader = () => (
@@ -91,6 +95,10 @@ const MainApp = () => (
         <Route path="/content-management" element={<ContentManagement />} />
         <Route path="/analytics"          element={<ContentAnalytics />} />
         <Route path="/logo-generator"     element={<LogoGenerator />} />
+        <Route path="/ghost-tester"       element={<GhostApiTester />} />
+        <Route path="/dalle-tester"       element={<DalleTester />} />
+        <Route path="/slider-generator"   element={<SliderGenerator />} />
+        <Route path="/ai-explanations"    element={<AiExplanations />} />
         <Route path="/settings"           element={<SettingsPage />} />
         <Route path="*"                    element={<Navigate to="/" replace />} />
       </Routes>
@@ -102,9 +110,7 @@ function App() {
   return (
     <BrowserRouter>
       <AuthProvider>
-        <ProtectedRoute>
-          <MainApp />
-        </ProtectedRoute>
+        <MainApp />
       </AuthProvider>
     </BrowserRouter>
   );

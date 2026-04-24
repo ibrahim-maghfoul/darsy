@@ -8,6 +8,7 @@ import {
     FileText,
     ClipboardList,
     ArrowLeft,
+    Send,
     CheckCircle2,
     Clock,
     ChevronRight,
@@ -16,7 +17,15 @@ import {
     PanelRightOpen,
     Search,
     Heart,
+    Sparkles,
+    Loader2,
+    ChevronDown,
+    ChevronUp,
+    Star,
+    RefreshCw,
+    Globe,
 } from "lucide-react";
+import api from "@/lib/api";
 import Link from "next/link";
 import { getLessonById, getLessons } from "@/services/data";
 import { trackResourceView, markResourceComplete, updateResourceProgress, toggleFavorite } from "@/services/progress";
@@ -96,9 +105,48 @@ export default function LessonPage() {
     const [nextLesson, setNextLesson] = useState<any>(null);
     const [activeResource, setActiveResource] = useState<any>(null);
 
-    // Draggable timer
-    const [timerPos, setTimerPos] = useState({ x: 0, y: 0 });
-    const timerPosRef = useRef({ x: 0, y: 0 });
+    // AI explanation state
+    const [aiAnswer, setAiAnswer] = useState<string | null>(null);
+    const [aiLoading, setAiLoading] = useState(false);
+    const [aiError, setAiError] = useState<string | null>(null);
+    const [aiExpanded, setAiExpanded] = useState(false);
+    const [aiDocId, setAiDocId] = useState<string | null>(null);
+    const [aiLanguage, setAiLanguage] = useState<'fr' | 'ar' | 'en'>('fr');
+    const [aiAvgRating, setAiAvgRating] = useState<number>(0);
+    const [aiRatingCount, setAiRatingCount] = useState<number>(0);
+    const [aiUserRating, setAiUserRating] = useState<number>(0);
+    const [aiRatingLoading, setAiRatingLoading] = useState(false);
+    const [aiRegenLoading, setAiRegenLoading] = useState(false);
+    const [showProLangDialog, setShowProLangDialog] = useState(false);
+
+    // Q&A state
+    type QaMessage = { role: 'user' | 'ai'; text: string };
+    const [qaMessages, setQaMessages] = useState<QaMessage[]>([]);
+    const [qaInput, setQaInput] = useState('');
+    const [qaLoading, setQaLoading] = useState(false);
+    const qaBottomRef = useRef<HTMLDivElement>(null);
+
+    // Draggable timer — starts centered at top under navbar
+    const [timerPos, setTimerPos] = useState({ x: 0, y: 80 });
+    const timerPosRef = useRef({ x: 0, y: 80 });
+
+    useEffect(() => {
+        if (typeof window !== 'undefined') {
+            const cx = Math.max(0, (window.innerWidth / 2) - 80);
+            setTimerPos({ x: cx, y: 108 });
+            timerPosRef.current = { x: cx, y: 108 };
+        }
+    }, []);
+
+    // Lock body scroll when upgrade dialog is open
+    useEffect(() => {
+        if (showProLangDialog) {
+            document.body.style.overflow = 'hidden';
+        } else {
+            document.body.style.overflow = '';
+        }
+        return () => { document.body.style.overflow = ''; };
+    }, [showProLangDialog]);
     const startTimerDrag = (startX: number, startY: number) => {
         const offsetX = startX - timerPosRef.current.x;
         const offsetY = startY - timerPosRef.current.y;
@@ -283,6 +331,136 @@ export default function LessonPage() {
         }
     }, [user, isFavorite, lessonId, lesson?.subjectId, refreshUser, showSnackbar, router]);
 
+    // Reset AI answer + Q&A when switching to a different resource and auto-detect language
+    useEffect(() => {
+        const id = activeResource ? safeId(activeResource) : null;
+        if (id !== aiDocId) {
+            setAiAnswer(null);
+            setAiError(null);
+            setAiExpanded(false);
+            setAiAvgRating(0);
+            setAiRatingCount(0);
+            setAiUserRating(0);
+            setQaMessages([]);
+            setQaInput('');
+            // Auto-detect document language for all users (manual switching is still premium-gated in the UI)
+            if (activeResource?.title) {
+                const hasArabic = /[؀-ۿ]/.test(activeResource.title);
+                setAiLanguage(hasArabic ? 'ar' : 'fr');
+            }
+        }
+    }, [activeResource, aiDocId, user?.subscription?.plan]);
+
+    const loadAiAnswer = useCallback(async (docId: string, lang: 'fr' | 'ar' | 'en', forceRegen = false) => {
+        setAiLoading(true);
+        setAiError(null);
+        setAiDocId(docId);
+
+        try {
+            if (!forceRegen) {
+                try {
+                    const cached = await api.get(`/ai/answer/${encodeURIComponent(docId)}?lang=${lang}`);
+                    setAiAnswer(cached.data.answer);
+                    setAiAvgRating(cached.data.avgRating || 0);
+                    setAiRatingCount(cached.data.ratingCount || 0);
+                    setAiExpanded(true);
+                    return;
+                } catch {
+                    // Not cached — generate
+                }
+            }
+
+            const res = await api.post('/ai/explain', {
+                docId,
+                documentTitle: activeResource?.title || 'Document',
+                lessonTitle: lesson?.title || '',
+                documentUrl: activeResource?.url || '',
+                language: lang,
+                forceRegenerate: forceRegen,
+            });
+            setAiAnswer(res.data.answer);
+            setAiAvgRating(res.data.avgRating || 0);
+            setAiRatingCount(res.data.ratingCount || 0);
+            setAiExpanded(true);
+        } catch (err: any) {
+            setAiError(err?.response?.data?.error || 'Failed to generate explanation. Please try again.');
+        } finally {
+            setAiLoading(false);
+            setAiRegenLoading(false);
+        }
+    }, [activeResource, lesson?.title]);
+
+    const handleGetAiExplanation = useCallback(async () => {
+        if (!activeResource || !user) return;
+        const docId = safeId(activeResource);
+
+        // If already loaded for this doc+lang, just toggle expand
+        if (aiDocId === docId && aiAnswer) {
+            setAiExpanded(prev => !prev);
+            return;
+        }
+
+        await loadAiAnswer(docId, aiLanguage);
+    }, [activeResource, user, aiDocId, aiAnswer, aiLanguage, loadAiAnswer]);
+
+    const handleSwitchLanguage = useCallback(async (lang: 'fr' | 'ar' | 'en') => {
+        if (!activeResource || !user) return;
+        setAiLanguage(lang);
+        setAiAnswer(null);
+        setAiExpanded(false);
+        const docId = safeId(activeResource);
+        await loadAiAnswer(docId, lang);
+    }, [activeResource, user, loadAiAnswer]);
+
+    const handleRegenerate = useCallback(async () => {
+        if (!activeResource || !user) return;
+        const docId = safeId(activeResource);
+        setAiRegenLoading(true);
+        setAiAnswer(null);
+        await loadAiAnswer(docId, aiLanguage, true);
+    }, [activeResource, user, aiLanguage, loadAiAnswer]);
+
+    const handleRateAi = useCallback(async (rating: number) => {
+        if (!activeResource || !user || aiRatingLoading) return;
+        const docId = safeId(activeResource);
+        setAiRatingLoading(true);
+        setAiUserRating(rating);
+        try {
+            const res = await api.post(`/ai/rate/${encodeURIComponent(docId)}`, { rating, language: aiLanguage });
+            setAiAvgRating(res.data.avgRating);
+            setAiRatingCount(res.data.ratingCount);
+        } catch (err: any) {
+            setAiUserRating(0);
+        } finally {
+            setAiRatingLoading(false);
+        }
+    }, [activeResource, user, aiLanguage, aiRatingLoading]);
+
+    const handleAskQuestion = useCallback(async () => {
+        if (!activeResource || !user || !qaInput.trim() || qaLoading) return;
+        const question = qaInput.trim();
+        setQaInput('');
+        setQaMessages(prev => [...prev, { role: 'user', text: question }]);
+        setQaLoading(true);
+        setTimeout(() => qaBottomRef.current?.scrollIntoView({ behavior: 'smooth' }), 50);
+        try {
+            const res = await api.post('/ai/ask', {
+                docId: safeId(activeResource),
+                documentTitle: activeResource?.title || 'Document',
+                lessonTitle: lesson?.title || '',
+                documentUrl: activeResource?.url || '',
+                question,
+                language: aiLanguage,
+            });
+            setQaMessages(prev => [...prev, { role: 'ai', text: res.data.answer }]);
+        } catch (err: any) {
+            setQaMessages(prev => [...prev, { role: 'ai', text: err?.response?.data?.error || 'Failed to get an answer. Please try again.' }]);
+        } finally {
+            setQaLoading(false);
+            setTimeout(() => qaBottomRef.current?.scrollIntoView({ behavior: 'smooth' }), 50);
+        }
+    }, [activeResource, user, qaInput, qaLoading, aiLanguage, lesson?.title]);
+
     // Memoize the active resource's completed state
     const isActiveCompleted = useMemo(() => {
         if (!activeResource) return false;
@@ -338,11 +516,12 @@ export default function LessonPage() {
     const isFullyDone = progressPct === 100 && totalResources > 0;
 
     return (
+        <>
         <div className="min-h-screen bg-white pb-20 md:pb-0 animate-slide-up">
             {/* Draggable Timer — isolated component to prevent full-page re-renders */}
             {user && (
                 <div
-                    className="fixed top-24 left-8 z-[200] hidden lg:block select-none"
+                    className="fixed top-0 left-0 z-[200] hidden lg:block select-none"
                     style={{ transform: `translate(${timerPos.x}px, ${timerPos.y}px)`, cursor: 'grab' }}
                     onMouseDown={(e) => { e.preventDefault(); startTimerDrag(e.clientX, e.clientY); }}
                     onTouchStart={(e) => { startTimerTouchDrag(e.touches[0].clientX, e.touches[0].clientY); }}
@@ -366,21 +545,24 @@ export default function LessonPage() {
             <header className="bg-white border-b border-green/10 md:pt-32 pt-4 pb-4 md:pb-8 px-6 relative z-10">
                 <div className={`max-w-7xl mx-auto flex flex-col ${isRTL ? 'md:flex-row-reverse' : 'md:flex-row'} md:items-center justify-between gap-4`}>
                     <div className="space-y-2">
-                        <Link href="/explore" className={`hidden md:flex text-sm font-medium text-green items-center gap-2 hover:${isRTL ? 'translate-x-1' : '-translate-x-1'} transition-transform ${isRTL ? 'flex-row-reverse' : ''}`}>
-                            {isRTL ? <ChevronRight size={16} /> : <ArrowLeft size={16} />}
+                        <Link href="/explore" className={`hidden md:inline-flex btn-back ${isRTL ? 'rtl flex-row-reverse' : ''}`}>
+                            {isRTL ? <ChevronRight size={14} className="btn-back-arrow" /> : <ArrowLeft size={14} className="btn-back-arrow" />}
                             {t("back_subjects")}
                         </Link>
                         <div className={`flex flex-wrap items-center gap-4 mt-2 ${isRTL ? 'flex-row-reverse' : ''}`}>
                             <h1 className="text-3xl font-bold text-dark">{lesson.title}</h1>
                             <button
                                 onClick={handleToggleFavorite}
-                                className={`group flex items-center gap-2 rounded-full font-bold text-sm transition-all duration-200 active:scale-95 hover:scale-105 shadow-lg ${isFavorite ? 'bg-red-500 text-white shadow-red-500/25' : 'bg-green text-white shadow-green/25'}`}
-                                style={{ padding: '10px 20px' }}
+                                className={`group inline-flex items-center gap-[7px] text-xs font-bold tracking-[0.02em] py-[7px] pr-[14px] pl-[11px] rounded-full border transition-all duration-200 active:scale-95 ${
+                                    isFavorite
+                                        ? 'text-red-500 border-red-200 bg-red-50 hover:bg-red-100 hover:border-red-300'
+                                        : 'text-green/50 border-green/15 bg-transparent hover:text-green hover:border-green/35 hover:bg-green/5'
+                                }`}
                                 title={isFavorite ? t("fav_remove") : t("fav_add")}
                             >
                                 <Heart
-                                    size={15}
-                                    className={`transition-all duration-200 group-hover:scale-110 ${isFavorite ? "fill-current" : ""}`}
+                                    size={14}
+                                    className={`transition-transform duration-200 group-hover:scale-110 flex-shrink-0 ${isFavorite ? "fill-red-500" : ""}`}
                                 />
                                 <span>{isFavorite ? tc("saved") : tc("save")}</span>
                             </button>
@@ -401,7 +583,7 @@ export default function LessonPage() {
 
                 {/* Content viewer — desktop only */}
                 <div className="flex-1 p-6 lg:p-12 transition-all duration-200 hidden lg:block">
-                    <div className="aspect-video bg-dark rounded-3xl overflow-hidden shadow-2xl relative">
+                    <div className="aspect-video bg-dark rounded-xl overflow-hidden shadow-2xl relative">
                         {activeResource?.type === 'video' ? (
                             <iframe
                                 src={getEmbedUrl(getResourceURL(activeResource.url) || '')}
@@ -413,7 +595,7 @@ export default function LessonPage() {
                         ) : activeResource ? (
                             <iframe
                                 src={getEmbedUrl(getResourceURL(activeResource.url) || '')}
-                                className="w-full h-full border-none bg-white rounded-3xl"
+                                className="w-full h-full border-none bg-white"
                                 loading="lazy"
                                 allowFullScreen
                             />
@@ -425,7 +607,7 @@ export default function LessonPage() {
                         )}
                     </div>
 
-                    <div className="mt-12 flex items-center justify-end">
+                    <div className="mt-6 flex items-center justify-end">
                         <button
                             disabled={isActiveCompleted}
                             onClick={handleMarkComplete}
@@ -437,6 +619,271 @@ export default function LessonPage() {
                             {isActiveCompleted ? "Completed" : tc("mark_completed")}
                         </button>
                     </div>
+
+                    {/* ── AI Explanation Section — only for non-video resources ── */}
+                    {activeResource && activeResource.type !== 'video' && (() => {
+                        const isPremium = user?.subscription?.plan === 'pro' || user?.subscription?.plan === 'premium';
+                        const docId = safeId(activeResource);
+                        const isCurrentDoc = aiDocId === docId;
+                        const LANGS: { code: 'fr' | 'ar' | 'en'; label: string }[] = [
+                            { code: 'fr', label: 'FR' },
+                            { code: 'ar', label: 'AR' },
+                            { code: 'en', label: 'EN' },
+                        ];
+                        return (
+                            <div className="mt-6 rounded-2xl border border-green/15 bg-gradient-to-br from-green/5 to-emerald-50/60 overflow-hidden">
+                                {/* Header row */}
+                                <div className="p-5 flex items-center justify-between gap-3">
+                                    <div className="flex items-center gap-3 min-w-0">
+                                        <div className="w-9 h-9 rounded-xl bg-green flex-shrink-0 flex items-center justify-center shadow-md shadow-green/25">
+                                            <Sparkles size={18} className="text-white" />
+                                        </div>
+                                        <div className="min-w-0">
+                                            <p className="font-black text-dark text-sm">AI Explanation</p>
+                                            <p className="text-xs text-muted-foreground font-medium truncate">
+                                                {aiLoading || aiRegenLoading ? 'Generating…' :
+                                                    isCurrentDoc && aiAnswer ? 'Explanation ready — click to expand' :
+                                                    user ? 'Get a detailed AI explanation of this document' : 'Sign in to use AI explanations'}
+                                            </p>
+                                        </div>
+                                    </div>
+
+                                    <div className="flex items-center gap-2 flex-shrink-0">
+                                        {/* Main action button */}
+                                        {user ? (
+                                            <button
+                                                onClick={handleGetAiExplanation}
+                                                disabled={aiLoading || aiRegenLoading}
+                                                className="flex items-center gap-2 px-4 py-2 bg-green text-white font-bold text-sm rounded-xl hover:bg-green/90 active:scale-95 transition-all shadow-md shadow-green/20 disabled:opacity-60 disabled:cursor-not-allowed"
+                                            >
+                                                {aiLoading ? (
+                                                    <><Loader2 size={16} className="animate-spin" /> Generating…</>
+                                                ) : isCurrentDoc && aiAnswer ? (
+                                                    <>{aiExpanded ? <ChevronUp size={16} /> : <ChevronDown size={16} />} {aiExpanded ? 'Hide' : 'Show'}</>
+                                                ) : (
+                                                    <><Sparkles size={16} /> Explain</>
+                                                )}
+                                            </button>
+                                        ) : (
+                                            <button
+                                                onClick={() => router.push('/login')}
+                                                className="px-4 py-2 border border-green text-green font-bold text-sm rounded-xl hover:bg-green hover:text-white transition-all"
+                                            >
+                                                Sign in
+                                            </button>
+                                        )}
+                                    </div>
+                                </div>
+
+                                {/* Language picker row — shown when no answer yet */}
+                                {user && !(isCurrentDoc && aiAnswer) && !aiLoading && (
+                                    <div className="px-5 pb-4 flex items-center gap-3">
+                                        <Globe size={13} className="text-green/50 flex-shrink-0" />
+                                        <span className="text-xs font-bold text-dark/40">Language:</span>
+                                        <div className="flex items-center gap-1 bg-white/80 rounded-xl p-1 border border-green/10">
+                                            {isPremium ? (
+                                                LANGS.map(l => (
+                                                    <button
+                                                        key={l.code}
+                                                        onClick={() => setAiLanguage(l.code)}
+                                                        className={`px-3 py-1 rounded-lg text-[11px] font-black transition-all ${aiLanguage === l.code ? 'bg-green text-white shadow-sm' : 'text-dark/40 hover:text-green'}`}
+                                                    >
+                                                        {l.label}
+                                                    </button>
+                                                ))
+                                            ) : (
+                                                <>
+                                                    <div className={`px-3 py-1 rounded-lg text-[11px] font-black bg-green text-white shadow-sm`}>
+                                                        {LANGS.find(l => l.code === 'fr')?.label || 'FR'}
+                                                    </div>
+                                                    {LANGS.filter(l => l.code !== 'fr').map(l => (
+                                                        <button key={l.code} onClick={() => setShowProLangDialog(true)} className="flex items-center gap-0.5 px-2.5 py-1 rounded-lg text-[11px] font-black text-dark/25 hover:text-amber-500 transition-colors" title="Upgrade to unlock">
+                                                            {l.label}
+                                                            <span className="text-[8px] bg-amber-100 text-amber-500 px-1 rounded-full font-black">PRO</span>
+                                                        </button>
+                                                    ))}
+                                                </>
+                                            )}
+                                        </div>
+                                    </div>
+                                )}
+
+                                {/* Error */}
+                                {aiError && (
+                                    <div className="px-5 pb-5">
+                                        <p className="text-sm text-red-500 font-medium bg-red-50 rounded-xl px-4 py-3 border border-red-100">{aiError}</p>
+                                    </div>
+                                )}
+
+                                {/* Answer + rating */}
+                                {aiExpanded && isCurrentDoc && aiAnswer && (
+                                    <div className="px-5 pb-0 border-t border-green/10">
+                                        <div className="mt-4 prose prose-sm max-w-none">
+                                            {aiAnswer.split('\n').map((line, i) => {
+                                                if (!line.trim()) return <br key={i} />;
+                                                if (line.startsWith('**') && line.endsWith('**')) {
+                                                    return <p key={i} className="font-black text-dark text-sm mt-3 mb-1">{line.replace(/\*\*/g, '')}</p>;
+                                                }
+                                                if (/^\d+\.\s\*\*/.test(line)) {
+                                                    return <p key={i} className="font-black text-dark text-sm mt-3 mb-1">{line.replace(/\*\*/g, '')}</p>;
+                                                }
+                                                if (line.startsWith('- ') || line.startsWith('• ')) {
+                                                    return <p key={i} className="text-sm text-dark/80 ml-4 leading-relaxed">• {line.slice(2)}</p>;
+                                                }
+                                                return <p key={i} className="text-sm text-dark/80 leading-relaxed">{line}</p>;
+                                            })}
+                                        </div>
+
+                                        {/* Footer: rating + regen + attribution */}
+                                        <div className="mt-5 pt-4 border-t border-green/10 flex items-center justify-between flex-wrap gap-3">
+                                            {/* Rating stars */}
+                                            {user && (
+                                                <div className="flex items-center gap-2">
+                                                    <span className="text-xs font-bold text-dark/50">Rate accuracy:</span>
+                                                    <div className="flex items-center gap-0.5">
+                                                        {[1, 2, 3, 4, 5].map(s => (
+                                                            <button
+                                                                key={s}
+                                                                onClick={() => handleRateAi(s)}
+                                                                disabled={aiRatingLoading}
+                                                                className="transition-transform hover:scale-125 active:scale-110 disabled:cursor-not-allowed"
+                                                                aria-label={`Rate ${s} stars`}
+                                                            >
+                                                                <Star
+                                                                    size={16}
+                                                                    className={s <= (aiUserRating || 0) ? 'text-amber-400 fill-amber-400' : 'text-dark/20 hover:text-amber-300'}
+                                                                />
+                                                            </button>
+                                                        ))}
+                                                    </div>
+                                                    {aiRatingCount > 0 && (
+                                                        <span className="text-xs text-muted-foreground font-medium">
+                                                            {aiAvgRating.toFixed(1)} ({aiRatingCount})
+                                                        </span>
+                                                    )}
+                                                </div>
+                                            )}
+
+                                            <div className="flex items-center gap-3 ml-auto">
+                                                {/* Language switcher in answer footer */}
+                                                {user && (
+                                                    <div className="flex items-center gap-1 bg-white/70 rounded-lg p-0.5 border border-green/10">
+                                                        {LANGS.map(l => (
+                                                            isPremium ? (
+                                                                <button
+                                                                    key={l.code}
+                                                                    onClick={() => handleSwitchLanguage(l.code)}
+                                                                    className={`px-2 py-0.5 rounded-md text-[10px] font-black transition-all ${aiLanguage === l.code ? 'bg-green text-white' : 'text-dark/40 hover:text-green'}`}
+                                                                >
+                                                                    {l.label}
+                                                                </button>
+                                                            ) : (
+                                                                <button
+                                                                    key={l.code}
+                                                                    onClick={() => l.code !== 'fr' ? setShowProLangDialog(true) : undefined}
+                                                                    className={`px-2 py-0.5 rounded-md text-[10px] font-black transition-all ${aiLanguage === l.code ? 'bg-green text-white' : l.code !== 'fr' ? 'text-dark/20 hover:text-amber-500' : 'text-dark/40 hover:text-green'}`}
+                                                                >
+                                                                    {l.label}{l.code !== 'fr' && <span className="ml-0.5 text-[7px] text-amber-400">✦</span>}
+                                                                </button>
+                                                            )
+                                                        ))}
+                                                    </div>
+                                                )}
+
+                                                {/* Regenerate button */}
+                                                {user && (
+                                                    <button
+                                                        onClick={handleRegenerate}
+                                                        disabled={aiRegenLoading || aiLoading}
+                                                        className="flex items-center gap-1.5 text-xs font-bold text-green/70 hover:text-green transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                                                        title={isPremium ? 'Regenerate explanation' : '1 free regeneration per day'}
+                                                    >
+                                                        <RefreshCw size={12} className={aiRegenLoading ? 'animate-spin' : ''} />
+                                                        Regenerate {!isPremium && <span className="text-[9px] text-dark/30 font-medium">1/day</span>}
+                                                    </button>
+                                                )}
+                                                <p className="text-xs text-muted-foreground flex items-center gap-1">
+                                                    <Sparkles size={10} className="text-green" />
+                                                    AI · Saved for all students
+                                                </p>
+                                            </div>
+                                        </div>
+                                    </div>
+                                )}
+
+                                {/* Q&A — ask anything about this document */}
+                                {user && (
+                                    <div className="px-5 pb-5 border-t border-green/10 pt-4">
+                                        <div className="flex items-center gap-2 mb-3">
+                                            <div className="w-5 h-5 rounded-lg bg-green/10 flex items-center justify-center flex-shrink-0">
+                                                <Sparkles size={11} className="text-green" />
+                                            </div>
+                                            <p className="text-xs font-black text-dark/50 uppercase tracking-wider">Ask about this document</p>
+                                        </div>
+
+                                        {/* Messages thread */}
+                                        {qaMessages.length > 0 && (
+                                            <div className="mb-3 space-y-3 max-h-72 overflow-y-auto pr-1">
+                                                {qaMessages.map((msg, i) => (
+                                                    <div key={i} className={`flex gap-2.5 ${msg.role === 'user' ? 'flex-row-reverse' : ''}`}>
+                                                        <div className={`w-6 h-6 rounded-full flex-shrink-0 flex items-center justify-center text-[10px] font-black mt-0.5 ${msg.role === 'user' ? 'bg-green text-white' : 'bg-green/10 text-green'}`}>
+                                                            {msg.role === 'user' ? 'Me' : <Sparkles size={11} />}
+                                                        </div>
+                                                        <div className={`flex-1 rounded-2xl px-3.5 py-2.5 text-sm leading-relaxed ${msg.role === 'user' ? 'bg-green/90 text-white rounded-tr-sm' : 'bg-white border border-green/10 text-dark/80 rounded-tl-sm'}`}>
+                                                            {msg.text.split('\n').map((line, j) => (
+                                                                <span key={j}>{line}{j < msg.text.split('\n').length - 1 && <br />}</span>
+                                                            ))}
+                                                        </div>
+                                                    </div>
+                                                ))}
+                                                {qaLoading && (
+                                                    <div className="flex gap-2.5">
+                                                        <div className="w-6 h-6 rounded-full flex-shrink-0 flex items-center justify-center bg-green/10 text-green mt-0.5">
+                                                            <Sparkles size={11} />
+                                                        </div>
+                                                        <div className="bg-white border border-green/10 rounded-2xl rounded-tl-sm px-3.5 py-2.5 flex items-center gap-1.5">
+                                                            <span className="w-1.5 h-1.5 bg-green/40 rounded-full animate-bounce" style={{ animationDelay: '0ms' }} />
+                                                            <span className="w-1.5 h-1.5 bg-green/40 rounded-full animate-bounce" style={{ animationDelay: '150ms' }} />
+                                                            <span className="w-1.5 h-1.5 bg-green/40 rounded-full animate-bounce" style={{ animationDelay: '300ms' }} />
+                                                        </div>
+                                                    </div>
+                                                )}
+                                                <div ref={qaBottomRef} />
+                                            </div>
+                                        )}
+
+                                        {/* Input row */}
+                                        <div className="flex gap-2 items-end">
+                                            <textarea
+                                                value={qaInput}
+                                                onChange={(e) => setQaInput(e.target.value)}
+                                                onKeyDown={(e) => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); handleAskQuestion(); } }}
+                                                placeholder="What don't you understand? Ask anything…"
+                                                rows={1}
+                                                className="flex-1 resize-none bg-white border border-green/15 rounded-2xl px-4 py-2.5 text-sm text-dark placeholder:text-dark/30 focus:outline-none focus:border-green/40 focus:ring-1 focus:ring-green/20 transition-all leading-relaxed"
+                                                style={{ minHeight: '42px', maxHeight: '120px' }}
+                                                onInput={(e) => {
+                                                    const t = e.target as HTMLTextAreaElement;
+                                                    t.style.height = 'auto';
+                                                    t.style.height = Math.min(t.scrollHeight, 120) + 'px';
+                                                }}
+                                            />
+                                            <button
+                                                onClick={handleAskQuestion}
+                                                disabled={!qaInput.trim() || qaLoading}
+                                                className="w-10 h-10 flex-shrink-0 bg-green text-white rounded-2xl flex items-center justify-center hover:bg-green/90 active:scale-95 transition-all shadow-md shadow-green/20 disabled:opacity-40 disabled:cursor-not-allowed"
+                                            >
+                                                {qaLoading ? <Loader2 size={15} className="animate-spin" /> : <Send size={15} />}
+                                            </button>
+                                        </div>
+                                        {qaMessages.length === 0 && (
+                                            <p className="text-[10px] text-dark/30 font-medium mt-2 text-center">The AI reads the document to answer your specific questions</p>
+                                        )}
+                                    </div>
+                                )}
+                            </div>
+                        );
+                    })()}
                 </div>
 
                 {/* Desktop sidebar toggle */}
@@ -512,6 +959,44 @@ export default function LessonPage() {
                     </div>
                 </aside>
             </div>
+
         </div>
+
+        {/* Pro Language Upgrade Dialog — rendered outside animated container so fixed positioning is viewport-relative */}
+        {showProLangDialog && (
+            <div
+                className="fixed inset-0 z-[500] flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm"
+                onClick={() => setShowProLangDialog(false)}
+            >
+                <div
+                    className="bg-white rounded-3xl p-8 max-w-sm w-full shadow-2xl shadow-black/20"
+                    onClick={(e) => e.stopPropagation()}
+                >
+                    <div className="w-14 h-14 bg-gradient-to-br from-amber-400 to-orange-500 rounded-2xl flex items-center justify-center mx-auto mb-5 shadow-lg shadow-amber-500/25">
+                        <Globe size={26} className="text-white" />
+                    </div>
+                    <h3 className="text-xl font-black text-dark text-center mb-2">Multi-Language AI</h3>
+                    <p className="text-sm text-dark/55 text-center leading-relaxed mb-1">
+                        Get AI explanations in <strong>Arabic</strong> and <strong>English</strong> with a Pro subscription.
+                    </p>
+                    <p className="text-xs text-dark/35 text-center mb-6">All free students get explanations in their document&apos;s language automatically.</p>
+                    <div className="space-y-3">
+                        <button
+                            onClick={() => { setShowProLangDialog(false); router.push('/pricing'); }}
+                            className="w-full py-3.5 bg-gradient-to-r from-amber-400 to-orange-500 text-white font-black rounded-2xl hover:scale-[1.02] active:scale-95 transition-all shadow-lg shadow-amber-500/25 text-sm"
+                        >
+                            Upgrade to Pro — 100 MAD/mo
+                        </button>
+                        <button
+                            onClick={() => setShowProLangDialog(false)}
+                            className="w-full py-2.5 text-dark/40 font-bold text-sm hover:text-dark transition-colors"
+                        >
+                            Maybe later
+                        </button>
+                    </div>
+                </div>
+            </div>
+        )}
+        </>
     );
 }

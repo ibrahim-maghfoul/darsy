@@ -61,14 +61,18 @@ function UsersPage() {
     const handleSaveEdit = async () => {
         setSaving(true);
         try {
-            await fetch(`${API}/user/admin/${editUser._id}/role`, {
+            const roleRes = await fetch(`${API}/user/admin/${editUser._id}/role`, {
                 method: 'PATCH', headers: { ...headers, 'Content-Type': 'application/json' },
                 body: JSON.stringify({ role: editForm.role }),
             });
-            await fetch(`${API}/user/admin/${editUser._id}/subscription`, {
+            if (!roleRes.ok) { const d = await roleRes.json(); throw new Error(d.error || 'Role update failed'); }
+
+            const subRes = await fetch(`${API}/user/admin/${editUser._id}/subscription`, {
                 method: 'PATCH', headers: { ...headers, 'Content-Type': 'application/json' },
                 body: JSON.stringify({ plan: editForm.plan, billingCycle: editForm.billingCycle }),
             });
+            if (!subRes.ok) { const d = await subRes.json(); throw new Error(d.error || 'Subscription update failed'); }
+
             setUsers(prev => prev.map(u => u._id === editUser._id ? {
                 ...u, role: editForm.role,
                 subscription: { ...u.subscription, plan: editForm.plan, billingCycle: editForm.billingCycle }

@@ -2,7 +2,7 @@ import { Response } from 'express';
 import { AuthRequest } from '../middleware/auth';
 import { body, validationResult } from 'express-validator';
 import { User } from '../models/User';
-import { hashPassword, comparePassword, generateAccessToken, generateRefreshToken, hashRefreshToken, generateAffiliateCode } from '../utils/auth';
+import { hashPassword, comparePassword, generateAccessToken, generateRefreshToken, hashRefreshToken, generateAffiliateCode, generateSessionId } from '../utils/auth';
 import { config } from '../config';
 
 export class AuthController {
@@ -82,10 +82,12 @@ export class AuthController {
                 );
             }
 
-            const accessToken = generateAccessToken(user._id.toString());
+            const sessionId = generateSessionId();
+            const accessToken = generateAccessToken(user._id.toString(), sessionId);
             const refreshToken = generateRefreshToken(user._id.toString());
 
             user.refreshToken = hashRefreshToken(refreshToken);
+            user.sessionId = sessionId;
             await user.save();
 
             res.cookie('token', accessToken, {
@@ -159,10 +161,12 @@ export class AuthController {
                 return;
             }
 
-            const accessToken = generateAccessToken(user._id.toString());
+            const sessionId = generateSessionId();
+            const accessToken = generateAccessToken(user._id.toString(), sessionId);
             const refreshToken = generateRefreshToken(user._id.toString());
 
             user.refreshToken = hashRefreshToken(refreshToken);
+            user.sessionId = sessionId;
             await user.save();
 
             const maxAge = rememberMe ? 15 * 24 * 60 * 60 * 1000 : config.cookie.maxAge;
@@ -293,10 +297,12 @@ export class AuthController {
                 }
             }
 
-            const accessToken = generateAccessToken(user._id.toString());
+            const sessionId = generateSessionId();
+            const accessToken = generateAccessToken(user._id.toString(), sessionId);
             const refreshToken = generateRefreshToken(user._id.toString());
 
             user.refreshToken = hashRefreshToken(refreshToken);
+            user.sessionId = sessionId;
             await user.save();
 
             res.cookie('token', accessToken, {

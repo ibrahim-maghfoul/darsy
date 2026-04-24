@@ -1,13 +1,16 @@
-import React, { useState } from 'react';
+import React, { useState, useRef } from 'react';
 import {
     Sparkles, Image as ImageIcon, Download, RefreshCw, CheckCircle2,
     AlertCircle, TrendingUp, Save, Copy
 } from 'lucide-react';
 import { makeLLMRequest } from '../utils/aiService';
 import { adminFetch } from '../utils/adminFetch';
-import './ContentCreator.css'; // reuse same styles
+import { buildImagePrompt } from '../utils/promptBuilder';
+import './ContentCreator.css';
 
-// ── Constants ────────────────────────────────────────────────────────────────
+// ── Constants ─────────────────────────────────────────────────────────────────
+
+const SVG_LOGO_PATH = '/assets/logo/logo.svg';
 
 const THEMES = {
     white: { bgColor: '#ffffff', label: 'White' },
@@ -37,41 +40,23 @@ const loadImage = (src) => new Promise((resolve, reject) => {
     img.src = src;
 });
 
-const buildImagePrompt = ({ designPhrase, theme, headline, subline }) => {
-    const bgColor = theme === 'green' ? 'green (#3aaa6a)' : 'white (#ffffff)';
-    const shapeColor = theme === 'green' ? 'white (#ffffff)' : 'green (#3aaa6a)';
-    const textColor = theme === 'green' ? 'white (#ffffff)' : 'black (#111111)';
+const tintSvg = (svgText, color) =>
+    svgText
+        .replace(/fill="#000000"/g, `fill="${color}"`)
+        .replace(/fill="black"/gi, `fill="${color}"`);
 
-    return `Flat artistic editorial graphic design. Solid ${bgColor} background.
+const loadColoredSvg = (svgText, color) => new Promise((resolve, reject) => {
+    const tinted = tintSvg(svgText, color);
+    const blob = new Blob([tinted], { type: 'image/svg+xml' });
+    const url = URL.createObjectURL(blob);
+    const img = new Image();
+    img.onload = () => { URL.revokeObjectURL(url); resolve(img); };
+    img.onerror = reject;
+    img.src = url;
+});
 
-COLOR:
-- Main color ${bgColor} 70%
-- Secondary color ${shapeColor} 20%
-- Background and empty space: ${bgColor} (solid, fills all edges)
-- Geometric shapes and accent elements: ${shapeColor} only
+const hexForColor = (c) => c === 'white' ? '#ffffff' : c === 'green' ? '#3aaa6a' : '#111111';
 
-
-OUTPUT FORMAT:
-- Aspect ratio 1:1 (perfect square)
-- Edge-to-edge full bleed composition, no borders, no margins, no padding
-- No frame, no mockup, no poster-in-scene, no grey edges, no drop shadows
-- Flat export, not a photographed design
-
-SCENE:
-${designPhrase}
-Human figure rendered using ${shapeColor} only, flat or shaded tones, positioned off-center. Large ${shapeColor} geometric circles and arcs overlap the figure.
-
-TEXT — exactly these phrases, no other text:
-1. "${headline}" — large bold display type, off-center, color ${textColor}
-${subline ? `2. "${subline}" — small light weight, near the headline, color ${textColor}` : ''}
-
-COMPOSITION:
-- At least 2 overlapping ${shapeColor} circles or arcs at different scales
-- One geometric element tilted 10-25 degrees from vertical
-- 1-2 thin ${shapeColor} rule lines (hairline weight)
-- Full-bleed, subject and shapes cropped by edges
-- Do NOT include any brand name, logo, or watermark`.trim();
-};
 
 // ── Component ─────────────────────────────────────────────────────────────────
 
@@ -91,6 +76,12 @@ const PosterGeneration = () => {
     const [headline, setHeadline] = useState('');
     const [subline, setSubline] = useState('');
     const [designPhrase, setDesignPhrase] = useState('');
+    const [mood, setMood] = useState('');
+    const [geometricDensity, setGeometricDensity] = useState('');
+    const [figurePlacement, setFigurePlacement] = useState('');
+    const [shapeStyle, setShapeStyle] = useState('');
+    const [bgTexture, setBgTexture] = useState('');
+    const [manualPromptOverride, setManualPromptOverride] = useState(null);
 
     // Poster
     const [theme, setTheme] = useState('random');
@@ -101,11 +92,20 @@ const PosterGeneration = () => {
     const [compositedUrl, setCompositedUrl] = useState('');
 
     // Overlays
-    const [logoFile, setLogoFile] = useState(null);
-    const [logoPreview, setLogoPreview] = useState('/assets/logo/logo.png');
     const [logoCorner, setLogoCorner] = useState('top-left');
     const [showLogo, setShowLogo] = useState(true);
     const [showDarsy, setShowDarsy] = useState(true);
+    const [logoColor, setLogoColor] = useState('white');    // 'white' | 'black' | 'green'
+    const [darsyColor, setDarsyColor] = useState('auto');   // 'auto' | 'white' | 'black' | 'green'
+
+    // SVG cache ref
+    const svgTextRef = useRef(null);
+    const getSvgText = async () => {
+        if (svgTextRef.current) return svgTextRef.current;
+        const res = await fetch(SVG_LOGO_PATH);
+        svgTextRef.current = await res.text();
+        return svgTextRef.current;
+    };
 
     // UI
     const [loading, setLoading] = useState(false);
@@ -160,11 +160,18 @@ const PosterGeneration = () => {
                     content: `You are a creative director for Darsy, an educational platform for Moroccan students.
 Return ONLY valid JSON, no markdown. title, headline, and subline must be in ${captionLang}. designPhrase must be in ${dpLang}.
 
+IMPORTANT: mood, geometricDensity, figurePlacement, shapeStyle, and bgTexture MUST be chosen from EXACTLY the options listed — no variations, no freeform text.
+
 {
   "title": "short captivating title (in ${captionLang})",
   "headline": "bold punchy poster headline (max 6 words, in ${captionLang})",
   "subline": "short supportive subtitle (optional, leave empty if not needed, in ${captionLang})",
-  "designPhrase": "Vivid scene description for image AI: describe lighting, composition, people, props, mood. In ${dpLang}. Very specific and artistic."
+  "designPhrase": "Vivid scene description for image AI: describe what the figure is doing, the setting, props, and action. In ${dpLang}. 2–3 sentences, very specific.",
+  "mood": "MUST be exactly one of: calm and confident | energetic and dynamic | contemplative and still | bold and assertive | hopeful and aspirational",
+  "geometricDensity": "MUST be exactly one of: sparse | balanced | layered",
+  "figurePlacement": "MUST be exactly one of: lower-left third | right-of-center | lower-right bleeding edge | centered but asymmetrically cropped",
+  "shapeStyle": "choose one geometric language that fits the mood, MUST be translated to ${dpLang}. e.g. 'bold overlapping circles and arcs' | 'sharp angular polygons and triangles' | 'floating squares and rectangles in perspective'",
+  "bgTexture": "choose one subtle texture, MUST be translated to ${dpLang}. e.g. 'fine grain noise' | 'soft linen weave' | 'smooth matte' | 'subtle concrete grain'"
 }`
                 },
                 {
@@ -181,6 +188,12 @@ Return ONLY valid JSON, no markdown. title, headline, and subline must be in ${c
             setHeadline(parsed.headline || '');
             setSubline(parsed.subline || '');
             setDesignPhrase(parsed.designPhrase || '');
+            setMood(parsed.mood || '');
+            setGeometricDensity(parsed.geometricDensity || '');
+            setFigurePlacement(parsed.figurePlacement || '');
+            setShapeStyle(parsed.shapeStyle || '');
+            setBgTexture(parsed.bgTexture || '');
+            setManualPromptOverride(null);
             setProgress(100); setStatus('Content ready!');
             setStep(2);
         } catch (err) {
@@ -200,17 +213,29 @@ Return ONLY valid JSON, no markdown. title, headline, and subline must be in ${c
             const response = await makeLLMRequest([
                 {
                     role: 'system',
-                    content: `You are a creative director. Return ONLY valid JSON with one field "designPhrase": a vivid, artistic scene description in ${dpLang} for an image AI to generate an educational poster. Very specific and artistic, max 3 sentences.`
+                    content: `You are a creative director. Return ONLY valid JSON with fields: "designPhrase", "mood", "geometricDensity", "figurePlacement", "shapeStyle", "bgTexture". All constrained as follows:
+- mood: exactly one of: calm and confident | energetic and dynamic | contemplative and still | bold and assertive | hopeful and aspirational
+- geometricDensity: exactly one of: sparse | balanced | layered
+- figurePlacement: exactly one of: lower-left third | right-of-center | lower-right bleeding edge | centered but asymmetrically cropped
+- shapeStyle: one geometric visual language sentence (freeform, MUST be in ${dpLang})
+- bgTexture: one subtle texture sentence (freeform, MUST be in ${dpLang})
+- designPhrase: vivid 2-3 sentence scene, in ${dpLang}`
                 },
                 {
                     role: 'user',
-                    content: `Topic: "${topic}". Headline: "${headline}". Generate a fresh design phrase. Return ONLY JSON: {"designPhrase": "..."}`
+                    content: `Topic: "${topic}". Headline: "${headline}". Generate a fresh design concept. Return ONLY JSON.`
                 }
             ], { keys, addLog: () => { }, setCurrentProvider });
             const raw = response?.choices?.[0]?.message?.content?.trim();
             const cleaned = raw?.replace(/```json\n?/gi, '').replace(/```/g, '').trim();
             const parsed = JSON.parse(cleaned);
             if (parsed.designPhrase) setDesignPhrase(parsed.designPhrase);
+            if (parsed.mood) setMood(parsed.mood);
+            if (parsed.geometricDensity) setGeometricDensity(parsed.geometricDensity);
+            if (parsed.figurePlacement) setFigurePlacement(parsed.figurePlacement);
+            if (parsed.shapeStyle) setShapeStyle(parsed.shapeStyle);
+            if (parsed.bgTexture) setBgTexture(parsed.bgTexture);
+            setManualPromptOverride(null);
         } catch (err) {
             setError(`Regeneration failed: ${err.message}`);
         } finally {
@@ -251,7 +276,11 @@ Return ONLY valid JSON, no markdown. title, headline, and subline must be in ${c
         try {
             const n = Math.min(Math.max(parseInt(imagesPerGen) || 1, 1), 4);
             const activeTheme = theme === 'random' ? (Math.random() > 0.5 ? 'green' : 'white') : theme;
-            const prompt = buildImagePrompt({ designPhrase, theme: activeTheme, headline, subline });
+            const dpLang = designLanguage === 'fr' ? 'French' : designLanguage === 'ar' ? 'Arabic' : 'English';
+            let prompt = manualPromptOverride !== null
+                ? manualPromptOverride
+                : buildImagePrompt({ designPhrase, theme: activeTheme, headline, subline, mood, geometricDensity, figurePlacement, shapeStyle, bgTexture, lang: dpLang });
+
             setProgress(30);
             setStatus(`Generating ${n} poster(s) via ${imageModel === 'ghost' ? 'Ghost API' : imageModel}...`);
 
@@ -270,7 +299,7 @@ Return ONLY valid JSON, no markdown. title, headline, and subline must be in ${c
             setProgress(100);
             setStatus(`${all.length} poster(s) generated. Style and save below.`);
             setStep(3);
-            applyOverlays(all[0], showDarsy, showLogo, logoCorner, darsyCorner);
+            applyOverlays(all[0], showDarsy, showLogo, logoCorner, darsyCorner, logoColor, darsyColor);
             generateSocialCaption();
         } catch (err) {
             setError(`Poster generation failed: ${err.message}`);
@@ -283,7 +312,15 @@ Return ONLY valid JSON, no markdown. title, headline, and subline must be in ${c
     };
 
     // ── Canvas compositing ─────────────────────────────────────────────────
-    const applyOverlays = async (entry = selectedPoster, darsyOn = showDarsy, logoOn = showLogo, corner = logoCorner, dCorner = darsyCorner) => {
+    const applyOverlays = async (
+        entry = selectedPoster,
+        darsyOn = showDarsy,
+        logoOn = showLogo,
+        corner = logoCorner,
+        dCorner = darsyCorner,
+        lColor = logoColor,
+        dColor = darsyColor,
+    ) => {
         const poster = entry || selectedPoster;
         if (!poster?.url) return;
         setLoading(true); setStatus('Compositing overlays...');
@@ -294,12 +331,8 @@ Return ONLY valid JSON, no markdown. title, headline, and subline must be in ${c
 
             const blob = await fetch(src).then(r => { if (!r.ok) throw new Error('Proxy failed'); return r.blob(); });
             const posterObjUrl = URL.createObjectURL(blob);
-            const logoSrc = logoFile ? URL.createObjectURL(logoFile) : '/assets/logo/logo.png';
-
-            const [posterImg, logoImg] = await Promise.all([
-                loadImage(posterObjUrl),
-                loadImage(logoSrc).catch(() => null),
-            ]);
+            const posterImg = await loadImage(posterObjUrl);
+            URL.revokeObjectURL(posterObjUrl);
 
             const canvas = document.createElement('canvas');
             canvas.width = posterImg.naturalWidth || posterImg.width;
@@ -307,12 +340,19 @@ Return ONLY valid JSON, no markdown. title, headline, and subline must be in ${c
             const ctx = canvas.getContext('2d');
             ctx.drawImage(posterImg, 0, 0);
 
+            // DARSY text
             if (darsyOn) {
                 const pad = canvas.width * 0.03;
                 const sz = Math.round(canvas.width * 0.038);
                 ctx.font = `700 ${sz}px -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif`;
                 const tw = ctx.measureText('DARSY').width;
-                ctx.fillStyle = poster.theme === 'green' ? '#ffffff' : '#111111';
+                let resolvedDarsyColor;
+                if (dColor === 'auto') {
+                    resolvedDarsyColor = poster.theme === 'green' ? '#ffffff' : '#111111';
+                } else {
+                    resolvedDarsyColor = hexForColor(dColor);
+                }
+                ctx.fillStyle = resolvedDarsyColor;
                 const dIsBottom = dCorner.startsWith('bottom');
                 const dIsRight = dCorner.endsWith('right');
                 ctx.textBaseline = dIsBottom ? 'bottom' : 'top';
@@ -321,19 +361,21 @@ Return ONLY valid JSON, no markdown. title, headline, and subline must be in ${c
                 ctx.fillText('DARSY', dx, dy);
             }
 
-            if (logoOn && logoImg) {
-                const pad = canvas.width * 0.015;
-                const lw = canvas.width * 0.18;
-                const lh = (logoImg.naturalHeight / logoImg.naturalWidth) * lw;
-                let x = pad, y = pad;
-                if (corner === 'top-right') { x = canvas.width - lw - pad; }
-                if (corner === 'bottom-left') { y = canvas.height - lh - pad; }
-                if (corner === 'bottom-right') { x = canvas.width - lw - pad; y = canvas.height - lh - pad; }
-                ctx.drawImage(logoImg, x, y, lw, lh);
+            // SVG logo overlay
+            if (logoOn) {
+                try {
+                    const svgText = await getSvgText();
+                    const logoImg = await loadColoredSvg(svgText, hexForColor(lColor));
+                    const pad = canvas.width * 0.03;
+                    const lw = 80;
+                    const lh = 80;
+                    let x = pad, y = pad;
+                    if (corner === 'top-right') { x = canvas.width - lw - pad; }
+                    if (corner === 'bottom-left') { y = canvas.height - lh - pad; }
+                    if (corner === 'bottom-right') { x = canvas.width - lw - pad; y = canvas.height - lh - pad; }
+                    ctx.drawImage(logoImg, x, y, lw, lh);
+                } catch (e) { console.warn('SVG logo render failed:', e); }
             }
-
-            URL.revokeObjectURL(posterObjUrl);
-            if (logoFile) URL.revokeObjectURL(logoSrc);
 
             setCompositedUrl(canvas.toDataURL('image/png'));
             setStatus('Preview ready.');
@@ -381,9 +423,11 @@ Return ONLY valid JSON, no markdown. title, headline, and subline must be in ${c
     const reset = () => {
         setStep(1); setTopic(''); setTopicId(''); setTrends([]);
         setTitle(''); setHeadline(''); setSubline(''); setDesignPhrase(''); setSocialCaption('');
+        setMood(''); setGeometricDensity(''); setFigurePlacement(''); setShapeStyle(''); setBgTexture('');
         setPosters([]); setSelectedPoster(null); setCompositedUrl('');
-        setLogoFile(null); setLogoPreview('/assets/logo/logo.png');
+        setLogoColor('white'); setDarsyColor('auto');
         setError(''); setStatus(''); setSavedCount(0);
+        setManualPromptOverride(null);
     };
 
     const STEPS = [
@@ -572,6 +616,70 @@ Return ONLY valid JSON, no markdown. title, headline, and subline must be in ${c
                             </div>
                             <textarea className="pg-textarea" rows={4} value={designPhrase} onChange={e => setDesignPhrase(e.target.value)} />
                         </div>
+
+                        {/* Constrained parameter badges */}
+                        {(mood || geometricDensity || figurePlacement) && (
+                            <div className="pg-input-group" style={{ marginBottom: 16 }}>
+                                <label className="pg-label">Composition Parameters</label>
+                                <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8 }}>
+                                    {mood && (
+                                        <div style={{ display: 'flex', flexDirection: 'column', gap: 3, minWidth: 160, flex: 1 }}>
+                                            <span style={{ fontSize: '0.6rem', fontWeight: 700, color: 'var(--text-secondary)', textTransform: 'uppercase', letterSpacing: '0.06em' }}>Mood</span>
+                                            <span style={{ fontSize: '0.78rem', fontWeight: 600, color: 'var(--dark)', background: '#f0fdf4', border: '1px solid #bbf7d0', borderRadius: 8, padding: '5px 10px' }}>{mood}</span>
+                                        </div>
+                                    )}
+                                    {geometricDensity && (
+                                        <div style={{ display: 'flex', flexDirection: 'column', gap: 3, minWidth: 100, flex: 1 }}>
+                                            <span style={{ fontSize: '0.6rem', fontWeight: 700, color: 'var(--text-secondary)', textTransform: 'uppercase', letterSpacing: '0.06em' }}>Density</span>
+                                            <span style={{ fontSize: '0.78rem', fontWeight: 600, color: 'var(--dark)', background: '#f0fdf4', border: '1px solid #bbf7d0', borderRadius: 8, padding: '5px 10px' }}>{geometricDensity}</span>
+                                        </div>
+                                    )}
+                                    {figurePlacement && (
+                                        <div style={{ display: 'flex', flexDirection: 'column', gap: 3, minWidth: 200, flex: 2 }}>
+                                            <span style={{ fontSize: '0.6rem', fontWeight: 700, color: 'var(--text-secondary)', textTransform: 'uppercase', letterSpacing: '0.06em' }}>Figure Placement</span>
+                                            <span style={{ fontSize: '0.78rem', fontWeight: 600, color: 'var(--dark)', background: '#f0fdf4', border: '1px solid #bbf7d0', borderRadius: 8, padding: '5px 10px' }}>{figurePlacement}</span>
+                                        </div>
+                                    )}
+                                </div>
+                                {(shapeStyle || bgTexture) && (
+                                    <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8, marginTop: 8 }}>
+                                        {shapeStyle && (
+                                            <div style={{ display: 'flex', flexDirection: 'column', gap: 3, flex: 1, minWidth: 200 }}>
+                                                <span style={{ fontSize: '0.6rem', fontWeight: 700, color: 'var(--text-secondary)', textTransform: 'uppercase', letterSpacing: '0.06em' }}>Shape Style</span>
+                                                <span style={{ fontSize: '0.75rem', color: 'var(--dark)', background: '#fafafa', border: '1px solid var(--border)', borderRadius: 8, padding: '5px 10px' }}>{shapeStyle}</span>
+                                            </div>
+                                        )}
+                                        {bgTexture && (
+                                            <div style={{ display: 'flex', flexDirection: 'column', gap: 3, flex: 1, minWidth: 160 }}>
+                                                <span style={{ fontSize: '0.6rem', fontWeight: 700, color: 'var(--text-secondary)', textTransform: 'uppercase', letterSpacing: '0.06em' }}>Background Texture</span>
+                                                <span style={{ fontSize: '0.75rem', color: 'var(--dark)', background: '#fafafa', border: '1px solid var(--border)', borderRadius: 8, padding: '5px 10px' }}>{bgTexture}</span>
+                                            </div>
+                                        )}
+                                    </div>
+                                )}
+                            </div>
+                        )}
+
+                        <div className="pg-input-group" style={{ marginTop: 4 }}>
+                            <label className="pg-label" style={{ color: 'var(--text-secondary)' }}>
+                                Full Image Generation Prompt
+                            </label>
+                            <textarea
+                                className="pg-textarea"
+                                rows={12}
+                                value={manualPromptOverride !== null ? manualPromptOverride : buildImagePrompt({ designPhrase, theme: theme === 'random' ? 'green' : theme, headline, subline, mood, geometricDensity, figurePlacement, shapeStyle, bgTexture, lang: designLanguage === 'fr' ? 'French' : designLanguage === 'ar' ? 'Arabic' : 'English' })}
+                                onChange={e => setManualPromptOverride(e.target.value)}
+                                style={{ fontFamily: 'monospace', fontSize: '0.78rem', resize: 'vertical', background: '#fafafa', border: '1.5px solid var(--border)' }}
+                            />
+                            {manualPromptOverride !== null && (
+                                <button
+                                    onClick={() => setManualPromptOverride(null)}
+                                    style={{ background: 'none', border: 'none', color: 'var(--green)', fontSize: '0.65rem', fontWeight: 700, padding: 0, marginTop: 6, cursor: 'pointer', textAlign: 'right', display: 'block', width: '100%' }}
+                                >
+                                    Reset to Auto-Generated Prompt
+                                </button>
+                            )}
+                        </div>
                     </div>
 
                     <div className="pg-footer-btns" style={{ marginTop: 20 }}>
@@ -644,65 +752,94 @@ Return ONLY valid JSON, no markdown. title, headline, and subline must be in ${c
                         <div className="cc-logo-panel">
                             <p style={{ fontSize: '0.85rem', fontWeight: 700, color: 'var(--dark)', marginBottom: 16 }}>Overlays</p>
 
-                            <div className="pg-input-group" style={{ marginBottom: 16 }}>
-                                <label className="pg-label">Toggles</label>
+                            {/* Toggles */}
+                            <div className="pg-input-group" style={{ marginBottom: 14 }}>
+                                <label className="pg-label">Show / Hide</label>
                                 <div style={{ display: 'flex', flexDirection: 'column', gap: 8, fontSize: '0.85rem' }}>
                                     <label style={{ display: 'flex', alignItems: 'center', gap: 8, cursor: 'pointer' }}>
                                         <input type="checkbox" checked={showLogo} onChange={e => {
                                             const v = e.target.checked; setShowLogo(v);
-                                            applyOverlays(selectedPoster, showDarsy, v, logoCorner, darsyCorner);
-                                        }} /> Show Logo
+                                            applyOverlays(selectedPoster, showDarsy, v, logoCorner, darsyCorner, logoColor, darsyColor);
+                                        }} /> Show SVG Logo
                                     </label>
                                     <label style={{ display: 'flex', alignItems: 'center', gap: 8, cursor: 'pointer' }}>
                                         <input type="checkbox" checked={showDarsy} onChange={e => {
                                             const v = e.target.checked; setShowDarsy(v);
-                                            applyOverlays(selectedPoster, v, showLogo, logoCorner, darsyCorner);
+                                            applyOverlays(selectedPoster, v, showLogo, logoCorner, darsyCorner, logoColor, darsyColor);
                                         }} /> Show DARSY Text
                                     </label>
                                 </div>
                             </div>
 
-                            <div className="pg-input-group">
-                                <label className="pg-label">Upload Custom Logo</label>
-                                <input type="file" accept="image/*" style={{ fontSize: '0.82rem' }} onChange={e => {
-                                    const f = e.target.files[0]; if (!f) return;
-                                    setLogoFile(f); setLogoPreview(URL.createObjectURL(f)); setCompositedUrl('');
-                                    applyOverlays(selectedPoster, showDarsy, showLogo, logoCorner);
-                                }} />
-                                {logoPreview && <img src={logoPreview} alt="Logo" style={{ marginTop: 10, height: 44, objectFit: 'contain', background: '#f5f5f5', borderRadius: 8, padding: 4 }} />}
-                            </div>
+                            {/* SVG Logo settings */}
+                            {showLogo && (
+                                <>
+                                    <div className="pg-input-group">
+                                        <label className="pg-label">Logo Color</label>
+                                        <div style={{ display: 'flex', gap: 8 }}>
+                                            {[{ id: 'white', hex: '#ffffff', border: '#d1d5db' }, { id: 'black', hex: '#111111', border: '#111111' }, { id: 'green', hex: '#3aaa6a', border: '#3aaa6a' }].map(c => (
+                                                <button key={c.id} title={c.id}
+                                                    onClick={() => { setLogoColor(c.id); applyOverlays(selectedPoster, showDarsy, showLogo, logoCorner, darsyCorner, c.id, darsyColor); }}
+                                                    style={{ width: 30, height: 30, borderRadius: 8, background: c.hex, border: `2.5px solid ${logoColor === c.id ? '#3aaa6a' : c.border}`, boxShadow: logoColor === c.id ? '0 0 0 3px rgba(58,170,106,0.3)' : 'none', cursor: 'pointer', transition: 'all 0.15s' }}
+                                                />
+                                            ))}
+                                        </div>
+                                    </div>
 
-                            <div className="pg-input-group">
-                                <label className="pg-label">Logo Corner</label>
-                                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 6 }}>
-                                    {CORNERS.map(c => (
-                                        <button
-                                            key={c.id}
-                                            className={`pg-btn ${logoCorner === c.id ? 'pg-btn-primary' : 'pg-btn-ghost'}`}
-                                            style={{ padding: '7px 10px', fontSize: '0.75rem' }}
-                                            onClick={() => { setLogoCorner(c.id); applyOverlays(selectedPoster, showDarsy, showLogo, c.id, darsyCorner); }}
-                                        >
-                                            {c.label}
-                                        </button>
-                                    ))}
-                                </div>
-                            </div>
 
-                            <div className="pg-input-group">
-                                <label className="pg-label">DARSY Text Corner</label>
-                                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 6 }}>
-                                    {CORNERS.map(c => (
-                                        <button
-                                            key={c.id}
-                                            className={`pg-btn ${darsyCorner === c.id ? 'pg-btn-primary' : 'pg-btn-ghost'}`}
-                                            style={{ padding: '7px 10px', fontSize: '0.75rem' }}
-                                            onClick={() => { setDarsyCorner(c.id); applyOverlays(selectedPoster, showDarsy, showLogo, logoCorner, c.id); }}
-                                        >
-                                            {c.label}
-                                        </button>
-                                    ))}
-                                </div>
-                            </div>
+
+                                    <div className="pg-input-group">
+                                        <label className="pg-label">Logo Corner</label>
+                                        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 6 }}>
+                                            {CORNERS.map(c => (
+                                                <button key={c.id}
+                                                    className={`pg-btn ${logoCorner === c.id ? 'pg-btn-primary' : 'pg-btn-ghost'}`}
+                                                    style={{ padding: '7px 10px', fontSize: '0.75rem' }}
+                                                    onClick={() => { setLogoCorner(c.id); applyOverlays(selectedPoster, showDarsy, showLogo, c.id, darsyCorner, logoColor, darsyColor); }}
+                                                >
+                                                    {c.label}
+                                                </button>
+                                            ))}
+                                        </div>
+                                    </div>
+                                </>
+                            )}
+
+                            {/* DARSY text settings */}
+                            {showDarsy && (
+                                <>
+                                    <div className="pg-input-group">
+                                        <label className="pg-label">DARSY Text Color</label>
+                                        <div style={{ display: 'flex', gap: 6, alignItems: 'center', flexWrap: 'wrap' }}>
+                                            <button
+                                                onClick={() => { setDarsyColor('auto'); applyOverlays(selectedPoster, showDarsy, showLogo, logoCorner, darsyCorner, logoColor, 'auto'); }}
+                                                style={{ fontSize: '0.65rem', fontWeight: 700, padding: '4px 10px', borderRadius: 6, border: `2px solid ${darsyColor === 'auto' ? '#3aaa6a' : 'var(--border)'}`, background: darsyColor === 'auto' ? '#f0fdf4' : 'transparent', cursor: 'pointer', color: 'var(--dark)' }}
+                                            >Auto</button>
+                                            {[{ id: 'white', hex: '#ffffff' }, { id: 'black', hex: '#111111' }, { id: 'green', hex: '#3aaa6a' }].map(c => (
+                                                <button key={c.id} title={c.id}
+                                                    onClick={() => { setDarsyColor(c.id); applyOverlays(selectedPoster, showDarsy, showLogo, logoCorner, darsyCorner, logoColor, c.id); }}
+                                                    style={{ width: 28, height: 28, borderRadius: 6, background: c.hex, border: `2.5px solid ${darsyColor === c.id ? '#3aaa6a' : '#d1d5db'}`, boxShadow: darsyColor === c.id ? '0 0 0 2px rgba(58,170,106,0.3)' : 'none', cursor: 'pointer', transition: 'all 0.15s' }}
+                                                />
+                                            ))}
+                                        </div>
+                                    </div>
+
+                                    <div className="pg-input-group">
+                                        <label className="pg-label">DARSY Text Corner</label>
+                                        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 6 }}>
+                                            {CORNERS.map(c => (
+                                                <button key={c.id}
+                                                    className={`pg-btn ${darsyCorner === c.id ? 'pg-btn-primary' : 'pg-btn-ghost'}`}
+                                                    style={{ padding: '7px 10px', fontSize: '0.75rem' }}
+                                                    onClick={() => { setDarsyCorner(c.id); applyOverlays(selectedPoster, showDarsy, showLogo, logoCorner, c.id, logoColor, darsyColor); }}
+                                                >
+                                                    {c.label}
+                                                </button>
+                                            ))}
+                                        </div>
+                                    </div>
+                                </>
+                            )}
                         </div>
                     </div>
 

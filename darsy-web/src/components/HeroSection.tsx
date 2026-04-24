@@ -4,6 +4,7 @@ import { useEffect, useRef, useState, useCallback, useMemo, memo } from "react";
 import { useTranslations } from 'next-intl';
 import { BookOpen, TrendingUp, Newspaper } from 'lucide-react';
 import { Diagram } from "./Diagram";
+import { DarsyLogo } from "./DarsyLogo";
 
 // Square clockwise: Free Materials(TL)→Track Progress(TR)→Latest News(BR)→Premium Prep(BL)
 const CARD_IDS = ["card-0", "card-1", "card-2", "card-3"];
@@ -269,7 +270,7 @@ export function HeroSection() {
         {id:"card-0", icon:<BookOpen   size={16}/>, title:t('card0_title'), msg:t('card0_msg'), color:"#e8f5ee", iconColor:"#3aaa6a"},
         {id:"card-1", icon:<TrendingUp size={16}/>, title:t('card1_title'), msg:t('card1_msg'), color:"#e8f5ee", iconColor:"#3aaa6a"},
         {id:"card-2", icon:<Newspaper  size={16}/>, title:t('card2_title'), msg:t('card2_msg'), color:"#e8f5ee", iconColor:"#3aaa6a"},
-        {id:"card-3", icon:<div className="font-black italic text-[11px]">D</div>, title:t('card3_title'), msg:t('card3_msg'), color:"#e8f5ee", iconColor:"#3aaa6a"},
+        {id:"card-3", icon:<DarsyLogo className="w-4 h-4" color="#3aaa6a" />, title:t('card3_title'), msg:t('card3_msg'), color:"#e8f5ee", iconColor:"#3aaa6a"},
     // eslint-disable-next-line react-hooks/exhaustive-deps
     ], []);
 
