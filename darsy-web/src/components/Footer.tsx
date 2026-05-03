@@ -124,7 +124,7 @@ export function Footer() {
                 </div>
 
                 <div className="flex flex-col sm:flex-row items-center justify-between py-6 text-xs text-white/30 gap-4">
-                    <span>&copy; 2025 Darsy. {t('rights')}</span>
+                    <span>&copy; {new Date().getFullYear()} Darsy. {t('rights')}</span>
                     <div className="flex gap-6">
                         <Link href="/privacy" className="hover:text-white transition-colors">{t('privacy')}</Link>
                         <a href="#" className="hover:text-white transition-colors">{t('terms')}</a>
