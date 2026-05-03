@@ -340,7 +340,7 @@ export const Navbar = () => {
                 >
                   <link.icon size={15} className="flex-shrink-0" />
                   <span className="hidden lg:inline">{link.label}</span>
-                  <span className="lg:hidden text-[11px]">{link.label}</span>
+                  <span className="lg:hidden text-[11px]" aria-hidden="true">{link.label}</span>
                 </Link>
               ))}
             </div>
