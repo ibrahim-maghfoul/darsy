@@ -51,11 +51,18 @@ export function Diagram() {
     const rawId = useId();
     const uid = rawId.replace(/[^a-zA-Z0-9]/g, '');
     const fanLinesRef = useRef<SVGPathElement[]>([]);
+    const rootRef = useRef<HTMLDivElement>(null);
     const [randomDelays, setRandomDelays] = useState<number[]>([]);
 
     useEffect(() => {
         const delays = Array.from({ length: 9 }, () => Math.random() * 0.8);
         setRandomDelays(delays);
+
+        // Pause all CSS animations when Diagram is off-screen
+        const visObs = new IntersectionObserver(([e]) => {
+            rootRef.current?.classList.toggle('diagram-paused', !e.isIntersecting);
+        }, { threshold: 0 });
+        if (rootRef.current) visObs.observe(rootRef.current);
 
         const observer = new IntersectionObserver(
             (entries) => {
@@ -79,11 +86,11 @@ export function Diagram() {
         const fanGroup = fanLinesRef.current[0]?.parentElement;
         if (fanGroup) observer.observe(fanGroup);
 
-        return () => observer.disconnect();
+        return () => { observer.disconnect(); visObs.disconnect(); };
     }, []);
 
     return (
-        <div className="w-[clamp(300px,44vw,500px)] relative shrink-0 z-3">
+        <div ref={rootRef} className="w-[clamp(300px,44vw,500px)] relative shrink-0 z-3 diagram-paused">
             <svg viewBox="0 0 500 580" xmlns="http://www.w3.org/2000/svg" className="block w-full h-auto overflow-visible font-roboto">
                 <defs>
                     <radialGradient id={`gHex${uid}`} cx="50%" cy="50%" r="60%">
@@ -264,26 +271,6 @@ export function Diagram() {
                     <AnimatedShapePop x={250} y={326} delay={3.6} />
                 </g>
 
-                {/* Darsy logo — center hub */}
-                <g id={`logo${uid}`} transform="translate(233,193)">
-                    <rect x="0" y="0" width="34" height="34" rx="9" fill="white" filter={`url(#shHex${uid})`} opacity="0.95" />
-                    <defs>
-                        <linearGradient id={`lgD${uid}`} x1="0%" y1="0%" x2="100%" y2="100%">
-                            <stop offset="0%" stopColor="#3aaa6a" />
-                            <stop offset="100%" stopColor="#1a6640" />
-                        </linearGradient>
-                    </defs>
-                    {/* Actual Darsy SVG logo — paths mapped to 30×30 with 2px padding */}
-                    <g transform="translate(2,32) scale(0.005,-0.005)" fill={`url(#lgD${uid})`} stroke="none">
-                        <path d="M2737 5989 c-1019 -90 -1928 -698 -2399 -1604 -215 -416 -322 -835 -335 -1320 l-6 -220 109 -104 c339 -325 739 -559 1174 -690 99 -30 390 -94 397 -87 2 1 -2 63 -8 137 -33 399 43 894 197 1286 268 682 784 1252 1431 1581 257 130 479 209 749 266 226 47 360 60 631 60 138 0 249 4 247 8 -10 16 -234 179 -328 238 -484 304 -1045 464 -1616 459 -85 -1 -194 -5 -243 -10z"/>
-                        <path d="M4480 5144 c-19 -2 -86 -9 -147 -15 -62 -6 -113 -15 -113 -19 0 -5 17 -19 37 -31 21 -13 82 -59 135 -101 361 -287 628 -617 828 -1023 164 -330 253 -629 296 -986 19 -160 22 -498 5 -649 -73 -651 -330 -1228 -762 -1710 l-94 -105 55 39 c210 149 510 435 651 621 366 482 570 1011 618 1608 68 817 -220 1644 -784 2261 l-71 76 -109 15 c-107 15 -474 27 -545 19z"/>
-                        <path d="M3511 4631 c-313 -176 -428 -245 -438 -265 -12 -23 -5 -71 77 -488 50 -255 96 -478 101 -496 6 -18 21 -39 32 -46 26 -16 976 -131 1011 -122 13 3 30 16 38 28 37 58 411 886 411 910 0 15 -8 37 -19 49 -10 12 -176 168 -368 345 -327 304 -351 324 -385 323 -28 0 -131 -53 -460 -238z m667 -317 c122 -113 222 -212 222 -220 0 -23 -239 -536 -259 -557 -17 -17 -29 -16 -317 18 -184 22 -304 41 -312 48 -18 18 -127 576 -119 607 5 20 57 53 259 167 139 77 264 142 278 142 20 1 75 -45 248 -205z"/>
-                        <path d="M2686 4349 c-161 -156 -274 -290 -394 -467 -62 -91 -74 -116 -66 -130 19 -31 187 -163 324 -254 121 -80 467 -265 477 -254 3 2 0 13 -5 23 -23 43 -95 298 -122 433 -43 214 -52 300 -59 559 l-6 235 -149 -145z"/>
-                        <path d="M4971 3938 c-91 -320 -266 -668 -473 -945 -607 -812 -1577 -1265 -2575 -1203 -683 42 -1304 297 -1813 743 -41 36 -77 64 -79 62 -16 -17 70 -386 134 -575 322 -940 1110 -1669 2075 -1921 487 -127 1016 -128 1505 -2 204 52 236 65 358 146 695 457 1160 1206 1261 2027 61 500 -6 992 -198 1453 -37 91 -111 243 -144 297 l-19 30 -32 -112z"/>
-                        <path d="M2087 3522 c-133 -283 -216 -571 -258 -897 -15 -113 -17 -550 -3 -630 l9 -50 120 -9 c146 -10 419 5 595 34 453 74 883 257 1245 528 128 96 294 244 370 330 l47 52 -149 0 c-656 0 -1356 261 -1869 697 -28 23 -53 43 -56 43 -3 0 -26 -44 -51 -98z"/>
-                    </g>
-                </g>
-
                 {[
                     { x: 15, y: 500, color: "#b07040", shirt: "#8b5530", skin: "#d4a06a", hair: "#2d1a0e" },
                     { x: 95, y: 502, color: "#e05535", shirt: "#b83820", skin: "#f4b090", hair: "#8b1a10" },
@@ -299,6 +286,42 @@ export function Diagram() {
                         <circle cx="25" cy="25" r="25" fill="none" stroke="white" strokeWidth="3" />
                     </g>
                 ))}
+
+                {/* Darsy logo — center hub (rendered last so it sits above connect lines) */}
+                <g id={`logo${uid}`}>
+                    <defs>
+                        <linearGradient id={`lgD${uid}`} x1="0%" y1="0%" x2="100%" y2="100%">
+                            <stop offset="0%" stopColor="#3aaa6a" />
+                            <stop offset="100%" stopColor="#1a6640" />
+                        </linearGradient>
+                    </defs>
+                    {/* Halftone dotted backdrop — grey dots that fade out radially */}
+                    <defs>
+                        <pattern id={`halftone${uid}`} width="4" height="4" patternUnits="userSpaceOnUse">
+                            <circle cx="2" cy="2" r="0.9" fill="#6b7280" />
+                        </pattern>
+                        <radialGradient id={`halftoneFade${uid}`} cx="50%" cy="50%" r="50%">
+                            <stop offset="0%" stopColor="#ffffff" stopOpacity="1" />
+                            <stop offset="70%" stopColor="#ffffff" stopOpacity="0.6" />
+                            <stop offset="100%" stopColor="#ffffff" stopOpacity="0" />
+                        </radialGradient>
+                        <mask id={`halftoneMask${uid}`}>
+                            <circle cx="250" cy="210" r="26" fill={`url(#halftoneFade${uid})`} />
+                        </mask>
+                    </defs>
+                    <circle cx="250" cy="210" r="22" fill="#ffffff" stroke="none" />
+                    <circle cx="250" cy="210" r="26" fill={`url(#halftone${uid})`} mask={`url(#halftoneMask${uid})`} />
+                    <g transform="translate(233,193)">
+                        <g transform="translate(2,32) scale(0.005,-0.005)" fill={`url(#lgD${uid})`} stroke="none">
+                            <path d="M2737 5989 c-1019 -90 -1928 -698 -2399 -1604 -215 -416 -322 -835 -335 -1320 l-6 -220 109 -104 c339 -325 739 -559 1174 -690 99 -30 390 -94 397 -87 2 1 -2 63 -8 137 -33 399 43 894 197 1286 268 682 784 1252 1431 1581 257 130 479 209 749 266 226 47 360 60 631 60 138 0 249 4 247 8 -10 16 -234 179 -328 238 -484 304 -1045 464 -1616 459 -85 -1 -194 -5 -243 -10z"/>
+                            <path d="M4480 5144 c-19 -2 -86 -9 -147 -15 -62 -6 -113 -15 -113 -19 0 -5 17 -19 37 -31 21 -13 82 -59 135 -101 361 -287 628 -617 828 -1023 164 -330 253 -629 296 -986 19 -160 22 -498 5 -649 -73 -651 -330 -1228 -762 -1710 l-94 -105 55 39 c210 149 510 435 651 621 366 482 570 1011 618 1608 68 817 -220 1644 -784 2261 l-71 76 -109 15 c-107 15 -474 27 -545 19z"/>
+                            <path d="M3511 4631 c-313 -176 -428 -245 -438 -265 -12 -23 -5 -71 77 -488 50 -255 96 -478 101 -496 6 -18 21 -39 32 -46 26 -16 976 -131 1011 -122 13 3 30 16 38 28 37 58 411 886 411 910 0 15 -8 37 -19 49 -10 12 -176 168 -368 345 -327 304 -351 324 -385 323 -28 0 -131 -53 -460 -238z m667 -317 c122 -113 222 -212 222 -220 0 -23 -239 -536 -259 -557 -17 -17 -29 -16 -317 18 -184 22 -304 41 -312 48 -18 18 -127 576 -119 607 5 20 57 53 259 167 139 77 264 142 278 142 20 1 75 -45 248 -205z"/>
+                            <path d="M2686 4349 c-161 -156 -274 -290 -394 -467 -62 -91 -74 -116 -66 -130 19 -31 187 -163 324 -254 121 -80 467 -265 477 -254 3 2 0 13 -5 23 -23 43 -95 298 -122 433 -43 214 -52 300 -59 559 l-6 235 -149 -145z"/>
+                            <path d="M4971 3938 c-91 -320 -266 -668 -473 -945 -607 -812 -1577 -1265 -2575 -1203 -683 42 -1304 297 -1813 743 -41 36 -77 64 -79 62 -16 -17 70 -386 134 -575 322 -940 1110 -1669 2075 -1921 487 -127 1016 -128 1505 -2 204 52 236 65 358 146 695 457 1160 1206 1261 2027 61 500 -6 992 -198 1453 -37 91 -111 243 -144 297 l-19 30 -32 -112z"/>
+                            <path d="M2087 3522 c-133 -283 -216 -571 -258 -897 -15 -113 -17 -550 -3 -630 l9 -50 120 -9 c146 -10 419 5 595 34 453 74 883 257 1245 528 128 96 294 244 370 330 l47 52 -149 0 c-656 0 -1356 261 -1869 697 -28 23 -53 43 -56 43 -3 0 -26 -44 -51 -98z"/>
+                        </g>
+                    </g>
+                </g>
             </svg>
         </div>
     );

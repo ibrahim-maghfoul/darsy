@@ -25,5 +25,6 @@ router.post('/admin/giveaway', authMiddleware, UserController.runGiveaway);
 router.get('/affiliate-code', authMiddleware, UserController.getAffiliateCode);
 router.get('/contribution-status', authMiddleware, UserController.getContributionStatus);
 router.post('/contribution-count/increment', authMiddleware, UserController.incrementContributionCount);
+router.get('/rankings', UserController.getRankings);
 
 export default router;

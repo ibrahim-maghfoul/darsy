@@ -55,7 +55,16 @@ function UsersPage() {
 
     const openEdit = (u) => {
         setEditUser(u);
-        setEditForm({ role: u.role || 'user', plan: u.subscription?.plan || 'free', billingCycle: u.subscription?.billingCycle || 'none' });
+        const existingExpiry = u.subscription?.expiresAt
+            ? new Date(u.subscription.expiresAt).toISOString().split('T')[0]
+            : '';
+        setEditForm({ role: u.role || 'user', plan: u.subscription?.plan || 'free', billingCycle: u.subscription?.billingCycle || 'none', expiresAt: existingExpiry });
+    };
+
+    const quickSetExpiry = (days) => {
+        const d = new Date();
+        d.setDate(d.getDate() + days);
+        setEditForm(f => ({ ...f, expiresAt: d.toISOString().split('T')[0] }));
     };
 
     const handleSaveEdit = async () => {
@@ -69,7 +78,7 @@ function UsersPage() {
 
             const subRes = await fetch(`${API}/user/admin/${editUser._id}/subscription`, {
                 method: 'PATCH', headers: { ...headers, 'Content-Type': 'application/json' },
-                body: JSON.stringify({ plan: editForm.plan, billingCycle: editForm.billingCycle }),
+                body: JSON.stringify({ plan: editForm.plan, billingCycle: editForm.billingCycle, expiresAt: editForm.expiresAt || undefined }),
             });
             if (!subRes.ok) { const d = await subRes.json(); throw new Error(d.error || 'Subscription update failed'); }
 
@@ -347,6 +356,37 @@ function UsersPage() {
                                         <option value="monthly">Monthly</option>
                                         <option value="yearly">Yearly</option>
                                     </select>
+                                </div>
+                                <div>
+                                    <label style={{ display: 'block', fontSize: '0.8rem', fontWeight: 600, marginBottom: 6 }}>
+                                        Subscription Expiry
+                                        <span style={{ fontWeight: 400, color: 'var(--text-secondary)', marginLeft: 6 }}>
+                                            (leave empty = no expiry)
+                                        </span>
+                                    </label>
+                                    <input
+                                        type="date"
+                                        className="input"
+                                        value={editForm.expiresAt || ''}
+                                        onChange={e => setEditForm(f => ({ ...f, expiresAt: e.target.value }))}
+                                    />
+                                    <div style={{ display: 'flex', gap: 6, marginTop: 8, flexWrap: 'wrap' }}>
+                                        {[
+                                            { label: '+30 days', days: 30 },
+                                            { label: '+3 months', days: 90 },
+                                            { label: '+1 year', days: 365 },
+                                        ].map(({ label, days }) => (
+                                            <button
+                                                key={days}
+                                                type="button"
+                                                className="btn btn-sm btn-outline"
+                                                style={{ fontSize: '0.72rem', padding: '3px 10px' }}
+                                                onClick={() => quickSetExpiry(days)}
+                                            >
+                                                {label}
+                                            </button>
+                                        ))}
+                                    </div>
                                 </div>
                                 <div style={{ display: 'flex', gap: 10 }}>
                                     <button className="btn btn-outline" style={{ flex: 1, justifyContent: 'center' }} onClick={() => setEditUser(null)}>Cancel</button>

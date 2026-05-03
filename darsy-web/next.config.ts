@@ -38,9 +38,8 @@ const nextConfig: NextConfig = {
       },
     ],
     localPatterns: [
-      {
-        pathname: "/data/images/**",
-      },
+      { pathname: "/data/images/**" },
+      { pathname: "/**" },
     ],
     formats: ['image/avif', 'image/webp'],
     minimumCacheTTL: 60 * 60 * 24, // 24h

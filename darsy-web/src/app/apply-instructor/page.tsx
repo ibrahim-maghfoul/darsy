@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
+import { DarsyLoader } from "@/components/DarsyLoader";
 import { AnimatePresence, motion } from "framer-motion";
 import {
     User, Mail, GraduationCap, Briefcase, BookOpen, Video,
@@ -207,8 +208,8 @@ export default function ApplyInstructorPage() {
 
     /* ── Loading ── */
     if (fetching && user) return (
-        <div className="min-h-screen bg-bg pt-20 md:pt-24 flex items-center justify-center">
-            <div className="w-10 h-10 border-[3px] border-green/20 border-t-green rounded-full animate-spin" />
+        <div className="min-h-screen bg-bg flex items-center justify-center">
+            <DarsyLoader size={90} />
         </div>
     );
 

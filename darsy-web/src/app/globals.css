@@ -235,15 +235,91 @@ body {
   to   { opacity: 1; transform: translate3d(0, 0, 0); }
 }
 
-/* Course cards — mobile heights */
+/* Course cards — responsive heights via CSS (no JS media query needed) */
 .course-card-1 { min-height: 480px; }
 .course-card-2 { min-height: 240px; }
 .course-card-3 { min-height: 120px; }
+
+@media (max-width: 767px) {
+  .course-card-1 { min-height: 280px; }
+  .course-card-2 { min-height: 200px; }
+  .course-card-3 { min-height: 90px; }
+}
 
 /* Team section card entrance */
 @keyframes teamCardIn {
   from { opacity: 0; translate: 0 40px; scale: 0.9; }
   to   { opacity: 1; translate: 0 0; scale: 1; }
+}
+
+/* ─── Hero card blob animations (HeroSection) ─── */
+@keyframes card-blob-enter {
+  from { transform: translate3d(0,150%,0) scale(1.4); }
+  to   { transform: translateZ(0) scale(1.4); }
+}
+@keyframes card-blob-enter-top {
+  from { transform: translate3d(0,-150%,0) scale(1.4); }
+  to   { transform: translateZ(0) scale(1.4); }
+}
+@keyframes card-blob-leave {
+  from { transform: translateZ(0) scale(1.4); }
+  to   { transform: translate3d(0,150%,0) scale(1.4); }
+}
+@keyframes card-blob-leave-top {
+  from { transform: translateZ(0) scale(1.4); }
+  to   { transform: translate3d(0,-150%,0) scale(1.4); }
+}
+.hcard-blob { position:relative; display:block; height:100%; }
+.hcard-blob span {
+  position:absolute; top:2px; width:25%; height:100%;
+  background:#3aaa6a; border-radius:100%;
+}
+.hcard-blob span:nth-child(1){left:0%}
+.hcard-blob span:nth-child(2){left:30%}
+.hcard-blob span:nth-child(3){left:60%}
+.hcard-blob span:nth-child(4){left:90%}
+.hcard-blob.entering     span { transform:translate3d(0,150%,0)  scale(1.4); animation:card-blob-enter     0.45s forwards ease-in-out; }
+.hcard-blob.entering-top span { transform:translate3d(0,-150%,0) scale(1.4); animation:card-blob-enter-top 0.45s forwards ease-in-out; }
+.hcard-blob.active       span { transform:translateZ(0) scale(1.4); }
+.hcard-blob.leaving      span { transform:translateZ(0) scale(1.4); animation:card-blob-leave     0.45s forwards ease-in-out; }
+.hcard-blob.leaving-top  span { transform:translateZ(0) scale(1.4); animation:card-blob-leave-top 0.45s forwards ease-in-out; }
+.hcard-blob.entering     span:nth-child(1),.hcard-blob.entering-top span:nth-child(1){animation-delay:0s}
+.hcard-blob.entering     span:nth-child(2),.hcard-blob.entering-top span:nth-child(2){animation-delay:0.08s}
+.hcard-blob.entering     span:nth-child(3),.hcard-blob.entering-top span:nth-child(3){animation-delay:0.16s}
+.hcard-blob.entering     span:nth-child(4),.hcard-blob.entering-top span:nth-child(4){animation-delay:0.24s}
+.hcard-blob.leaving span:nth-child(4),.hcard-blob.leaving-top span:nth-child(4){animation-delay:0s}
+.hcard-blob.leaving span:nth-child(3),.hcard-blob.leaving-top span:nth-child(3){animation-delay:0.08s}
+.hcard-blob.leaving span:nth-child(2),.hcard-blob.leaving-top span:nth-child(2){animation-delay:0.16s}
+.hcard-blob.leaving span:nth-child(1),.hcard-blob.leaving-top span:nth-child(1){animation-delay:0.24s}
+
+@keyframes hero-cell-pulse {
+  0%, 100% { opacity: 0.55; }
+  50%       { opacity: 1; }
+}
+.hero-cell-lit { animation: hero-cell-pulse 2.4s ease-in-out infinite; }
+
+/* ─── Chat message entrance (ChatFeatureSection) ─── */
+@keyframes msg-in {
+  from { opacity: 0; transform: translateY(10px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+/* ─── Subject cards float + responsive scaling (SubjectCardsSection) ─── */
+@keyframes subjectFloat {
+  0%,100% { transform:translateY(0); }
+  50%      { transform:translateY(-15px); }
+}
+
+@media (min-width: 769px) and (max-width: 1024px) {
+  .darsy-cards-area {
+    transform: scale(0.88);
+    transform-origin: top center;
+    margin-bottom: -64px;
+  }
+}
+
+.darsy-scroll-hide::-webkit-scrollbar {
+  display: none;
 }
 
 /* ─── Apply-teacher info cards (dual contour border) ─── */
@@ -385,14 +461,31 @@ body {
 .continue-card:hover::after  { clip-path: inset(0 0 0% 50%); }
 
 /* ─── Reduce motion for users who prefer it ─── */
-/* Reduce motion for users who prefer it */
 @media (prefers-reduced-motion: reduce) {
-  *, *::before, *::after {
-    animation-duration: 0.01ms !important;
-    animation-iteration-count: 1 !important;
-    transition-duration: 0.01ms !important;
+  /* Stop infinite / decorative animations — keep functional transitions */
+  .fan-line,
+  .anim-flow,
+  .anim-shape-pop,
+  .floating,
+  .animate-spin-slow,
+  .hero-cell-lit,
+  [class*="animate-[chipFloat"],
+  [class*="animate-[wFloat"],
+  [class*="animate-[subjectFloat"] {
+    animation: none !important;
   }
-  .floating, .animate-spin-slow {
-    animation: none;
+
+  /* Reset will-change on now-static elements */
+  .fan-line,
+  .floating,
+  .animate-spin-slow {
+    will-change: auto;
   }
+}
+
+/* Pause diagram animations when off-screen */
+.diagram-paused .anim-flow,
+.diagram-paused .anim-shape-pop,
+.diagram-paused .fan-line.visible {
+  animation-play-state: paused;
 }

@@ -693,4 +693,48 @@ export class DataController {
             res.status(500).json({ error: 'Failed to delete contribution' });
         }
     }
+
+    // Count total resources across all lessons in a guidance branch
+    static async getGuidanceResourceCount(req: AuthRequest, res: Response): Promise<void> {
+        try {
+            const { guidanceId } = req.params;
+            if (!guidanceId) { res.status(400).json({ error: 'Invalid guidance ID' }); return; }
+
+            const CACHE_KEY = `guidance-resource-count:${guidanceId}`;
+            const cached = cache.get<{ total: number; bySubject: Record<string, number> }>(CACHE_KEY);
+            if (cached) { res.json(cached); return; }
+
+            // Get all subjects for this guidance
+            const subjects = await Subject.find({ guidanceId }, '_id').lean();
+            const subjectIds = subjects.map(s => s._id);
+
+            // Get all lessons for these subjects, only fetch array lengths
+            const lessons = await Lesson.find(
+                { subjectId: { $in: subjectIds } },
+                'subjectId coursesPdf videos exercices exams resourses'
+            ).lean();
+
+            let total = 0;
+            const bySubject: Record<string, number> = {};
+
+            for (const lesson of lessons) {
+                const count =
+                    (lesson.coursesPdf?.length || 0) +
+                    (lesson.videos?.length || 0) +
+                    (lesson.exercices?.length || 0) +
+                    (lesson.exams?.length || 0) +
+                    (lesson.resourses?.length || 0);
+                total += count;
+                const sid = String(lesson.subjectId);
+                bySubject[sid] = (bySubject[sid] || 0) + count;
+            }
+
+            const result = { total, bySubject };
+            cache.set(CACHE_KEY, result, 600); // cache 10 min
+            res.json(result);
+        } catch (error) {
+            console.error('Get guidance resource count error:', error);
+            res.status(500).json({ error: 'Failed to count resources' });
+        }
+    }
 }

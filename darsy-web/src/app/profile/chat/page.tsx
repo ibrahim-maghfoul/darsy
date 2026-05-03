@@ -9,6 +9,8 @@ import { io, Socket } from "socket.io-client";
 import { format } from "date-fns";
 import Image from "next/image";
 import api from "@/lib/api";
+import { containsBadWord } from "@/lib/badWords";
+import { DarsyLoader } from "@/components/DarsyLoader";
 import {
     AtSign,
     Flag,
@@ -51,8 +53,9 @@ interface Participant {
 
 const EMOJIS = ["👍", "❤️", "😂", "👏", "💡", "❓"];
 
-const DOT_TEXTURE = `radial-gradient(circle, rgba(58,170,106,0.18) 1px, transparent 1px)`;
+const DOT_TEXTURE = `radial-gradient(circle, rgba(255,255,255,0.18) 1px, transparent 1px)`;
 const DARK_STRIPE = `repeating-linear-gradient(45deg, rgba(255,255,255,0.03) 0px, rgba(255,255,255,0.03) 2px, transparent 2px, transparent 8px), linear-gradient(135deg, #1e7a46 0%, #0f4428 100%)`;
+const MSG_BG = `radial-gradient(circle, rgba(58,170,106,0.055) 1px, transparent 1px)`;
 
 export default function ChatPage() {
     const t = useTranslations("Profile");
@@ -64,6 +67,7 @@ export default function ChatPage() {
 
     const [messages, setMessages] = useState<Message[]>([]);
     const [newMessage, setNewMessage] = useState("");
+    const [badWordWarning, setBadWordWarning] = useState<string | null>(null);
     const [isConnecting, setIsConnecting] = useState(true);
     const [activeReactionMsg, setActiveReactionMsg] = useState<string | null>(null);
     const [activeReply, setActiveReply] = useState<{ _id: string; text: string; senderName: string } | null>(null);
@@ -75,6 +79,9 @@ export default function ChatPage() {
     const [reportReason, setReportReason] = useState("");
     const [reportDetails, setReportDetails] = useState("");
     const [isSubmittingReport, setIsSubmittingReport] = useState(false);
+    const [roomRating, setRoomRating] = useState<{ average: number; total: number } | null>(null);
+    const [myRating, setMyRating] = useState<number>(0);
+    const [isSubmittingRating, setIsSubmittingRating] = useState(false);
     const { showSnackbar } = useSnackbar();
 
     const socketRef = useRef<Socket | null>(null);
@@ -83,6 +90,46 @@ export default function ChatPage() {
         if (!user) return;
         api.get("/teacher/rooms/joined").then((r) => setJoinedRooms(r.data || [])).catch(() => {});
     }, [user]);
+
+    // Fetch room rating when switching to a teacher room
+    useEffect(() => {
+        if (activeTab === "general") { setRoomRating(null); setMyRating(0); return; }
+        const room = joinedRooms.find((r) => r._id === activeTab);
+        if (room) {
+            setRoomRating({ average: room.averageRating || 0, total: room.totalRatings || 0 });
+        }
+        // Fetch user's existing rating from the full room object
+        api.get(`/teacher/rooms/${activeTab}`)
+            .then((r) => {
+                const ratings = r.data?.ratings || [];
+                const userId = user?.id || (user as any)?._id;
+                const mine = ratings.find((rt: any) => rt.userId === userId || rt.userId?._id === userId);
+                if (mine) setMyRating(mine.rating);
+                setRoomRating({ average: r.data?.averageRating || 0, total: r.data?.totalRatings || 0 });
+            })
+            .catch(() => {});
+    }, [activeTab, joinedRooms]);
+
+    const handleRateRoom = async (stars: number) => {
+        if (!user || activeTab === "general" || isSubmittingRating) return;
+        const isTeacher = user.role === "teacher";
+        const room = joinedRooms.find((r) => r._id === activeTab);
+        const isOwner = room && (room.teacherId === (user?.id || (user as any)?._id) || room.teacherId?._id === (user?.id || (user as any)?._id));
+        if (isTeacher && isOwner) return;
+        setIsSubmittingRating(true);
+        try {
+            const res = await api.post(`/teacher/rooms/${activeTab}/rate`, { rating: stars });
+            setMyRating(stars);
+            setRoomRating({ average: res.data.averageRating, total: res.data.totalRatings });
+            // Update joinedRooms cache
+            setJoinedRooms((prev) => prev.map((r) => r._id === activeTab ? { ...r, averageRating: res.data.averageRating, totalRatings: res.data.totalRatings } : r));
+            showSnackbar("Room rated!", "success");
+        } catch (err: any) {
+            showSnackbar(err?.response?.data?.error || "Failed to rate room", "error");
+        } finally {
+            setIsSubmittingRating(false);
+        }
+    };
 
     const isProfileComplete = !!(
         user?.displayName &&
@@ -245,7 +292,19 @@ export default function ChatPage() {
 
     const handleSendMessage = (e: React.FormEvent) => {
         e.preventDefault();
-        if (!newMessage.trim() || !user || !socketRef.current) return;
+        if (!newMessage.trim() || !user) return;
+        if (!socketRef.current) {
+            showSnackbar("Not connected — please wait and try again.", "error");
+            return;
+        }
+
+        const matched = containsBadWord(newMessage.trim());
+        if (matched) {
+            setBadWordWarning(matched);
+            showSnackbar("Your message contains inappropriate language. Please keep the chat respectful.", "error");
+            return;
+        }
+
         const currentUserId = user.id || (user as { _id?: string })._id;
 
         if (activeTab !== "general") {
@@ -275,6 +334,7 @@ export default function ChatPage() {
 
     const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
         setNewMessage(e.target.value);
+        if (badWordWarning) setBadWordWarning(null);
         if (!user || !socketRef.current) return;
         const currentUserId = user.id || (user as { _id?: string })._id;
 
@@ -339,7 +399,7 @@ export default function ChatPage() {
     if (loading) {
         return (
             <div className="flex items-center justify-center min-h-screen bg-bg">
-                <div className="w-10 h-10 border-[3px] border-green border-t-transparent rounded-full animate-spin" />
+                <DarsyLoader size={90} />
             </div>
         );
     }
@@ -440,8 +500,8 @@ export default function ChatPage() {
                 <div className="relative z-10 rounded-[18px] overflow-hidden" style={{ background: "rgba(255,255,255,0.07)", border: "1px solid rgba(255,255,255,0.12)" }}>
                     {/* Icon header with dot texture */}
                     <div className="relative px-4 pt-4 pb-3" style={{ background: "rgba(255,255,255,0.05)" }}>
-                        <div className="absolute inset-0 opacity-40" style={{ backgroundImage: DOT_TEXTURE, backgroundSize: "14px 14px" }} />
-                        <div className="relative z-10 w-11 h-11 rounded-[14px] bg-white/15 flex items-center justify-center">
+                        <div className="absolute inset-0" style={{ backgroundImage: DOT_TEXTURE, backgroundSize: "18px 18px", opacity: 0.35 }} />
+                        <div className="relative z-10 w-11 h-11 rounded-[14px] bg-white/15 flex items-center justify-center border border-white/10">
                             <MessageCircle size={20} className="text-white" />
                         </div>
                     </div>
@@ -488,6 +548,65 @@ export default function ChatPage() {
                                 {room.name}
                             </button>
                         ))}
+                    </div>
+                )}
+
+                {/* ── Room Rating (desktop sidebar, teacher rooms only) ── */}
+                {activeTab !== "general" && roomRating !== null && !(user.role === "teacher" && joinedRooms.find((r) => r._id === activeTab)?.teacherId === (user?.id || (user as any)?._id)) && (
+                    <motion.div
+                        key={activeTab}
+                        initial={{ opacity: 0, y: 8 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        className="relative z-10 rounded-[14px] p-3 space-y-2"
+                        style={{ background: "rgba(255,255,255,0.06)", border: "1px solid rgba(255,255,255,0.10)" }}
+                    >
+                        <p className="text-[9px] font-black uppercase tracking-[0.18em] text-white/30">Rate This Room</p>
+                        <div className="flex items-center gap-1">
+                            {[1, 2, 3, 4, 5].map((star) => (
+                                <button
+                                    key={star}
+                                    disabled={isSubmittingRating}
+                                    onClick={() => handleRateRoom(star)}
+                                    className="transition-transform hover:scale-125 active:scale-95 disabled:opacity-50"
+                                >
+                                    <Star
+                                        size={18}
+                                        className={`transition-colors ${star <= myRating ? "text-amber-400 fill-amber-400" : "text-white/20 hover:text-amber-300"}`}
+                                    />
+                                </button>
+                            ))}
+                        </div>
+                        {roomRating.total > 0 && (
+                            <p className="text-[10px] text-white/35 font-bold">
+                                {roomRating.average.toFixed(1)} · {roomRating.total} {roomRating.total === 1 ? "rating" : "ratings"}
+                            </p>
+                        )}
+                        {myRating > 0 && (
+                            <p className="text-[10px] text-amber-400/70 font-bold">Your rating: {myRating}★</p>
+                        )}
+                    </motion.div>
+                )}
+
+                {/* Room Info — creation date + creator */}
+                {activeRoomObj && (
+                    <div
+                        className="relative z-10 rounded-[14px] p-3 space-y-1.5"
+                        style={{ background: "rgba(255,255,255,0.06)", border: "1px solid rgba(255,255,255,0.10)" }}
+                    >
+                        <p className="text-[9px] font-black uppercase tracking-[0.18em] text-white/30">Room Info</p>
+                        {activeRoomObj.createdAt && (
+                            <p className="text-[11px] text-white/50 font-semibold">
+                                Created {format(new Date(activeRoomObj.createdAt), "MMM d, yyyy")}
+                            </p>
+                        )}
+                        {activeRoomObj.teacherId?.displayName && (
+                            <p className="text-[11px] text-white/50 font-semibold">
+                                By <span className="text-white/75 font-bold">{activeRoomObj.teacherId.displayName}</span>
+                            </p>
+                        )}
+                        {activeRoomObj.description && (
+                            <p className="text-[10px] text-white/35 font-medium leading-relaxed pt-1">{activeRoomObj.description}</p>
+                        )}
                     </div>
                 )}
 
@@ -567,7 +686,7 @@ export default function ChatPage() {
             </div>
 
             {/* ── Chat panel (floating white card) ── */}
-            <div className="flex-1 flex flex-col min-w-0 md:m-3 md:rounded-[24px] bg-white overflow-hidden md:shadow-[0_20px_60px_rgba(0,0,0,0.08),_0_4px_16px_rgba(0,0,0,0.04)]">
+            <div className="flex-1 flex flex-col min-w-0 md:m-3 md:rounded-[24px] bg-white overflow-hidden md:shadow-[0_20px_60px_rgba(0,0,0,0.08),_0_4px_16px_rgba(0,0,0,0.04)] md:border md:border-green/8">
 
                 {/* Mobile room tabs */}
                 <div className="md:hidden flex gap-1.5 px-3 pt-3 pb-2 overflow-x-auto shrink-0 scrollbar-none bg-white border-b border-green/8">
@@ -589,7 +708,7 @@ export default function ChatPage() {
                 </div>
 
                 {/* Mobile header */}
-                <header className="md:hidden px-4 py-3.5 flex items-center gap-3 border-b border-green/8 bg-white sticky top-0 z-40">
+                <header className="md:hidden px-4 py-3.5 flex items-center gap-3 border-b border-green/8 bg-white/95 backdrop-blur-sm sticky top-0 z-40">
                     <motion.button
                         whileTap={{ scale: 0.93 }}
                         onClick={() => router.back()}
@@ -600,6 +719,13 @@ export default function ChatPage() {
                     <div className="flex-1 min-w-0">
                         <h1 className="text-sm font-black text-dark flex items-center gap-2 truncate">
                             {roomName}
+                            {/* Star rating badge for teacher rooms on mobile */}
+                            {activeTab !== "general" && roomRating !== null && roomRating.total > 0 && (
+                                <span className="flex items-center gap-0.5 px-1.5 py-0.5 rounded-full bg-amber-50 border border-amber-200/60 shrink-0">
+                                    <Star size={9} className="text-amber-400 fill-amber-400" />
+                                    <span className="text-[9px] font-black text-amber-600">{roomRating.average.toFixed(1)}</span>
+                                </span>
+                            )}
                             {isConnecting ? (
                                 <span className="w-2 h-2 rounded-full bg-amber-400 animate-pulse shrink-0" />
                             ) : (
@@ -609,40 +735,93 @@ export default function ChatPage() {
                                 </span>
                             )}
                         </h1>
-                        <p className="text-[9px] font-black uppercase tracking-[0.18em] text-dark/35 mt-0.5">{t("class_space")}</p>
+                        <p className="text-[9px] font-black uppercase tracking-[0.18em] text-dark/35 mt-0.5">
+                            {activeRoomObj?.createdAt
+                                ? `Created ${format(new Date(activeRoomObj.createdAt), "MMM d, yyyy")}${activeRoomObj.teacherId?.displayName ? ` · ${activeRoomObj.teacherId.displayName}` : ""}`
+                                : t("class_space")}
+                        </p>
                     </div>
-                    <div className="text-[10px] font-bold text-dark/35 shrink-0">
-                        {!isConnecting && `${onlineUsers.length} online`}
+                    <div className="flex items-center gap-2 shrink-0">
+                        {/* Mobile star rating for teacher rooms */}
+                        {activeTab !== "general" && roomRating !== null && !(user.role === "teacher" && joinedRooms.find((r) => r._id === activeTab)?.teacherId === (user?.id || (user as any)?._id)) && (
+                            <div className="flex items-center gap-0.5">
+                                {[1, 2, 3, 4, 5].map((star) => (
+                                    <button
+                                        key={star}
+                                        disabled={isSubmittingRating}
+                                        onClick={() => handleRateRoom(star)}
+                                        className="transition-transform active:scale-95"
+                                    >
+                                        <Star
+                                            size={15}
+                                            className={`transition-colors ${star <= myRating ? "text-amber-400 fill-amber-400" : "text-dark/20"}`}
+                                        />
+                                    </button>
+                                ))}
+                            </div>
+                        )}
+                        <div className="text-[10px] font-bold text-dark/35">
+                            {!isConnecting && `${onlineUsers.length} online`}
+                        </div>
                     </div>
                 </header>
 
                 {/* Desktop top bar inside white panel */}
-                <div className="hidden md:flex items-center justify-between px-6 py-4 border-b border-green/8">
+                <div className="hidden md:flex items-center justify-between px-6 py-4 border-b border-green/8 bg-white/80 backdrop-blur-sm">
                     <div className="flex items-center gap-3">
                         <div
-                            className="w-9 h-9 rounded-[12px] flex items-center justify-center relative overflow-hidden"
+                            className="w-9 h-9 rounded-[12px] flex items-center justify-center relative overflow-hidden border border-green/12 shadow-sm"
                             style={{ background: "linear-gradient(135deg, #f0faf5, #e8f5ee)" }}
                         >
-                            <div className="absolute inset-0 opacity-50" style={{ backgroundImage: DOT_TEXTURE, backgroundSize: "14px 14px" }} />
+                            <div className="absolute inset-0" style={{ backgroundImage: "radial-gradient(circle, rgba(58,170,106,0.15) 1px, transparent 1px)", backgroundSize: "14px 14px" }} />
                             <MessageCircle size={16} className="text-green relative z-10" />
                         </div>
                         <div>
                             <span className="font-black text-dark text-sm block">{roomName}</span>
                             <span className="text-[9px] font-black uppercase tracking-[0.18em] text-dark/35">{t("class_space")}</span>
                         </div>
-                    </div>
-                    <div className="flex items-center gap-2 text-[11px] text-dark/40 font-bold">
-                        {isConnecting ? (
-                            <><span className="w-2 h-2 rounded-full bg-amber-400 animate-pulse" /> Connecting…</>
-                        ) : (
-                            <>
-                                <span className="relative flex w-2 h-2">
-                                    <span className="w-2 h-2 rounded-full bg-green" />
-                                    <span className="absolute inset-0 rounded-full bg-green animate-ping opacity-60" />
-                                </span>
-                                {onlineUsers.length} online
-                            </>
+                        {/* Inline rating display for teacher rooms */}
+                        {activeTab !== "general" && roomRating !== null && roomRating.total > 0 && (
+                            <div className="flex items-center gap-1 px-2.5 py-1 rounded-full bg-amber-50 border border-amber-200/60">
+                                <Star size={11} className="text-amber-400 fill-amber-400" />
+                                <span className="text-[11px] font-black text-amber-600">{roomRating.average.toFixed(1)}</span>
+                                <span className="text-[10px] text-amber-400/70 font-bold">({roomRating.total})</span>
+                            </div>
                         )}
+                    </div>
+                    <div className="flex items-center gap-3">
+                        {/* Mobile-accessible rating for teacher rooms in chat panel header */}
+                        {activeTab !== "general" && roomRating !== null && !(user.role === "teacher" && joinedRooms.find((r) => r._id === activeTab)?.teacherId === (user?.id || (user as any)?._id)) && (
+                            <div className="flex items-center gap-0.5">
+                                {[1, 2, 3, 4, 5].map((star) => (
+                                    <button
+                                        key={star}
+                                        disabled={isSubmittingRating}
+                                        onClick={() => handleRateRoom(star)}
+                                        className="transition-transform hover:scale-125 active:scale-95 disabled:opacity-50"
+                                        title={`Rate ${star} star${star > 1 ? "s" : ""}`}
+                                    >
+                                        <Star
+                                            size={14}
+                                            className={`transition-colors ${star <= myRating ? "text-amber-400 fill-amber-400" : "text-dark/20 hover:text-amber-300"}`}
+                                        />
+                                    </button>
+                                ))}
+                            </div>
+                        )}
+                        <div className="flex items-center gap-2 text-[11px] text-dark/40 font-bold">
+                            {isConnecting ? (
+                                <><span className="w-2 h-2 rounded-full bg-amber-400 animate-pulse" /> Connecting…</>
+                            ) : (
+                                <>
+                                    <span className="relative flex w-2 h-2">
+                                        <span className="w-2 h-2 rounded-full bg-green" />
+                                        <span className="absolute inset-0 rounded-full bg-green animate-ping opacity-60" />
+                                    </span>
+                                    {onlineUsers.length} online
+                                </>
+                            )}
+                        </div>
                     </div>
                 </div>
 
@@ -671,18 +850,25 @@ export default function ChatPage() {
                 <div
                     ref={scrollContainerRef}
                     onScroll={handleScroll}
-                    className="flex-1 overflow-y-auto p-4 md:p-6 space-y-3 md:space-y-4"
-                    style={{ background: "#fafcfb" }}
+                    className="flex-1 overflow-y-auto p-4 md:p-6 space-y-3 md:space-y-4 relative"
+                    style={{ background: "#f9fcfb", backgroundImage: MSG_BG, backgroundSize: "22px 22px" }}
                 >
                     {messages.length === 0 && !isConnecting ? (
-                        <div className="h-full flex flex-col items-center justify-center text-dark/30 space-y-4 pt-20 animate-slide-up">
-                            <div
-                                className="w-16 h-16 rounded-[18px] flex items-center justify-center"
-                                style={{ background: "linear-gradient(135deg, #f0faf5, #e8f5ee)" }}
-                            >
-                                <MessageCircle size={28} className="text-green/50" />
+                        <div className="h-full flex flex-col items-center justify-center space-y-5 pt-12 animate-slide-up">
+                            <div className="relative">
+                                <div className="w-20 h-20 rounded-[24px] flex items-center justify-center relative overflow-hidden shadow-lg shadow-green/10"
+                                    style={{ background: "linear-gradient(135deg, #f0faf5, #e8f5ee)" }}>
+                                    <div className="absolute inset-0" style={{ backgroundImage: "radial-gradient(circle, rgba(58,170,106,0.15) 1px, transparent 1px)", backgroundSize: "14px 14px" }} />
+                                    <MessageCircle size={32} className="text-green/60 relative z-10" />
+                                </div>
+                                <div className="absolute -bottom-1 -right-1 w-7 h-7 rounded-full bg-green flex items-center justify-center shadow-md shadow-green/30">
+                                    <span className="text-white text-xs font-black">0</span>
+                                </div>
                             </div>
-                            <p className="text-sm font-bold">{t("no_messages_yet")}</p>
+                            <div className="text-center space-y-1">
+                                <p className="text-sm font-black text-dark/50">{t("no_messages_yet")}</p>
+                                <p className="text-xs text-dark/30 font-medium">Be the first to say something!</p>
+                            </div>
                         </div>
                     ) : (
                         messages.map((msg, index) => {
@@ -773,9 +959,11 @@ export default function ChatPage() {
                                             )}
 
                                             <div className={`px-4 py-3 rounded-[20px] text-sm relative z-10 ${isMe
-                                                ? "bg-green text-white rounded-tr-[6px] font-medium shadow-md shadow-green/20"
-                                                : "bg-white border border-green/10 text-dark rounded-tl-[6px] shadow-sm"
-                                            }`}>
+                                                ? "text-white rounded-tr-[6px] font-medium shadow-md shadow-green/25"
+                                                : "bg-white border-[1.5px] border-green/12 text-dark rounded-tl-[6px] shadow-sm"
+                                            }`}
+                                            style={isMe ? { background: "linear-gradient(135deg, #3aaa6a 0%, #2a8a55 100%)" } : undefined}
+                                            >
                                                 {msg.text}
 
                                                 {msg.replyTo?.sender?._id === currentUserId && !isMe && (
@@ -889,7 +1077,7 @@ export default function ChatPage() {
                 </div>
 
                 {/* Input area */}
-                <div className="bg-white border-t border-green/8 px-4 py-3 pb-[calc(env(safe-area-inset-bottom)+88px)] md:pb-4 relative z-20">
+                <div className="bg-white/95 backdrop-blur-sm border-t border-green/8 px-4 py-3 pb-[calc(env(safe-area-inset-bottom)+88px)] md:pb-4 relative z-20">
                     <div className="max-w-5xl mx-auto">
                         {/* Typing indicator */}
                         <AnimatePresence>
@@ -931,6 +1119,21 @@ export default function ChatPage() {
                             )}
                         </AnimatePresence>
 
+                        <AnimatePresence>
+                            {badWordWarning && (
+                                <motion.div
+                                    initial={{ opacity: 0, y: 6 }}
+                                    animate={{ opacity: 1, y: 0 }}
+                                    exit={{ opacity: 0, y: 4 }}
+                                    className="mb-2 flex items-center gap-2 px-4 py-2.5 rounded-[14px] bg-red-50 border border-red-200/70 text-red-600"
+                                >
+                                    <span className="text-base shrink-0">🚫</span>
+                                    <p className="text-xs font-bold leading-snug">
+                                        Your message contains an inappropriate word. Please keep the chat respectful.
+                                    </p>
+                                </motion.div>
+                            )}
+                        </AnimatePresence>
                         <form onSubmit={handleSendMessage} className="relative flex items-center z-10">
                             <input
                                 type="text"
@@ -938,7 +1141,7 @@ export default function ChatPage() {
                                 onChange={handleInputChange}
                                 placeholder="Message your class…"
                                 disabled={isConnecting}
-                                className={`w-full bg-green/5 border-[1.5px] border-green/15 focus:border-green focus:bg-white focus:ring-4 focus:ring-green/8 pl-5 pr-14 py-4 outline-none transition-all disabled:opacity-50 font-medium text-dark placeholder:text-dark/35 text-sm ${activeReply ? "rounded-b-[22px] rounded-t-none border-t-0" : "rounded-[22px]"}`}
+                                className={`w-full bg-green/5 border-[1.5px] focus:bg-white focus:ring-4 pl-5 pr-14 py-4 outline-none transition-all disabled:opacity-50 font-medium text-dark placeholder:text-dark/35 text-sm ${badWordWarning ? "border-red-400 focus:border-red-400 focus:ring-red-100 bg-red-50/40" : "border-green/15 focus:border-green focus:ring-green/8"} ${activeReply ? "rounded-b-[22px] rounded-t-none border-t-0" : "rounded-[22px]"}`}
                             />
                             <motion.button
                                 whileHover={{ scale: 1.08, rotate: 3 }}

@@ -678,4 +678,30 @@ export class UserController {
             res.status(500).json({ error: 'Failed to increment contribution count' });
         }
     }
+
+    // Public leaderboard — top 50 users by points
+    static async getRankings(_req: AuthRequest, res: Response): Promise<void> {
+        try {
+            const users = await User.find({ points: { $gt: 0 } })
+                .select('displayName photoURL points subscription.plan level.guidance level.level createdAt')
+                .sort({ points: -1 })
+                .limit(50)
+                .lean();
+
+            const ranked = users.map((u, i) => ({
+                rank: i + 1,
+                displayName: u.displayName,
+                photoURL: u.photoURL || null,
+                points: u.points || 0,
+                plan: (u.subscription as any)?.plan || 'free',
+                guidance: (u.level as any)?.guidance || null,
+                level: (u.level as any)?.level || null,
+            }));
+
+            res.json(ranked);
+        } catch (error) {
+            console.error('Get rankings error:', error);
+            res.status(500).json({ error: 'Failed to get rankings' });
+        }
+    }
 }

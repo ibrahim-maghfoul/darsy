@@ -155,80 +155,65 @@ type BottomNavProps = {
 };
 
 function BottomNavBar({ bottomTabs, isTabActive, isAuthenticated, user, getPhotoURL, locale, pathname }: BottomNavProps) {
-  const allTabs = [...bottomTabs, { href: 'profile', isProfile: true }];
-  const activeIdx = allTabs.findIndex((t: any) =>
-    t.isProfile
-      ? (pathname === '/profile' || pathname === `/${locale}/profile` || pathname?.startsWith('/login') || pathname?.startsWith(`/${locale}/login`))
-      : isTabActive(t.href)
-  );
-  const safeIdx = activeIdx === -1 ? 0 : activeIdx;
-
-  const ringLeft = `calc(8px + ${(safeIdx + 0.5) / 5} * (100% - 16px))`;
+  const isProfileActive = pathname === '/profile' || pathname === `/${locale}/profile` || pathname?.startsWith('/login') || pathname?.startsWith(`/${locale}/login`);
 
   return (
-    <div className="mx-4 mb-4 flex items-center justify-around px-2 py-0 relative h-[60px]">
-      <div className="absolute inset-0 rounded-[24px] shadow-[0_-8px_40px_rgba(0,0,0,0.14),0_2px_8px_rgba(0,0,0,0.08)] pointer-events-none z-0" />
-      <div className="absolute inset-0 rounded-[24px] overflow-hidden pointer-events-none z-0 backdrop-blur-xl" style={{ willChange: 'transform', isolation: 'isolate' } as React.CSSProperties} />
-      <div className="absolute inset-0 rounded-[24px] overflow-hidden pointer-events-none z-0 flex px-2">
-        {Array.from({ length: 5 }, (_, i) => (
-          <div
-            key={i}
-            className="flex-1 h-full bg-white/80"
-            style={i === safeIdx ? {
-              maskImage: 'radial-gradient(circle 30px at 50% 10px, transparent 99.5%, black 100%)',
-              WebkitMaskImage: 'radial-gradient(circle 30px at 50% 10px, transparent 99.5%, black 100%)',
-            } : undefined}
-          />
-        ))}
-      </div>
-      <div
-        className="absolute pointer-events-none"
-        style={{
-          left: ringLeft,
-          top: '10px',
-          transform: 'translate(-50%, -50%)',
-          width: '62px',
-          height: '62px',
-          borderRadius: '50%',
-          border: '2.5px solid #22c55e',
-          boxShadow: '0 0 0 1px rgba(34,197,94,0.18)',
-          zIndex: 2,
-        }}
-      />
+    <div className="mx-3 mb-3 flex items-stretch relative h-[58px]">
+      {/* Glass pill background */}
+      <div className="absolute inset-0 rounded-[22px] bg-white/88 backdrop-blur-2xl border border-white/60 shadow-[0_-4px_32px_rgba(0,0,0,0.10),0_2px_8px_rgba(0,0,0,0.06)] pointer-events-none" />
+
+      {/* Tab items */}
       {bottomTabs.map((tab) => {
         const active = isTabActive(tab.href);
         return (
           <Link
             key={tab.href}
             href={tab.href}
-            className="relative flex flex-col items-center justify-center min-w-0 flex-1 z-10 h-[60px]"
+            className="relative flex flex-col items-center justify-center min-w-0 flex-1 z-10 gap-0.5 pt-1"
           >
-            <div className={`relative flex items-center justify-center transition-all duration-300 ${active ? '-translate-y-[20px] w-[50px] h-[50px] rounded-full shadow-sm' : 'w-10 h-10'}`}>
-              {active && <motion.div layoutId="bottom-tab-pill" className="absolute inset-0 bg-green rounded-full -z-10" transition={{ type: "spring", stiffness: 500, damping: 35 }} />}
-              <tab.icon size={active ? 22 : 24} strokeWidth={active ? 2.5 : 2} className={`relative z-10 transition-colors ${active ? 'text-white' : 'text-dark/40 hover:text-dark/70'}`} />
-            </div>
+            {active && (
+              <motion.div
+                layoutId="bottom-tab-active"
+                className="absolute inset-x-1 inset-y-1 rounded-[18px] bg-green/10"
+                transition={{ type: 'spring', stiffness: 500, damping: 38 }}
+              />
+            )}
+            <tab.icon
+              size={22}
+              strokeWidth={active ? 2.5 : 1.8}
+              className={`relative z-10 transition-all duration-200 ${active ? 'text-green scale-110' : 'text-dark/35'}`}
+            />
+            <span className={`relative z-10 text-[9px] font-black tracking-wide transition-all duration-200 ${active ? 'text-green' : 'text-dark/30'}`}>
+              {tab.label}
+            </span>
           </Link>
         );
       })}
+
+      {/* Profile tab */}
       <Link
         href={isAuthenticated ? "/profile" : "/login"}
-        className="relative flex flex-col items-center justify-center min-w-0 flex-1 z-10 h-[60px]"
+        className="relative flex flex-col items-center justify-center min-w-0 flex-1 z-10 gap-0.5 pt-1"
       >
-        {(() => {
-          const active = (pathname === '/profile' || pathname === `/${locale}/profile` || pathname?.startsWith('/login') || pathname?.startsWith(`/${locale}/login`));
-          return (
-            <div className={`relative flex items-center justify-center transition-all duration-300 ${active ? '-translate-y-[20px] w-[50px] h-[50px] rounded-full shadow-sm' : 'w-10 h-10'}`}>
-              {active && <motion.div layoutId="bottom-tab-pill" className="absolute inset-0 bg-green rounded-full -z-10" transition={{ type: "spring", stiffness: 500, damping: 35 }} />}
-              {isAuthenticated && user?.photoURL ? (
-                <div className={`rounded-full overflow-hidden relative z-10 transition-all ${active ? 'w-full h-full border-[1.5px] border-white/30' : 'w-[26px] h-[26px] border-[1.5px] border-dark/20'}`}>
-                  <img src={getPhotoURL(user.photoURL) || ''} alt="" className="w-full h-full object-cover" />
-                </div>
-              ) : (
-                <User size={active ? 22 : 24} strokeWidth={active ? 2.5 : 2} className={`relative z-10 transition-colors ${active ? 'text-white' : 'text-dark/40 hover:text-dark/70'}`} />
-              )}
+        {isProfileActive && (
+          <motion.div
+            layoutId="bottom-tab-active"
+            className="absolute inset-x-1 inset-y-1 rounded-[18px] bg-green/10"
+            transition={{ type: 'spring', stiffness: 500, damping: 38 }}
+          />
+        )}
+        <div className={`relative z-10 transition-all duration-200 ${isProfileActive ? 'scale-110' : ''}`}>
+          {isAuthenticated && user?.photoURL ? (
+            <div className={`rounded-full overflow-hidden border-2 transition-all ${isProfileActive ? 'w-6 h-6 border-green' : 'w-6 h-6 border-dark/20'}`}>
+              <img src={getPhotoURL(user.photoURL) || ''} alt="" className="w-full h-full object-cover" />
             </div>
-          );
-        })()}
+          ) : (
+            <User size={22} strokeWidth={isProfileActive ? 2.5 : 1.8} className={`transition-colors ${isProfileActive ? 'text-green' : 'text-dark/35'}`} />
+          )}
+        </div>
+        <span className={`relative z-10 text-[9px] font-black tracking-wide transition-all duration-200 ${isProfileActive ? 'text-green' : 'text-dark/30'}`}>
+          Me
+        </span>
       </Link>
     </div>
   );
@@ -273,9 +258,10 @@ export const Navbar = () => {
 
   const isSettingsPage = pathname?.startsWith('/settings');
   const isChatPage = pathname?.startsWith('/profile/chat');
+  const isLessonPage = pathname?.startsWith('/lesson/') || pathname?.includes('/lesson/');
   if (isSettingsPage) return null;
 
-  const navLinks = [
+  const navLinksBase = [
     { href: "/", label: t('home'), icon: House },
     { href: "/explore", label: t('explore'), icon: LayoutGrid },
     { href: "/news", label: t('news'), icon: BookOpen },
@@ -284,7 +270,8 @@ export const Navbar = () => {
       { href: "/calendar", label: t('calendar') || "Calendar", icon: CalendarDays },
       { href: "/contributions", label: t('contributions'), icon: Share2 },
     ] : []),
-  ].sort((a, b) => isRTL ? -1 : 0);
+  ];
+  const navLinks = isRTL ? [...navLinksBase].reverse() : navLinksBase;
 
   const bottomTabs = [
     { href: "/", label: t('home'), icon: House },
@@ -333,34 +320,35 @@ export const Navbar = () => {
 
       {/* ── Desktop / Tablet Navbar ── */}
       {!isChatPage && (
-        <nav className={`fixed top-0 left-0 right-0 z-50 px-6 py-6 transition-transform duration-300 hidden md:block ${isVisible ? 'translate-y-0' : '-translate-y-full'}`}>
-          <div className="max-w-7xl mx-auto flex items-center justify-between p-4 rounded-3xl bg-white/80 backdrop-blur-xl border border-green/10 shadow-[0_8px_30px_rgba(0,0,0,0.04)]">
+        <nav className={`fixed top-0 left-0 right-0 z-50 px-3 md:px-4 lg:px-6 py-3 lg:py-6 transition-transform duration-300 hidden md:block ${isVisible ? 'translate-y-0' : '-translate-y-full'}`}>
+          <div className="max-w-7xl mx-auto flex items-center justify-between p-2.5 lg:p-4 rounded-3xl bg-white/80 backdrop-blur-xl border border-green/10 shadow-[0_8px_30px_rgba(0,0,0,0.04)]">
             {/* Brand */}
-            <Link href="/" className="flex items-center gap-2 px-4 group">
-              <div className="w-10 h-10 bg-green rounded-2xl flex items-center justify-center group-hover:-translate-y-1 transition-transform shadow-lg shadow-green/20 p-2">
+            <Link href="/" className="flex items-center gap-1.5 lg:gap-2 px-2 lg:px-4 group flex-shrink-0">
+              <div className="w-9 h-9 lg:w-10 lg:h-10 bg-green rounded-2xl flex items-center justify-center group-hover:-translate-y-1 transition-transform shadow-lg shadow-green/20 p-2">
                 <DarsyLogo className="w-full h-full" color="white" />
               </div>
-              <span className="text-2xl font-black text-dark tracking-tighter">Darsy</span>
+              <span className="text-xl lg:text-2xl font-black text-dark tracking-tighter">Darsy</span>
             </Link>
 
             {/* Nav Links */}
-            <div className={`flex items-center gap-2 ${isRTL ? 'flex-row-reverse' : ''}`}>
+            <div className={`flex items-center gap-0.5 lg:gap-1 min-w-0 ${isRTL ? 'flex-row-reverse' : ''}`}>
               {navLinks.map((link) => (
                 <Link
                   key={link.href}
                   href={link.href}
-                  className="relative flex items-center gap-2 px-6 py-2.5 rounded-full text-muted-foreground hover:text-green hover:bg-green/5 transition-all font-bold text-sm"
+                  className="relative flex items-center gap-1 lg:gap-2 px-2.5 lg:px-5 py-2 lg:py-2.5 rounded-full text-muted-foreground hover:text-green hover:bg-green/5 transition-all font-bold text-xs lg:text-sm whitespace-nowrap"
                 >
-                  <link.icon size={18} />
-                  {link.label}
+                  <link.icon size={15} className="flex-shrink-0" />
+                  <span className="hidden lg:inline">{link.label}</span>
+                  <span className="lg:hidden text-[11px]">{link.label}</span>
                 </Link>
               ))}
             </div>
 
             {/* Auth Actions */}
-            <div className="hidden md:flex items-center gap-3">
+            <div className="hidden md:flex items-center gap-2 lg:gap-3 flex-shrink-0">
               {isAuthenticated ? (
-                <div className={`flex items-center gap-3 ${isRTL ? 'pr-4 border-r' : 'pl-4 border-l'} border-green/10`}>
+                <div className={`flex items-center gap-2 lg:gap-3 ${isRTL ? 'pr-2 lg:pr-4 border-r' : 'pl-2 lg:pl-4 border-l'} border-green/10`}>
                   <NotificationBell />
                   <Link href="/profile" className={`flex items-center gap-3 group ${isRTL ? 'flex-row-reverse' : ''}`}>
                     <div className={`${isRTL ? 'text-left' : 'text-right'} hidden sm:block`}>
@@ -377,17 +365,17 @@ export const Navbar = () => {
                   </Link>
                 </div>
               ) : (
-                <div className="flex items-center gap-3">
+                <div className="flex items-center gap-2 lg:gap-3">
                   <Link
                     href="/login"
-                    className="px-6 py-2.5 rounded-full font-bold text-sm text-dark hover:bg-black/5 transition-all flex items-center gap-2"
+                    className="px-3 lg:px-6 py-2 lg:py-2.5 rounded-full font-bold text-xs lg:text-sm text-dark hover:bg-black/5 transition-all flex items-center gap-1.5 lg:gap-2"
                   >
-                    <LogIn size={18} />
-                    {t('signin')}
+                    <LogIn size={16} />
+                    <span className="hidden lg:inline">{t('signin')}</span>
                   </Link>
                   <Link
                     href="/signup"
-                    className="px-8 py-2.5 bg-green text-white font-bold rounded-full text-sm shadow-[0_4px_14px_rgba(0,0,0,0.2)] hover:shadow-[0_6px_20px_rgba(0,0,0,0.23)] hover:-translate-y-0.5 active:scale-95 transition-all"
+                    className="px-4 lg:px-8 py-2 lg:py-2.5 bg-green text-white font-bold rounded-full text-xs lg:text-sm shadow-[0_4px_14px_rgba(0,0,0,0.2)] hover:shadow-[0_6px_20px_rgba(0,0,0,0.23)] hover:-translate-y-0.5 active:scale-95 transition-all"
                   >
                     {t('getStarted')}
                   </Link>
@@ -398,8 +386,8 @@ export const Navbar = () => {
         </nav>
       )}
 
-      {/* ── Mobile Bottom Tab Bar ── */}
-      <nav className="fixed bottom-0 left-0 right-0 z-50 md:hidden pb-safe" style={{ background: 'linear-gradient(to top, rgba(255,255,255,0.92) 0%, rgba(255,255,255,0.55) 55%, transparent 100%)' }}>
+      {/* ── Mobile Bottom Tab Bar — hidden on lesson + chat pages ── */}
+      {!isLessonPage && <nav className="fixed bottom-0 left-0 right-0 z-50 md:hidden pb-safe">
         <BottomNavBar
           bottomTabs={bottomTabs}
           isTabActive={isTabActive}
@@ -409,7 +397,7 @@ export const Navbar = () => {
           locale={locale}
           pathname={pathname}
         />
-      </nav>
+      </nav>}
     </>
   );
 };

@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect, useRef } from "react";
+import { DarsyLoader } from "@/components/DarsyLoader";
 import { motion, AnimatePresence } from "framer-motion";
 import {
     User,
@@ -19,7 +20,6 @@ import {
     XCircle,
     Star,
     Plus,
-    LayoutGrid,
     Calculator,
     Newspaper,
     CalendarDays,
@@ -27,7 +27,8 @@ import {
     GraduationCap,
     Sparkles,
     UserPlus,
-    MessageSquare
+    MessageSquare,
+    Trophy
 } from "lucide-react";
 import Link from "next/link";
 import { useAuth } from "@/contexts/AuthContext";
@@ -53,6 +54,10 @@ export default function ProfilePage() {
     const [isCropping, setIsCropping] = useState(false);
     const [cropImage, setCropImage] = useState<string | null>(null);
     const [isChangingPath, setIsChangingPath] = useState(false);
+    const [guidanceTotalResources, setGuidanceTotalResources] = useState<number>(0);
+    const [settingsOpen, setSettingsOpen] = useState(false);
+    const [savingSettings, setSavingSettings] = useState(false);
+    const [localSettings, setLocalSettings] = useState({ notifications: true, theme: 'system' as 'light' | 'dark' | 'system' });
     const [approvedApplication, setApprovedApplication] = useState<any>(null);
     const [instructorNames, setInstructorNames] = useState<{ guidance: string; subject: string }>({ guidance: '', subject: '' });
     const [teacherVerification, setTeacherVerification] = useState<any>(null);
@@ -72,6 +77,17 @@ export default function ProfilePage() {
             setProfileDataLoading(true);
             Promise.all([fetchApprovedApplication(), fetchTeacherVerification()])
                 .finally(() => setProfileDataLoading(false));
+            // Sync local settings state from user
+            setLocalSettings({
+                notifications: user.settings?.notifications ?? true,
+                theme: user.settings?.theme ?? 'system',
+            });
+            // Fetch guidance total resources if path is set
+            if (user.selectedPath?.guidanceId) {
+                api.get(`/data/guidance-resources/${user.selectedPath.guidanceId}`)
+                    .then(r => setGuidanceTotalResources(r.data?.total || 0))
+                    .catch(() => {});
+            }
         }
     }, [authLoading, user, router]);
 
@@ -118,6 +134,20 @@ export default function ProfilePage() {
             const res = await api.get('/teacher/verify/me');
             if (res.data?.status === 'approved') setTeacherVerification(res.data);
         } catch { }
+    };
+
+    const saveSettings = async (patch: Partial<typeof localSettings>) => {
+        const updated = { ...localSettings, ...patch };
+        setLocalSettings(updated);
+        setSavingSettings(true);
+        try {
+            await api.patch('/user/profile', { settings: updated });
+            showSnackbar("Settings saved", "success");
+        } catch {
+            showSnackbar("Failed to save settings", "error");
+        } finally {
+            setSavingSettings(false);
+        }
     };
 
     useEffect(() => {
@@ -252,10 +282,7 @@ export default function ProfilePage() {
     if ((isInstructor || isTeacher) && (profileDataLoading || redirecting)) {
         return (
             <div className="min-h-screen flex items-center justify-center bg-[#F8F9FA]">
-                <div className="flex flex-col items-center gap-4">
-                    <div className="w-12 h-12 border-[3px] border-green border-t-transparent rounded-full animate-spin" />
-                    <p className="text-sm font-bold text-dark/40">Loading your dashboard…</p>
-                </div>
+                <DarsyLoader size={90} />
             </div>
         );
     }
@@ -479,7 +506,28 @@ export default function ProfilePage() {
                             </div>
 
                             <div className="text-center md:text-left space-y-3">
-                                <h1 className="text-4xl font-bold text-dark">{user?.displayName}</h1>
+                                <div className="flex flex-col md:flex-row items-center md:items-center gap-2.5">
+                                    <h1 className="text-4xl font-bold text-dark">{user?.displayName}</h1>
+                                    {/* Plan badge */}
+                                    {(() => {
+                                        const plan = user?.subscription?.plan;
+                                        if (plan === 'premium') return (
+                                            <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-[10px] font-black tracking-widest uppercase bg-amber-400 text-white shadow-md shadow-amber-200 shrink-0">
+                                                <Star size={9} className="fill-white" /> Premium
+                                            </span>
+                                        );
+                                        if (plan === 'pro') return (
+                                            <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-[10px] font-black tracking-widest uppercase bg-green text-white shadow-md shadow-green/30 shrink-0">
+                                                <Star size={9} className="fill-white" /> Pro
+                                            </span>
+                                        );
+                                        return (
+                                            <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-[10px] font-black tracking-widest uppercase border border-green/20 text-green/60 shrink-0">
+                                                Free
+                                            </span>
+                                        );
+                                    })()}
+                                </div>
                                 <div className="flex flex-col items-center md:items-start gap-2">
                                     {user?.age && (
                                         <p className="text-muted-foreground flex items-center gap-2">
@@ -513,10 +561,13 @@ export default function ProfilePage() {
                                 {t("chat_room") || "Class Chat"}
                                 <span className="absolute -top-1 -right-1 w-3 h-3 bg-red-500 rounded-full border-2 border-white animate-pulse"></span>
                             </Link>
-                            <Link href="/settings" className="px-6 py-3 rounded-2xl bg-dark border border-gray-100/10 hover:border-green hover:shadow-lg transition-all text-white hover:text-green flex items-center justify-center gap-2 font-bold">
-                                <SettingsIcon size={20} className="group-hover:scale-110 transition-transform" />
+                            <button
+                                onClick={() => setSettingsOpen(v => !v)}
+                                className={`px-6 py-3 rounded-2xl border transition-all flex items-center justify-center gap-2 font-bold ${settingsOpen ? 'bg-green border-green text-white shadow-lg shadow-green/20' : 'bg-dark border-gray-100/10 hover:border-green hover:shadow-lg text-white hover:text-green'}`}
+                            >
+                                <SettingsIcon size={20} className={settingsOpen ? 'rotate-45 transition-transform duration-300' : 'transition-transform duration-300'} />
                                 {t("settings") || "Settings"}
-                            </Link>
+                            </button>
                         </div>
                     </div>
 
@@ -525,53 +576,52 @@ export default function ProfilePage() {
                     {/* Profile Completion */}
                     {profileCompletion < 100 && (
                     <motion.div
-                        initial={{ opacity: 0, scale: 0.95 }}
-                        animate={{ opacity: 1, scale: 1 }}
+                        initial={{ opacity: 0, y: 18 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        transition={{ duration: 0.35, ease: [0.16, 1, 0.3, 1] }}
                         dir={isAr ? "rtl" : "ltr"}
-                        className="rounded-[28px] md:rounded-[40px] relative overflow-hidden"
-                        style={{ background: 'linear-gradient(135deg, #0f4428 0%, #1a7a46 45%, #22c55e 100%)' }}
+                        className="rounded-[28px] relative overflow-hidden"
+                        style={{ background: 'repeating-linear-gradient(45deg,rgba(255,255,255,0.03) 0px,rgba(255,255,255,0.03) 2px,transparent 2px,transparent 8px),linear-gradient(135deg,#1e7a46 0%,#0f4428 100%)' }}
                     >
-                        {/* Dot grid texture */}
-                        <div className="absolute inset-0 opacity-[0.08] pointer-events-none"
-                            style={{
-                                backgroundImage: 'radial-gradient(circle, white 1px, transparent 1px)',
-                                backgroundSize: '18px 18px',
-                            }}
-                        />
+                        {/* Dot grid texture — matches instructor banner */}
+                        <div className="absolute inset-0 pointer-events-none" style={{ backgroundImage: 'radial-gradient(circle, rgba(255,255,255,0.18) 1px, transparent 1px)', backgroundSize: '18px 18px', opacity: 0.35 }} />
 
-                        <div className="relative z-10 flex items-center gap-4 p-5 md:p-8">
+                        {/* Header row */}
+                        <div className="relative z-10 flex items-center gap-5 p-5 md:p-7">
                             {/* Progress ring */}
                             <div className="relative shrink-0">
-                                <svg className="w-[72px] h-[72px] md:w-28 md:h-28 -rotate-90" viewBox="0 0 128 128" style={{ shapeRendering: "geometricPrecision" }}>
-                                    <circle cx="64" cy="64" r="54" stroke="white" strokeOpacity="0.15" strokeWidth="12" fill="transparent" strokeLinecap="round" />
+                                <svg className="w-[68px] h-[68px] md:w-24 md:h-24 -rotate-90" viewBox="0 0 128 128" style={{ shapeRendering: "geometricPrecision" }}>
+                                    {/* Track */}
+                                    <circle cx="64" cy="64" r="54" stroke="white" strokeOpacity="0.12" strokeWidth="10" fill="transparent" strokeLinecap="round" />
+                                    {/* Fill */}
                                     <motion.circle
                                         cx="64" cy="64" r="54"
-                                        stroke="white" strokeWidth="12" fill="transparent"
+                                        stroke="white" strokeWidth="10" fill="transparent"
                                         strokeDasharray={339.3}
                                         initial={{ strokeDashoffset: 339.3 }}
                                         animate={{ strokeDashoffset: 339.3 - (339.3 * profileCompletion) / 100 }}
                                         strokeLinecap="round"
-                                        transition={{ duration: 1, ease: "easeOut" }}
+                                        transition={{ duration: 1.1, ease: [0.34, 1.2, 0.64, 1] }}
                                     />
                                 </svg>
                                 <div className="absolute inset-0 flex items-center justify-center">
                                     {profileCompletion === 100 ? (
                                         <motion.div initial={{ scale: 0 }} animate={{ scale: 1 }} transition={{ type: "spring", stiffness: 200, delay: 0.5 }}>
-                                            <Star size={22} className="text-white fill-white" />
+                                            <Star size={20} className="text-white fill-white" />
                                         </motion.div>
                                     ) : (
-                                        <span className="text-lg md:text-2xl font-black text-white">{profileCompletion}%</span>
+                                        <span className="text-base md:text-xl font-black text-white tabular-nums">{profileCompletion}%</span>
                                     )}
                                 </div>
                             </div>
 
                             {/* Text */}
                             <div className={`flex-1 min-w-0 ${isAr ? "text-right" : "text-left"}`}>
-                                <div className="flex items-center gap-1.5 mb-1">
+                                <div className={`flex items-center gap-1.5 mb-1.5 ${isAr ? "flex-row-reverse" : ""}`}>
                                     {profileCompletion === 100
-                                        ? <CheckCircle size={13} className="text-white/80 shrink-0" />
-                                        : <CircleDashed size={13} className="text-white/80 shrink-0 animate-spin-slow" />}
-                                    <span className="text-[10px] md:text-xs font-black uppercase tracking-widest text-white/70">
+                                        ? <CheckCircle size={12} className="text-white/80 shrink-0" />
+                                        : <CircleDashed size={12} className="text-white/80 shrink-0 animate-spin-slow" />}
+                                    <span className="text-[10px] font-black uppercase tracking-widest text-white/70">
                                         {profileCompletion === 100 ? t("completion_success_title") : t("completion_title")}
                                     </span>
                                 </div>
@@ -580,30 +630,35 @@ export default function ProfilePage() {
                                         ? <>{t.rich("completion_perfect", { green: (chunks) => <span className="text-green-200">{chunks}</span> })}</>
                                         : t("completion_almost_ready")}
                                 </h3>
-                                <p className="text-white/60 text-xs md:text-sm leading-snug line-clamp-2">
+                                <p className="text-white/50 text-xs md:text-sm leading-snug line-clamp-2 font-medium">
                                     {profileCompletion === 100 ? t("completion_success_desc") : t("completion_desc")}
                                 </p>
                             </div>
                         </div>
 
-                        {profileCompletion < 100 && (
-                            <div className="relative z-10 px-5 pb-5 md:px-8 md:pb-8 flex flex-col gap-2">
-                                {suggestions.map((suggestion) => (
-                                    <button
+                        {/* Suggestions */}
+                        {profileCompletion < 100 && suggestions.length > 0 && (
+                            <div className="relative z-10 px-5 pb-5 md:px-7 md:pb-7 flex flex-col gap-1.5">
+                                <div className="h-px bg-white/10 mb-2" />
+                                {suggestions.map((suggestion, idx) => (
+                                    <motion.button
                                         key={suggestion.id}
+                                        initial={{ opacity: 0, x: isAr ? 12 : -12 }}
+                                        animate={{ opacity: 1, x: 0 }}
+                                        transition={{ delay: 0.15 + idx * 0.05, duration: 0.28, ease: [0.16, 1, 0.3, 1] }}
                                         onClick={() => {
                                             if (suggestion.id === 'path') router.push('/onboarding');
                                             else if (suggestion.id === 'photo') handlePhotoClick();
                                             else router.push('/settings');
                                         }}
-                                        className={`flex items-center gap-3 px-4 py-3 rounded-2xl bg-white/10 hover:bg-white/20 border border-white/10 hover:border-white/25 transition-all group/btn ${isAr ? "text-right" : "text-left"}`}
+                                        className={`flex items-center gap-3 px-4 py-2.5 rounded-[14px] bg-white/8 hover:bg-white/14 border border-white/10 hover:border-white/20 transition-all duration-200 group/btn ${isAr ? "flex-row-reverse text-right" : "text-left"}`}
                                     >
-                                        <div className="w-7 h-7 rounded-xl bg-white/15 flex items-center justify-center text-white shrink-0 group-hover/btn:scale-110 transition-transform">
-                                            <Plus size={15} />
+                                        <div className="w-6 h-6 rounded-[9px] bg-white/12 flex items-center justify-center text-white shrink-0 group-hover/btn:bg-white/20 group-hover/btn:scale-105 transition-all">
+                                            <Plus size={13} />
                                         </div>
-                                        <span className="text-sm font-semibold text-white/90 flex-1 truncate">{suggestion.label}</span>
-                                        <ChevronRight size={15} className={`${isAr ? "rotate-180" : ""} text-white/30 group-hover/btn:text-white group-hover/btn:translate-x-0.5 transition-all shrink-0`} />
-                                    </button>
+                                        <span className="text-sm font-semibold text-white/85 flex-1 truncate group-hover/btn:text-white transition-colors">{suggestion.label}</span>
+                                        <ChevronRight size={13} className={`${isAr ? "rotate-180" : ""} text-white/25 group-hover/btn:text-white/70 group-hover/btn:translate-x-0.5 transition-all shrink-0`} />
+                                    </motion.button>
                                 ))}
                             </div>
                         )}
@@ -619,7 +674,7 @@ export default function ProfilePage() {
                             totalLessons={totalLessons}
                             documentsOpened={user?.progress?.documentsOpened || 0}
                             completedResources={user?.progress?.lessons?.reduce((sum: number, l: any) => sum + (l.completedResources?.length || 0), 0) || 0}
-                            totalResources={user?.totalGuidanceResources || user?.progress?.lessons?.reduce((sum: number, l: any) => sum + (l.totalResourcesCount || 0), 0) || totalLessons}
+                            totalResources={guidanceTotalResources || user?.totalGuidanceResources || user?.progress?.lessons?.reduce((sum: number, l: any) => sum + (l.totalResourcesCount || 0), 0) || totalLessons}
                         />
                     </div>
 
@@ -771,6 +826,17 @@ export default function ProfilePage() {
                                 </div>
                             </div>
 
+                            {/* Rankings */}
+                            <Link href="/rankings" className="svc-card">
+                                <div className="svc-icon" style={{ background: 'rgba(251,191,36,0.1)', color: '#f59e0b' }}>
+                                    <Trophy size={22} />
+                                </div>
+                                <div>
+                                    <h4 className="font-bold text-dark text-sm leading-tight">Rankings</h4>
+                                    <p className="text-xs mt-1" style={{ color: 'rgba(26,58,42,0.38)' }}>Top students</p>
+                                </div>
+                            </Link>
+
                             {/* 2. Calendar */}
                             <Link href="/calendar" className="svc-card">
                                 <div className="svc-icon" style={{ background: 'rgba(59,130,246,0.1)', color: '#3b82f6' }}>
@@ -883,6 +949,73 @@ export default function ProfilePage() {
 
                         </div>
                     </div>
+
+                    {/* ── Inline Settings Panel ── */}
+                    <AnimatePresence>
+                        {settingsOpen && (
+                            <motion.div
+                                key="settings-panel"
+                                initial={{ opacity: 0, y: 14 }}
+                                animate={{ opacity: 1, y: 0 }}
+                                exit={{ opacity: 0, y: 8 }}
+                                transition={{ duration: 0.28, ease: [0.16, 1, 0.3, 1] }}
+                                className="border-t border-green/8 pt-8 space-y-4"
+                            >
+                                <div>
+                                    <h2 className="text-2xl font-black text-dark">Settings</h2>
+                                    <p className="text-sm mt-1" style={{ color: 'rgba(26,58,42,0.4)' }}>Manage your account preferences.</p>
+                                </div>
+                                <div className="rounded-[20px] border border-green/10 divide-y divide-green/8 overflow-hidden bg-white shadow-sm">
+                                    {/* Notifications toggle */}
+                                    <div className="flex items-center justify-between px-5 py-4">
+                                        <div>
+                                            <p className="text-sm font-bold text-dark">Notifications</p>
+                                            <p className="text-xs mt-0.5" style={{ color: 'rgba(26,58,42,0.4)' }}>Receive learning reminders and updates</p>
+                                        </div>
+                                        <button
+                                            disabled={savingSettings}
+                                            onClick={() => saveSettings({ notifications: !localSettings.notifications })}
+                                            className={`relative w-11 h-6 rounded-full transition-colors duration-200 shrink-0 ${localSettings.notifications ? 'bg-green' : 'bg-dark/15'} disabled:opacity-50`}
+                                        >
+                                            <span className={`absolute top-0.5 left-0.5 w-5 h-5 rounded-full bg-white shadow transition-transform duration-200 ${localSettings.notifications ? 'translate-x-5' : 'translate-x-0'}`} />
+                                        </button>
+                                    </div>
+                                    {/* Theme selector */}
+                                    <div className="px-5 py-4">
+                                        <p className="text-sm font-bold text-dark mb-3">Theme</p>
+                                        <div className="flex gap-2">
+                                            {(['light', 'system', 'dark'] as const).map(t => (
+                                                <button
+                                                    key={t}
+                                                    disabled={savingSettings}
+                                                    onClick={() => saveSettings({ theme: t })}
+                                                    className={`flex-1 py-2 rounded-[12px] text-xs font-black capitalize transition-all border disabled:opacity-50 ${localSettings.theme === t ? 'bg-green text-white border-green shadow-md shadow-green/20' : 'text-dark/50 border-green/15 hover:border-green/30'}`}
+                                                >
+                                                    {t}
+                                                </button>
+                                            ))}
+                                        </div>
+                                    </div>
+                                    {/* Change password link */}
+                                    <Link href="/settings/password" className="flex items-center justify-between px-5 py-4 hover:bg-green/3 transition-colors group">
+                                        <div>
+                                            <p className="text-sm font-bold text-dark">Change Password</p>
+                                            <p className="text-xs mt-0.5" style={{ color: 'rgba(26,58,42,0.4)' }}>Update your account password</p>
+                                        </div>
+                                        <ChevronRight size={16} className="text-green/30 group-hover:text-green transition-colors" />
+                                    </Link>
+                                    {/* Delete account link */}
+                                    <Link href="/settings/delete-account" className="flex items-center justify-between px-5 py-4 hover:bg-red-50/50 transition-colors group">
+                                        <div>
+                                            <p className="text-sm font-bold text-red-500">Delete Account</p>
+                                            <p className="text-xs mt-0.5 text-red-400/70">Permanently remove your data</p>
+                                        </div>
+                                        <ChevronRight size={16} className="text-red-300 group-hover:text-red-500 transition-colors" />
+                                    </Link>
+                                </div>
+                            </motion.div>
+                        )}
+                    </AnimatePresence>
 
                     <div className="pt-8 border-t border-green/6 flex flex-col items-center gap-3">
                         <p className="text-[10px] font-black uppercase tracking-widest" style={{ color: 'rgba(26,58,42,0.25)' }}>Account</p>

@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useEffect, useRef } from 'react';
+import { DarsyLoader } from '@/components/DarsyLoader';
 import { useRouter } from 'next/navigation';
 import { useAuth } from '@/contexts/AuthContext';
 import api from '@/lib/api';
@@ -145,7 +146,7 @@ export default function ApplyTeacherPage() {
     if (authLoading || fetching) {
         return (
             <div className="min-h-screen flex items-center justify-center bg-[#F8F9FA]">
-                <Loader2 size={32} className="text-green animate-spin" />
+                <DarsyLoader size={90} />
             </div>
         );
     }

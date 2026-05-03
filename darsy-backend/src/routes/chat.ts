@@ -74,11 +74,55 @@ router.get('/history', authMiddleware, async (req: express.Request, res: express
     }
 });
 
+// Admin: Get all user reports (with optional status filter)
+router.get('/reports', authMiddleware, adminMiddleware, async (req: express.Request, res: express.Response): Promise<void> => {
+    try {
+        const status = req.query.status as string | undefined;
+        const query: any = {};
+        if (status && ['pending', 'resolved', 'dismissed'].includes(status)) query.status = status;
+        const reports = await UserReport.find(query)
+            .sort({ createdAt: -1 })
+            .populate('reporterId', 'displayName email photoURL')
+            .populate('reportedUserId', 'displayName email photoURL')
+            .populate('messageId', 'text createdAt')
+            .lean();
+        res.json(reports);
+    } catch (error) {
+        res.status(500).json({ error: 'Failed to get reports' });
+    }
+});
+
+// Admin: Update report status
+router.patch('/reports/:id/status', authMiddleware, adminMiddleware, async (req: express.Request, res: express.Response): Promise<void> => {
+    try {
+        const { status } = req.body;
+        if (!['pending', 'resolved', 'dismissed'].includes(status)) {
+            res.status(400).json({ error: 'Invalid status' }); return;
+        }
+        const report = await UserReport.findByIdAndUpdate(req.params.id, { status }, { new: true });
+        if (!report) { res.status(404).json({ error: 'Report not found' }); return; }
+        res.json(report);
+    } catch (error) {
+        res.status(500).json({ error: 'Failed to update report' });
+    }
+});
+
+// Admin: Delete a report
+router.delete('/reports/:id', authMiddleware, adminMiddleware, async (req: express.Request, res: express.Response): Promise<void> => {
+    try {
+        const report = await UserReport.findByIdAndDelete(req.params.id);
+        if (!report) { res.status(404).json({ error: 'Report not found' }); return; }
+        res.json({ message: 'Report deleted' });
+    } catch (error) {
+        res.status(500).json({ error: 'Failed to delete report' });
+    }
+});
+
 // Report a user/message in chat
 router.post('/report', authMiddleware, async (req: any, res: express.Response): Promise<void> => {
     try {
         const { reportedUserId, messageId, reason, details } = req.body;
-        const reporterId = req.user.id;
+        const reporterId = req.userId;
 
         if (!reportedUserId || !reason || !details) {
             res.status(400).json({ error: 'Reported user, reason, and details are required' });

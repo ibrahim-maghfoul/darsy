@@ -176,4 +176,8 @@ export interface User {
         levelId: string;
         guidanceId: string;
     };
+    settings?: {
+        notifications: boolean;
+        theme: 'light' | 'dark' | 'system';
+    };
 }

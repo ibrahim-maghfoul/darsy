@@ -173,63 +173,11 @@ const CIRCUIT_NODES = [
   { cx: 940, cy: 700, r: 2.5 },
 ];
 
-// ─── Sinusoidal companion path generator ─────────────────────────────────────
-// Converts an M/V/H path into two sinusoidal wave paths, one on each side.
-// Each straight segment is sampled and offset perpendicular by a sine function.
-// Using integer freq ensures sin(freq·2π)=0 at segment endpoints → clean joins.
-function makeSineCompanions(d: string, amp = 5): [string, string] {
-  const pts: [number, number][] = [];
-  let cx = 0, cy = 0;
-  for (const tok of d.trim().split(/\s+/)) {
-    if (tok[0] === 'M') { [cx, cy] = tok.slice(1).split(',').map(Number); pts.push([cx, cy]); }
-    else if (tok[0] === 'V') { cy = +tok.slice(1); pts.push([cx, cy]); }
-    else if (tok[0] === 'H') { cx = +tok.slice(1); pts.push([cx, cy]); }
-  }
-  const a1: string[] = [], a2: string[] = [];
-  for (let s = 0; s < pts.length - 1; s++) {
-    const [x1, y1] = pts[s], [x2, y2] = pts[s + 1];
-    const dx = x2 - x1, dy = y2 - y1;
-    const len = Math.sqrt(dx * dx + dy * dy);
-    if (len < 1) continue;
-    const nx = -dy / len, ny = dx / len; 
-
-    if (s === 0) {
-      a1.push(`M${x1.toFixed(1)},${y1.toFixed(1)}`);
-      a2.push(`M${x1.toFixed(1)},${y1.toFixed(1)}`);
-    }
-
-    const freq = Math.max(1, Math.round(len / 55));
-    const halfPeriods = freq * 2;
-    const hpLen = len / halfPeriods;
-
-    for (let i = 0; i < halfPeriods; i++) {
-        const ef = (i + 1) * hpLen;
-        const epx = x1 + dx * (ef / len);
-        const epy = y1 + dy * (ef / len);
-
-        if (i === 0) {
-            const cf = 0.5 * hpLen;
-            const px = x1 + dx * (cf / len);
-            const py = y1 + dy * (cf / len);
-            const cp1x = px + nx * (2 * amp), cp1y = py + ny * (2 * amp);
-            const cp2x = px - nx * (2 * amp), cp2y = py - ny * (2 * amp);
-            a1.push(`Q${cp1x.toFixed(1)},${cp1y.toFixed(1)} ${epx.toFixed(1)},${epy.toFixed(1)}`);
-            a2.push(`Q${cp2x.toFixed(1)},${cp2y.toFixed(1)} ${epx.toFixed(1)},${epy.toFixed(1)}`);
-        } else {
-            a1.push(`T${epx.toFixed(1)},${epy.toFixed(1)}`);
-            a2.push(`T${epx.toFixed(1)},${epy.toFixed(1)}`);
-        }
-    }
-  }
-  return [a1.join(' '), a2.join(' ')];
-}
-
-// Precomputed once at module level — no runtime cost in the component
-const SINE_A = CIRCUIT_LINES.map(d => makeSineCompanions(d, 8)[0]);
-const SINE_B = CIRCUIT_LINES.map(d => makeSineCompanions(d, 8)[1]);
 
 // ─── Keyframes ────────────────────────────────────────────────────────────────
 // Injected into <head> once — Chrome ignores @keyframes inside SVG <defs><style>
+// pfWave removed: 32 stroke-dashoffset animations caused continuous paint.
+// Replaced with pfGlow (opacity only → GPU-composited, zero paint cost).
 const PF_STYLE_ID = "pf-circuit-keyframes";
 function ensureKeyframes() {
   if (typeof document === "undefined" || document.getElementById(PF_STYLE_ID)) return;
@@ -238,13 +186,7 @@ function ensureKeyframes() {
   s.textContent = `
     @keyframes pfDraw  { from{stroke-dashoffset:1500} to{stroke-dashoffset:0} }
     @keyframes pfPulse { 0%,100%{opacity:.45} 50%{opacity:1} }
-    @keyframes pfWave  {
-      0%   { stroke-dashoffset: 300; opacity: 0; }
-      6%   { opacity: 0.9; }
-      65%  { stroke-dashoffset: -1100; opacity: 0.8; }
-      82%  { stroke-dashoffset: -1900; opacity: 0; }
-      100% { stroke-dashoffset: -1900; opacity: 0; }
-    }
+    @keyframes pfGlow  { 0%,100%{opacity:.30} 50%{opacity:.70} }
   `;
   document.head.appendChild(s);
 }
@@ -263,45 +205,25 @@ function SpiderCircuit({ active }: { active: boolean }) {
       viewBox="0 0 1440 800"
       preserveAspectRatio="xMidYMid slice"
     >
-      {/* All path data defined once — core lines + sinusoidal companions */}
       <defs>
-        {CIRCUIT_LINES.map((d, i) => <path key={`d${i}`}  id={`${uid}L${i}`} d={d} />)}
-        {SINE_A.map(       (d, i) => <path key={`da${i}`} id={`${uid}A${i}`} d={d} />)}
-        {SINE_B.map(       (d, i) => <path key={`db${i}`} id={`${uid}B${i}`} d={d} />)}
+        {CIRCUIT_LINES.map((d, i) => <path key={`d${i}`} id={`${uid}L${i}`} d={d} />)}
       </defs>
 
       {active && <>
+        {/* Base lines: draw in once (pfDraw), then glow pulse on opacity only (GPU-composited) */}
         {CIRCUIT_LINES.map((_, i) => {
           const dc = i * 0.05;
-          const dw = dc + 1.2;
-          const dw2 = dw + 0.4; // second wave staggered behind first
+          const dg = dc + 3.2; // glow starts after draw completes
           return (
-            <g key={`wG${i}`}>
-              <use href={`#${uid}L${i}`} fill="none"
-                stroke="rgba(0,215,105,0.44)" strokeWidth="1.5"
-                style={{ strokeDasharray:1500, strokeDashoffset:1500,
-                  animation:`pfDraw 3s ease-out ${dc}s forwards` }} />
-              {/* Wave A (side 1) */}
-              <use href={`#${uid}A${i}`} fill="none"
-                stroke="rgba(0,140,65,0.55)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"
-                style={{ strokeDasharray:"280 9999", strokeDashoffset:300,
-                  animation:`pfWave 9s ease-in-out ${dw}s infinite` }} />
-              <use href={`#${uid}A${i}`} fill="none"
-                stroke="rgba(0,255,148,0.9)" strokeWidth="6" strokeLinecap="round"
-                style={{ strokeDasharray:"0 280 0.01 9998.99", strokeDashoffset:300,
-                  animation:`pfWave 9s ease-in-out ${dw}s infinite` }} />
-              {/* Wave B (side 2) */}
-              <use href={`#${uid}B${i}`} fill="none"
-                stroke="rgba(0,140,65,0.55)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"
-                style={{ strokeDasharray:"280 9999", strokeDashoffset:300,
-                  animation:`pfWave 9s ease-in-out ${dw2}s infinite` }} />
-              <use href={`#${uid}B${i}`} fill="none"
-                stroke="rgba(0,255,148,0.9)" strokeWidth="6" strokeLinecap="round"
-                style={{ strokeDasharray:"0 280 0.01 9998.99", strokeDashoffset:300,
-                  animation:`pfWave 9s ease-in-out ${dw2}s infinite` }} />
-            </g>
+            <use key={`L${i}`} href={`#${uid}L${i}`} fill="none"
+              stroke="rgba(0,215,105,0.50)" strokeWidth="1.5"
+              style={{
+                strokeDasharray: 1500, strokeDashoffset: 1500,
+                animation: `pfDraw 3s ease-out ${dc}s forwards, pfGlow 3.5s ease-in-out ${dg}s infinite`,
+              }} />
           );
         })}
+        {/* Nodes: opacity pulse only — already GPU-composited */}
         {CIRCUIT_NODES.map((n, i) => (
           <circle key={`n${i}`} cx={n.cx} cy={n.cy}
             r={i === 0 ? n.r * 1.4 : n.r}

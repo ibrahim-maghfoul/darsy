@@ -1,10 +1,10 @@
 "use client";
 
 import { motion, useInView } from "framer-motion";
-import { useRef } from "react";
+import { useRef, useState, useEffect } from "react";
 import { useTranslations } from 'next-intl';
-import Link from "next/link";
-import styles from "./NewsCard.module.css";
+import { DownloadButton } from "@/components/DownloadButton";
+import Image from "next/image";
 
 const avatars = [
     { id: 1, img: "https://i.pravatar.cc/160?img=1", shape: "rounded-full", className: "w-20 h-20 top-[8%] left-[4%] [--dy:-12px] [--r:0deg]" },
@@ -21,6 +21,17 @@ export function BelieveSection() {
     const sectionRef = useRef<HTMLElement>(null);
     const isInView = useInView(sectionRef, { once: true, amount: 0.12 });
     const t = useTranslations('Believe');
+
+    // Pause float animations when section is off-screen — no React re-renders, pure DOM toggle
+    const [floatRunning, setFloatRunning] = useState(false);
+    useEffect(() => {
+        const obs = new IntersectionObserver(
+            ([e]) => setFloatRunning(e.isIntersecting),
+            { threshold: 0 }
+        );
+        if (sectionRef.current) obs.observe(sectionRef.current);
+        return () => obs.disconnect();
+    }, []);
 
     return (
         <section
@@ -39,9 +50,9 @@ export function BelieveSection() {
                     animate={isInView ? { opacity: 1, scale: 1 } : {}}
                     transition={{ delay: i * 0.05, duration: 0.6 }}
                     className={`hidden md:absolute md:block overflow-hidden shadow-[0_8px_32px_rgba(0,0,0,0.28)] animate-[chipFloat_5s_ease-in-out_infinite] will-change-transform ${av.shape === 'hex' ? 'clip-hex' : av.shape === 'blob' ? 'rounded-[60%_40%_55%_45%_/_45%_55%_40%_60%]' : av.shape} ${av.className}`}
-                    style={{ animationDelay: `${i * 0.2}s` } as any}
+                    style={{ animationDelay: `${i * 0.2}s`, animationPlayState: floatRunning ? 'running' : 'paused' } as React.CSSProperties}
                 >
-                    <img src={av.img} alt="person" className="w-full h-full object-cover block" />
+                    <Image src={av.img} alt="" fill className="object-cover" sizes="120px" />
                 </motion.div>
             ))}
 
@@ -63,7 +74,7 @@ export function BelieveSection() {
                 transition={{ duration: 0.8 }}
                 className="relative z-2 mb-[-80px] md:mb-[-120px] -mt-6 md:-mt-12"
             >
-                <img src="/door.png" alt="Door" className="block w-[clamp(80px,35vw,280px)] h-auto mx-auto object-contain drop-shadow-2xl" />
+                <Image src="/door.png" alt="Door" width={280} height={400} className="block w-[clamp(80px,35vw,280px)] h-auto mx-auto object-contain drop-shadow-2xl" priority={false} />
             </motion.div>
             <motion.div
                 initial={{ opacity: 0, y: 28 }}
@@ -79,25 +90,16 @@ export function BelieveSection() {
                     {t('desc')}
                 </p>
                 <div className="flex justify-center mt-8 mb-8">
-                    <Link
+                    <DownloadButton
                         href="/download"
-                        className={`${styles.blobBtn} !relative !inline-flex !items-center !justify-center gap-3 !bg-[#111] !text-white font-semibold text-sm !px-10 !py-4 !rounded-full shadow-[0_4px_20px_rgba(0,0,0,0.25)] hover:!text-[#3aaa6a] hover:-translate-y-[2px] hover:shadow-[0_8px_28px_rgba(0,0,0,0.3)] transition-all overflow-hidden border-none outline-none cursor-pointer !h-auto !w-auto !bottom-auto !right-auto group mx-0 no-underline`}
-                    >
-                        <span className={styles.blobBtnInner}>
-                            <span className={styles.blobBtnBlobs}>
-                                <span className={styles.blobBtnBlob} />
-                                <span className={styles.blobBtnBlob} />
-                                <span className={styles.blobBtnBlob} />
-                                <span className={styles.blobBtnBlob} />
-                            </span>
-                        </span>
-                        <span className={`${styles.blobBtnLabel} z-10 flex items-center justify-center gap-3 w-full`}>
-                            <svg viewBox="0 0 24 24" fill="currentColor" className="w-5 h-5 shrink-0">
+                        text={t('btn_download')}
+                        showArrow={false}
+                        icon={
+                            <svg viewBox="0 0 24 24" fill="currentColor" style={{ width: 20, height: 20 }}>
                                 <path d="M17.05 20.28c-.98.95-2.05.8-3.08.35-1.09-.46-2.09-.48-3.24 0-1.44.62-2.2.44-3.06-.35C2.79 15.25 3.51 7.7 9.05 7.42c1.27.06 2.15.63 2.9.63.78 0 2.26-.78 3.81-.66 1.06.08 2.8.44 3.84 1.97-3.48 2.12-2.92 6.7.45 8.92zm-3.6-16.08c-2.59.28-4.72 2.9-4.47 5.21 2.33.18 4.73-2.39 4.47-5.21z" />
                             </svg>
-                            {t('btn_download')}
-                        </span>
-                    </Link>
+                        }
+                    />
                 </div>
             </motion.div>
             </div>

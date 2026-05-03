@@ -24,6 +24,7 @@ import {
     Star,
     RefreshCw,
     Globe,
+    BotMessageSquare,
 } from "lucide-react";
 import api from "@/lib/api";
 import Link from "next/link";
@@ -484,8 +485,10 @@ export default function LessonPage() {
     );
 
     // Resource list renderer — avoids repeating the same JSX 5 times
+    // On mobile, PDF-type resources show an AI icon leading to the AI explain page.
     const renderResourceList = (items: any[], type: string, label: string, Icon: any) => {
         if (!items?.length) return null;
+        const isPdfType = type === 'coursesPdf' || type === 'exercices' || type === 'exams' || type === 'resourses';
         return (
             <div className="space-y-2">
                 <h4 className="text-xs font-bold text-muted-foreground uppercase tracking-wider">{label}</h4>
@@ -493,16 +496,31 @@ export default function LessonPage() {
                     const id = safeId(res);
                     const isCompleted = localCompletedResources.includes(id);
                     const isActive = activeResource?.url === res.url;
+                    const aiHref = `/lesson/${lessonId}/ai-explain?docId=${encodeURIComponent(id)}&title=${encodeURIComponent(res.title || '')}&url=${encodeURIComponent(res.url || '')}&lessonTitle=${encodeURIComponent(lesson?.title || '')}`;
                     return (
-                        <button
+                        <div
                             key={idx}
-                            onClick={() => handleSelectResource(res, type)}
-                            className={`w-full flex items-center gap-3 p-4 rounded-2xl border transition-all duration-150 text-left ${isActive ? 'bg-white border-green shadow-xl shadow-green/5' : 'bg-white/50 border-green/5 hover:bg-white hover:border-green/20'}`}
+                            className={`flex items-center gap-2 rounded-2xl border transition-all duration-150 ${isActive ? 'bg-white border-green shadow-xl shadow-green/5' : 'bg-white/50 border-green/5 hover:bg-white hover:border-green/20'}`}
                         >
-                            <Icon className={isActive ? 'text-green' : 'text-muted-foreground'} size={20} />
-                            <span className="font-semibold text-sm line-clamp-1 flex-1">{res.title}</span>
-                            {user && isCompleted && <CheckCircle2 size={16} className="text-green ml-auto flex-shrink-0" />}
-                        </button>
+                            <button
+                                onClick={() => handleSelectResource(res, type)}
+                                className="flex items-center gap-3 p-4 text-left flex-1 min-w-0"
+                            >
+                                <Icon className={isActive ? 'text-green' : 'text-muted-foreground'} size={20} />
+                                <span className="font-semibold text-sm line-clamp-1 flex-1">{res.title}</span>
+                                {user && isCompleted && <CheckCircle2 size={16} className="text-green flex-shrink-0" />}
+                            </button>
+                            {isPdfType && (
+                                <Link
+                                    href={aiHref}
+                                    onClick={e => e.stopPropagation()}
+                                    className="md:hidden shrink-0 mr-2 flex items-center justify-center w-9 h-9 rounded-[12px] bg-green/8 hover:bg-green/15 border border-green/12 transition-all active:scale-95"
+                                    title="AI Explain"
+                                >
+                                    <BotMessageSquare size={16} className="text-green" />
+                                </Link>
+                            )}
+                        </div>
                     );
                 })}
             </div>

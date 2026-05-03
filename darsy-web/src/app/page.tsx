@@ -1,49 +1,67 @@
 "use client";
 
 import { HeroSection } from "@/components/HeroSection";
-import { BelieveSection } from "@/components/BelieveSection";
-import { CoursesSection } from "@/components/CoursesSection";
-import { ChatFeatureSection } from "@/components/ChatFeatureSection";
-import { WorksSection } from "@/components/WorksSection";
-import { TeamSection } from "@/components/TeamSection";
-import { PlatformFeatures } from "@/components/PlatformFeatures";
+import dynamic from "next/dynamic";
 import Link from "next/link";
 import { useTranslations } from 'next-intl';
 import { useState, useEffect, useRef } from "react";
-import { AnimatePresence, motion } from "framer-motion";
+
+const SubjectCardsSection = dynamic(() => import("@/components/SubjectCardsSection").then(m => ({ default: m.SubjectCardsSection })), { ssr: false, loading: () => <div style={{ minHeight: 700 }} /> });
+const BelieveSection      = dynamic(() => import("@/components/BelieveSection").then(m => ({ default: m.BelieveSection })), { ssr: false, loading: () => <div style={{ minHeight: 600 }} /> });
+const ChatFeatureSection  = dynamic(() => import("@/components/ChatFeatureSection").then(m => ({ default: m.ChatFeatureSection })), { ssr: false, loading: () => <div style={{ minHeight: 500 }} /> });
+const CoursesSection      = dynamic(() => import("@/components/CoursesSection").then(m => ({ default: m.CoursesSection })), { ssr: false, loading: () => <div style={{ minHeight: 600 }} /> });
+const WorksSection        = dynamic(() => import("@/components/WorksSection").then(m => ({ default: m.WorksSection })), { ssr: false, loading: () => <div style={{ minHeight: 500 }} /> });
+const PlatformFeatures    = dynamic(() => import("@/components/PlatformFeatures").then(m => ({ default: m.PlatformFeatures })), { ssr: false, loading: () => <div style={{ minHeight: 400 }} /> });
+const PricingSection      = dynamic(() => import("@/components/PricingSection").then(m => ({ default: m.PricingSection })), { ssr: false, loading: () => <div style={{ minHeight: 500 }} /> });
+const TeamSection         = dynamic(() => import("@/components/TeamSection").then(m => ({ default: m.TeamSection })), { ssr: false, loading: () => <div style={{ minHeight: 400 }} /> });
+
+function LazySection({ children, minHeight = 400 }: { children: React.ReactNode; minHeight?: number }) {
+  const ref = useRef<HTMLDivElement>(null);
+  const [mounted, setMounted] = useState(false);
+  useEffect(() => {
+    const el = ref.current;
+    if (!el) return;
+    const io = new IntersectionObserver(
+      ([entry]) => { if (entry.isIntersecting) { setMounted(true); io.disconnect(); } },
+      { rootMargin: "400px" }
+    );
+    io.observe(el);
+    return () => io.disconnect();
+  }, []);
+  return (
+    <div ref={ref} style={mounted ? undefined : { minHeight }}>
+      {mounted ? children : null}
+    </div>
+  );
+}
 
 export default function Home() {
   const t = useTranslations('Trusted');
   const commonT = useTranslations('Common');
-  const coursesRef = useRef<HTMLDivElement>(null);
   const [showButton, setShowButton] = useState(false);
+  const [coursesEl, setCoursesEl] = useState<HTMLDivElement | null>(null);
 
   useEffect(() => {
+    if (!coursesEl) return;
     const observer = new IntersectionObserver(
       ([entry]) => {
-        // Show button even if only a tiny bit of the section is visible
         if (entry.isIntersecting) {
           setShowButton(true);
         } else if (entry.boundingClientRect.top > 0) {
-          // Hide button only if we are ABOVE the section
           setShowButton(false);
         }
       },
       { threshold: 0.01 }
     );
-
-    if (coursesRef.current) {
-      observer.observe(coursesRef.current);
-    }
-
+    observer.observe(coursesEl);
     return () => observer.disconnect();
-  }, []);
+  }, [coursesEl]);
 
   return (
     <div className="min-h-screen font-roboto bg-white selection:bg-green/10 selection:text-green">
       <div className="absolute top-0 left-0 w-full h-[120vh] bg-gradient-to-b from-green/[0.03] to-transparent pointer-events-none" />
 
-      <main className="flex flex-col pt-4 md:pt-[72px]">
+      <main className="flex flex-col pt-0 md:pt-[72px]">
         <HeroSection />
 
         {/* Trusted Strip */}
@@ -71,29 +89,26 @@ export default function Home() {
           </div>
         </div>
 
-        <BelieveSection />
-        <ChatFeatureSection />
-        <div ref={coursesRef}>
-          <CoursesSection />
-        </div>
-        <WorksSection />
-        <PlatformFeatures />
-        <TeamSection />
+        <LazySection minHeight={700}><SubjectCardsSection /></LazySection>
+        <LazySection minHeight={600}><BelieveSection /></LazySection>
+        <LazySection minHeight={500}><ChatFeatureSection /></LazySection>
+        <LazySection minHeight={600}>
+          <div ref={setCoursesEl}><CoursesSection /></div>
+        </LazySection>
+        <LazySection minHeight={500}><WorksSection /></LazySection>
+        <LazySection minHeight={400}><PlatformFeatures /></LazySection>
+        <LazySection minHeight={500}><PricingSection /></LazySection>
+        <LazySection minHeight={400}><TeamSection /></LazySection>
 
-        <AnimatePresence>
-          {showButton && (
-            <Link href="/explore">
-              <motion.button
-                initial={{ opacity: 0, scale: 0.8, y: 20 }}
-                animate={{ opacity: 1, scale: 1, y: 0 }}
-                exit={{ opacity: 0, scale: 0.8, y: 20 }}
-                className="fixed bottom-24 right-4 md:bottom-8 md:right-8 bg-dark text-white font-semibold text-sm p-[14px_26px] rounded-full shadow-[0_6px_28px_rgba(0,0,0,0.28)] z-[100] transition-all hover:-translate-y-0.5 hover:shadow-[0_10px_36px_rgba(0,0,0,0.35)]"
-              >
-                {commonT('start_learning')} →
-              </motion.button>
-            </Link>
-          )}
-        </AnimatePresence>
+        <Link href="/explore" aria-hidden={!showButton} tabIndex={showButton ? 0 : -1}>
+          <button
+            className={`fixed bottom-24 right-4 md:bottom-8 md:right-8 bg-dark text-white font-semibold text-sm p-[14px_26px] rounded-full shadow-[0_6px_28px_rgba(0,0,0,0.28)] z-[100] transition-[opacity,transform] duration-300 hover:-translate-y-0.5 hover:shadow-[0_10px_36px_rgba(0,0,0,0.35)] ${
+              showButton ? 'opacity-100 scale-100 translate-y-0 pointer-events-auto' : 'opacity-0 scale-[0.8] translate-y-5 pointer-events-none'
+            }`}
+          >
+            {commonT('start_learning')} →
+          </button>
+        </Link>
       </main>
 
     </div>

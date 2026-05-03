@@ -8,7 +8,7 @@ import { getGuidances, getSubjects } from '@/services/data';
 import {
     GraduationCap, Upload, Video, FileText, Trash2,
     Plus, X, CheckCircle, Loader2, BookOpen, Clock,
-    Camera, Eye, Download, Star, Settings, MessageSquare,
+    Camera, Eye, Download, Star, Settings, MessageSquare, LogOut,
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import Link from 'next/link';
@@ -47,7 +47,7 @@ interface AppData {
 }
 
 export default function InstructorDashboardPage() {
-    const { user, loading: authLoading, checkAuth, getPhotoURL } = useAuth();
+    const { user, loading: authLoading, checkAuth, getPhotoURL, logout } = useAuth();
     const router = useRouter();
 
     const [appData, setAppData] = useState<AppData | null>(null);
@@ -303,13 +303,22 @@ export default function InstructorDashboardPage() {
                         </div>
                     </div>
 
-                    <Link
-                        href="/settings"
-                        className="flex items-center gap-1.5 px-3 py-1.5 bg-white/15 backdrop-blur-sm border border-white/20 rounded-xl text-white text-xs font-semibold hover:bg-white/25 transition-all flex-shrink-0 mb-1"
-                    >
-                        <Settings size={13} />
-                        Edit Info
-                    </Link>
+                    <div className="flex items-center gap-2 flex-shrink-0 mb-1">
+                        <Link
+                            href="/settings"
+                            className="flex items-center gap-1.5 px-3 py-1.5 bg-white/15 backdrop-blur-sm border border-white/20 rounded-xl text-white text-xs font-semibold hover:bg-white/25 transition-all"
+                        >
+                            <Settings size={13} />
+                            Edit Info
+                        </Link>
+                        <button
+                            onClick={() => logout().then(() => router.push("/"))}
+                            className="flex items-center gap-1.5 px-3 py-1.5 bg-red-500/20 backdrop-blur-sm border border-red-400/30 rounded-xl text-red-200 text-xs font-semibold hover:bg-red-500/35 transition-all"
+                        >
+                            <LogOut size={13} />
+                            Sign Out
+                        </button>
+                    </div>
                 </div>
             </div>
 

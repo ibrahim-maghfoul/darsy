@@ -135,6 +135,23 @@ export class ProgressController {
             user.progress.usageTime = Math.round(totalUsageSeconds / 60);
             user.progress.learningTime = user.progress.usageTime;
 
+            // Append today's minutes to timeSpentHistory
+            const addedMinutes = Math.round((additionalTimeSpent || 0) / 60);
+            if (addedMinutes > 0) {
+                const today = new Date().toISOString().split('T')[0];
+                if (!user.progress.timeSpentHistory) user.progress.timeSpentHistory = [];
+                const todayIdx = user.progress.timeSpentHistory.findIndex((h: any) => h.date === today);
+                if (todayIdx >= 0) {
+                    user.progress.timeSpentHistory[todayIdx].minutes += addedMinutes;
+                } else {
+                    user.progress.timeSpentHistory.push({ date: today, minutes: addedMinutes });
+                }
+                // Keep only last 90 days
+                if (user.progress.timeSpentHistory.length > 90) {
+                    user.progress.timeSpentHistory = user.progress.timeSpentHistory.slice(-90);
+                }
+            }
+
             user.markModified('progress');
             await user.save();
 

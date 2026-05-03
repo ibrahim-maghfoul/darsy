@@ -2,6 +2,7 @@ import React, { lazy, Suspense } from 'react';
 import { BrowserRouter, Routes, Route, Navigate, useNavigate } from 'react-router-dom';
 import Layout from './components/Layout';
 import { AuthProvider } from './context/AuthContext';
+import { DarsyLoader } from './components/DarsyLoader';
 import './index.css';
 
 const Dashboard         = lazy(() => import('./pages/Dashboard'));
@@ -43,9 +44,8 @@ const TAB_ROUTES = {
 };
 
 const PageLoader = () => (
-  <div style={{ padding: '3rem', textAlign: 'center', color: 'var(--text-secondary)' }}>
-    <div className="spin" style={{ width: 24, height: 24, border: '3px solid var(--border)', borderTopColor: 'var(--green)', borderRadius: '50%', margin: '0 auto 8px' }} />
-    Loading...
+  <div style={{ minHeight: '60vh', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+    <DarsyLoader size={90} />
   </div>
 );
 

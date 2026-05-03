@@ -81,9 +81,9 @@ export default function NewsGrid({ items }: { items: NewsItem[] }) {
 
     return (
         <div className="space-y-10">
-            {/* Tabs Navigation */}
+            {/* Tabs Navigation — design-system pill style, scrollable on mobile */}
             <div className="flex items-center justify-center mb-10">
-                <div className="flex items-center bg-white rounded-[20px] p-1.5 shadow-lg shadow-black/[0.04] border border-green/8">
+                <div className="flex items-center bg-white rounded-[22px] p-1.5 shadow-lg shadow-black/[0.05] border border-green/10 overflow-x-auto scrollbar-none max-w-full gap-0.5">
                     {tabs.map((tab) => {
                         const Icon = TAB_ICONS[tab];
                         const isActive = activeTab === tab;
@@ -92,27 +92,30 @@ export default function NewsGrid({ items }: { items: NewsItem[] }) {
                             <button
                                 key={tab}
                                 onClick={() => setActiveTab(tab)}
-                                className={`relative flex items-center gap-2 px-5 py-2.5 rounded-[14px] font-bold text-[13px] transition-all duration-200 whitespace-nowrap ${
+                                className={`relative flex items-center gap-1.5 px-3 sm:px-4 py-2.5 rounded-[16px] font-bold text-[13px] transition-colors duration-150 whitespace-nowrap shrink-0 ${
                                     isActive
                                         ? 'text-white'
-                                        : 'text-dark/40 hover:text-dark/70 hover:bg-green/[0.04]'
+                                        : 'text-dark/40 hover:text-dark/70 hover:bg-green/[0.05]'
                                 }`}
                             >
                                 {isActive && (
                                     <motion.div
                                         layoutId="news-tab-bg"
-                                        className="absolute inset-0 bg-green rounded-[14px] shadow-lg shadow-green/25"
-                                        transition={{ type: 'spring', stiffness: 400, damping: 28 }}
+                                        className="absolute inset-0 rounded-[16px] shadow-lg shadow-green/20"
+                                        style={{ background: 'repeating-linear-gradient(45deg,rgba(255,255,255,0.04) 0px,rgba(255,255,255,0.04) 2px,transparent 2px,transparent 8px),linear-gradient(135deg,#3aaa6a 0%,#1e7a46 100%)' }}
+                                        transition={{ type: 'spring', stiffness: 450, damping: 32 }}
                                     />
                                 )}
-                                <span className="relative z-10 flex items-center gap-2">
-                                    <Icon size={15} />
-                                    {getTabLabel(tab)}
+                                <span className="relative z-10 flex items-center gap-1.5">
+                                    {/* icon always visible */}
+                                    <Icon size={16} />
+                                    {/* text hidden on small screens to save space */}
+                                    <span className="hidden sm:inline">{getTabLabel(tab)}</span>
                                     <span
-                                        className={`text-[10px] px-1.5 py-0.5 rounded-full font-black min-w-[20px] text-center transition-colors ${
+                                        className={`text-[10px] px-1.5 py-0.5 rounded-full font-black min-w-[18px] text-center transition-colors ${
                                             isActive
-                                                ? 'bg-white/25 text-white'
-                                                : 'bg-green/8 text-dark/30'
+                                                ? 'bg-white/20 text-white'
+                                                : 'bg-green/8 text-dark/35'
                                         }`}
                                     >
                                         {count}

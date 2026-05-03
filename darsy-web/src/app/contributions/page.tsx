@@ -2,7 +2,8 @@
 
 import { useState, useEffect, useMemo } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { Download, FileText, Plus, Loader2 } from "lucide-react";
+import { useTranslations } from "next-intl";
+import { Download, FileText, Plus, Loader2, Upload, X, ChevronDown } from "lucide-react";
 import CircleRing from "@/components/ui/CircleRing";
 import { useAuth } from "@/contexts/AuthContext";
 import { useSnackbar } from "@/contexts/SnackbarContext";
@@ -31,6 +32,7 @@ interface RecentContribution {
 }
 
 export default function ContributionsPage() {
+    const t = useTranslations("Contributions");
     const { user, getPhotoURL, getResourceURL } = useAuth();
     const { showSnackbar } = useSnackbar();
     
@@ -110,16 +112,24 @@ export default function ContributionsPage() {
             .catch(() => {});
     }, [user]);
 
+    const handleCloseModal = () => {
+        setIsAddModalOpen(false);
+        setResourceTitle("");
+        setUploadFile(null);
+        setSelectedSubject("");
+        setSelectedLesson("");
+    };
+
     const handleAddContribution = async (e: React.FormEvent) => {
         e.preventDefault();
         if (!uploadFile || !resourceTitle || !selectedSubject) {
-            showSnackbar("Please fill all required fields", "error");
+            showSnackbar(t("fill_required"), "error");
             return;
         }
 
         // Check 10MB file size limit
         if (uploadFile.size > 10 * 1024 * 1024) {
-            showSnackbar("File size must be 10MB or less", "error");
+            showSnackbar(t("file_too_large"), "error");
             return;
         }
 
@@ -154,10 +164,8 @@ export default function ContributionsPage() {
                 }
             } catch {}
 
-            showSnackbar("Contributed successfully!", "success");
-            setIsAddModalOpen(false);
-            setResourceTitle("");
-            setUploadFile(null);
+            showSnackbar(t("success"), "success");
+            handleCloseModal();
             
             // Refresh recent
             const recentParams = guidanceId ? { params: { guidanceId } } : {};
@@ -212,15 +220,15 @@ export default function ContributionsPage() {
                                 animate={{ opacity: 1, x: 0 }}
                                 className="text-4xl md:text-5xl font-black text-[#112A46] tracking-tight mb-2 pt-4"
                             >
-                                Contributions <span className="text-green">Hub</span>
+                                {t("page_title")} <span className="text-green">{t("page_title_highlight")}</span>
                             </motion.h1>
-                            <motion.p 
+                            <motion.p
                                 initial={{ opacity: 0, x: -20 }}
                                 animate={{ opacity: 1, x: 0 }}
                                 transition={{ delay: 0.1 }}
                                 className="text-lg text-muted-foreground font-medium"
                             >
-                                Connecting members through knowledge sharing.
+                                {t("page_subtitle")}
                             </motion.p>
 
                             {/* Contribution status badge — fixed height to prevent ring jump */}
@@ -240,13 +248,13 @@ export default function ContributionsPage() {
                                     >
                                         <span className={`w-2 h-2 rounded-full ${contributionStatus.remaining === 0 ? 'bg-red-500' : 'bg-green'}`} />
                                         {contributionStatus.remaining === 0
-                                            ? 'Monthly limit reached (0 / 30 left)'
-                                            : `${contributionStatus.remaining} / 30 contributions remaining this month`}
+                                            ? t("limit_reached")
+                                            : t("limit_remaining", { count: contributionStatus.remaining })}
                                     </motion.div>
                                 )}
                                 {contributionStatus?.isPremium && (
                                     <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full text-sm font-bold bg-amber-50 border border-amber-200 text-amber-700">
-                                        ✦ Premium — Unlimited contributions
+                                        {t("premium_unlimited")}
                                     </div>
                                 )}
                             </div>
@@ -270,90 +278,92 @@ export default function ContributionsPage() {
                     <div className="lg:col-span-6 space-y-6">
                         <div className="bg-[#fdfdfd] rounded-[48px] border border-green/5 shadow-2xl shadow-green/5 overflow-hidden flex flex-col md:min-h-[700px] h-full">
                             <div className="p-6 border-b border-green/5 bg-white/50 backdrop-blur-md sticky top-0 z-10">
-                                <h2 className="text-2xl font-black text-[#112A46]">Recent Activity</h2>
-                                <p className="text-sm text-muted-foreground font-medium mb-4">Latest shared resources</p>
+                                <h2 className="text-2xl font-black text-[#112A46]">{t("recent_activity")}</h2>
+                                <p className="text-sm text-muted-foreground font-medium mb-4">{t("latest_shared")}</p>
                                 <button
                                     onClick={() => setIsAddModalOpen(true)}
                                     className="w-full flex justify-center items-center gap-2 bg-green text-white px-4 py-3 rounded-2xl font-bold hover:shadow-lg hover:shadow-green/30 hover:-translate-y-0.5 transition-all group"
                                 >
                                     <Plus size={20} className="transition-transform group-hover:rotate-90" />
-                                    Share Your Resources
+                                    {t("share_btn")}
                                 </button>
                             </div>
 
-                            <div className="flex-1 overflow-y-auto p-6 flex flex-col gap-4 custom-scrollbar bg-gradient-to-b from-transparent to-green/[0.02]">
+                            <div className="flex-1 overflow-y-auto p-4 flex flex-col gap-3 custom-scrollbar">
                                 {loading ? (
                                     Array(5).fill(0).map((_, i) => (
-                                        <div key={i} className="bg-white p-5 rounded-[24px] border border-green/5 flex items-center gap-4 animate-pulse">
-                                            <div className="w-12 h-12 bg-gray-50 rounded-full shrink-0"></div>
+                                        <div key={i} className="bg-white rounded-[18px] border border-green/[0.11] p-4 flex items-center gap-3"
+                                            style={{ boxShadow: '0 2px 10px rgba(0,0,0,0.05)', animation: 'shimmer 1.5s ease-in-out infinite', background: 'linear-gradient(90deg,#f3f4f3 0%,#eaf2ed 40%,#f3f4f3 80%)', backgroundSize: '200% 100%', animationDelay: `${i * 0.1}s` }}>
+                                            <div className="w-10 h-10 bg-green/5 rounded-[11px] shrink-0" />
                                             <div className="flex-1 space-y-2">
-                                                <div className="h-4 bg-gray-50 rounded w-2/3"></div>
-                                                <div className="h-3 bg-gray-50 rounded w-1/3"></div>
+                                                <div className="h-3.5 bg-green/5 rounded-full w-2/3" />
+                                                <div className="h-2.5 bg-green/5 rounded-full w-1/3" />
                                             </div>
+                                            <div className="w-8 h-8 bg-green/5 rounded-full shrink-0" />
                                         </div>
                                     ))
-                                ) : recent.length > 0 ? (
-                                recent.map((item, index) => {
-                                    const avatarUrl = item.user.photoURL ? getPhotoURL(item.user.photoURL) : null;
-                                    const fileUrl = getResourceURL(item.url);
-                                    const fileType = getFileType(item.url);
-                                    const isEven = index % 2 === 0;
-                                    
-                                    return (
-                                        <motion.div 
-                                            key={item._id}
-                                            initial={{ opacity: 0, x: isEven ? -20 : 20 }}
-                                            animate={{ opacity: 1, x: 0 }}
-                                            transition={{ delay: index * 0.05 }}
-                                            className={`flex items-end gap-3 group w-[85%] ${isEven ? 'self-start' : 'self-end flex-row-reverse'}`}
-                                        >
-                                            <div className="w-8 h-8 rounded-full overflow-hidden shrink-0 border border-green/10 bg-green/5 flex items-center justify-center relative z-10">
-                                                {avatarUrl ? (
-                                                    <Image src={avatarUrl} alt={item.user.displayName} fill className="object-cover" />
-                                                ) : (
-                                                    <span className="text-green font-black text-xs">{item.user.displayName.charAt(0)}</span>
-                                                )}
-                                            </div>
-
-                                            <div className={`flex-1 min-w-0 p-4 py-3 border border-green/10 shadow-sm hover:shadow-md transition-all flex flex-col ${
-                                                isEven 
-                                                    ? 'rounded-t-[24px] rounded-br-[24px] rounded-bl-sm bg-white hover:border-green/20' 
-                                                    : 'rounded-t-[24px] rounded-bl-[24px] rounded-br-sm bg-green/5 hover:border-green/30'
-                                            }`}>
-                                                <div className={`flex items-center gap-2 mb-1 ${isEven ? '' : 'flex-row-reverse'}`}>
-                                                    <span className="text-[10px] font-black uppercase tracking-wider px-2 py-0.5 bg-green/10 text-green rounded-md">
-                                                        {fileType}
-                                                    </span>
-                                                    <span className={`text-[11px] font-bold text-green/60 leading-none mt-0.5 ${isEven ? 'ml-auto' : 'mr-auto'}`}>
-                                                        {formatTimeAgo(item.createdAt)}
-                                                    </span>
+                                ) : recent.length === 0 ? (
+                                    <div className="text-center py-12 px-6 rounded-[18px] border border-dashed border-green/[0.11] m-2">
+                                        <FileText className="mx-auto text-green/20 w-10 h-10 mb-3" />
+                                        <p className="text-sm text-dark/30 font-bold">{t("no_recent")}</p>
+                                    </div>
+                                ) : (
+                                    recent.map((item, index) => {
+                                        const avatarUrl = item.user.photoURL ? getPhotoURL(item.user.photoURL) : null;
+                                        const fileUrl = getResourceURL(item.url);
+                                        const fileType = getFileType(item.url);
+                                        return (
+                                            <motion.div
+                                                key={item._id}
+                                                initial={{ opacity: 0, y: 18 }}
+                                                whileInView={{ opacity: 1, y: 0 }}
+                                                viewport={{ once: true, margin: "-20px" }}
+                                                transition={{ duration: 0.35, ease: [0.16, 1, 0.3, 1], delay: index * 0.06 }}
+                                                className="group bg-white rounded-[18px] border border-green/[0.11] p-4 flex items-center gap-3 transition-all duration-[280ms] cursor-default"
+                                                style={{ boxShadow: '0 2px 10px rgba(0,0,0,0.05)' }}
+                                                whileHover={{ y: -3, boxShadow: '0 10px 28px rgba(58,170,106,0.14), 0 3px 10px rgba(58,170,106,0.08)', borderColor: 'rgba(58,170,106,0.35)' } as any}
+                                            >
+                                                {/* Avatar */}
+                                                <div className="w-10 h-10 rounded-[11px] overflow-hidden shrink-0 border border-green/10 bg-green/5 flex items-center justify-center relative">
+                                                    {avatarUrl ? (
+                                                        <Image src={avatarUrl} alt={item.user.displayName} fill className="object-cover" />
+                                                    ) : (
+                                                        <span className="text-green font-black text-sm">{item.user.displayName.charAt(0)}</span>
+                                                    )}
                                                 </div>
-                                                <div className={`flex flex-col gap-1 ${isEven ? 'text-left' : 'text-right'}`}>
-                                                    <h3 className="font-bold text-[#112A46] text-sm group-hover:text-green transition-colors leading-tight">
+
+                                                {/* Content */}
+                                                <div className="flex-1 min-w-0">
+                                                    <div className="flex items-center gap-2 mb-0.5">
+                                                        <span className="text-[10px] font-black uppercase tracking-wider px-1.5 py-0.5 bg-green/[0.07] text-green rounded-md">
+                                                            {fileType}
+                                                        </span>
+                                                        <span className="text-[10px] font-bold text-dark/30 ml-auto shrink-0">
+                                                            {formatTimeAgo(item.createdAt)}
+                                                        </span>
+                                                    </div>
+                                                    <h3 className="font-bold text-[#112A46] text-[13px] group-hover:text-green transition-colors leading-tight truncate">
                                                         {item.resourceTitle}
                                                     </h3>
-                                                    <p className="text-[11.5px] text-muted-foreground font-medium truncate">
-                                                        {item.subjectTitle && item.subjectTitle !== 'General' ? item.subjectTitle : 'Subject'} • {item.lessonTitle && item.lessonTitle !== 'General' ? item.lessonTitle : 'Lesson'}
+                                                    <p className="text-[11px] text-dark/40 font-medium truncate mt-0.5">
+                                                        <span className="font-bold text-dark/55">{item.user.displayName}</span>
+                                                        {(item.subjectTitle && item.subjectTitle !== 'General') ? ` · ${item.subjectTitle}` : ''}
                                                     </p>
                                                 </div>
-                                            </div>
-                                            
-                                            <a 
-                                                href={fileUrl || '#'} 
-                                                target="_blank" 
-                                                rel="noopener noreferrer"
-                                                className={`w-8 h-8 rounded-full bg-white border border-green/10 text-green/60 flex items-center justify-center hover:bg-green hover:text-white transition-all shrink-0 shadow-sm self-center ${isEven ? 'ml-1' : 'mr-1'}`}
-                                            >
-                                                <Download size={14} />
-                                            </a>
-                                        </motion.div>
-                                    );
-                                })
-                            ) : (
-                                    <div className="text-center py-12 px-6 rounded-[32px] border border-dashed border-gray-200/60 m-4">
-                                        <FileText className="mx-auto text-gray-300 w-12 h-12 mb-4" />
-                                        <p className="text-sm text-gray-400 font-bold">No recent shares yet</p>
-                                    </div>
+
+                                                {/* Download */}
+                                                <a
+                                                    href={fileUrl || '#'}
+                                                    target="_blank"
+                                                    rel="noopener noreferrer"
+                                                    onClick={(e) => e.stopPropagation()}
+                                                    className="w-8 h-8 rounded-full bg-green/5 border border-green/[0.11] text-green/50 flex items-center justify-center hover:bg-green hover:text-white hover:border-green transition-all shrink-0 shadow-sm"
+                                                >
+                                                    <Download size={13} />
+                                                </a>
+                                            </motion.div>
+                                        );
+                                    })
                                 )}
                             </div>
                         </div>
@@ -368,72 +378,102 @@ export default function ContributionsPage() {
                             initial={{ opacity: 0 }}
                             animate={{ opacity: 1 }}
                             exit={{ opacity: 0 }}
-                            onClick={() => setIsAddModalOpen(false)}
+                            onClick={handleCloseModal}
                             className="absolute inset-0 bg-dark/40 backdrop-blur-sm"
                         />
                         <motion.div
-                            initial={{ opacity: 0, y: 60 }}
+                            initial={{ opacity: 0, y: 48 }}
                             animate={{ opacity: 1, y: 0 }}
-                            exit={{ opacity: 0, y: 40 }}
-                            className="relative bg-white w-full md:max-w-xl mx-3 md:mx-0 rounded-[32px] md:rounded-[40px] shadow-2xl overflow-hidden p-5 md:p-8 max-h-[92dvh] overflow-y-auto mb-3 md:mb-0"
+                            exit={{ opacity: 0, y: 32 }}
+                            transition={{ duration: 0.35, ease: [0.16, 1, 0.3, 1] }}
+                            className="relative bg-white w-full md:max-w-lg mx-3 md:mx-0 rounded-t-[28px] md:rounded-[28px] overflow-x-hidden overflow-y-auto max-h-[92dvh]"
+                            style={{ boxShadow: '0 20px 60px rgba(0,0,0,0.08), 0 4px 16px rgba(0,0,0,0.04)' }}
                         >
                             {/* Drag handle — mobile only */}
-                            <div className="w-10 h-1 bg-gray-200 rounded-full mx-auto mb-4 md:hidden" />
+                            <div className="w-10 h-1 bg-green/10 rounded-full mx-auto mt-3 md:hidden" />
 
-                            <div className="flex items-center justify-between mb-5 md:mb-8">
-                                <h3 className="text-xl md:text-2xl font-black text-[#112A46]">Contribute Resource</h3>
-                                <button onClick={() => setIsAddModalOpen(false)} className="w-9 h-9 rounded-full bg-gray-100 flex items-center justify-center text-gray-400 hover:bg-red-50 hover:text-red-500 transition-colors">
-                                    <Plus className="rotate-45" size={18} />
+                            {/* Header with icon */}
+                            <div className="px-6 pt-5 pb-4 flex items-start justify-between gap-4 border-b border-green/[0.08]">
+                                <div className="flex items-center gap-3">
+                                    <div
+                                        className="w-11 h-11 rounded-[13px] flex items-center justify-center shrink-0 relative overflow-hidden"
+                                        style={{ background: 'linear-gradient(135deg, #f0faf5, #e8f5ee)' }}
+                                    >
+                                        <div
+                                            className="absolute inset-0 opacity-60"
+                                            style={{ backgroundImage: 'radial-gradient(circle, rgba(58,170,106,0.18) 1px, transparent 1px)', backgroundSize: '14px 14px' }}
+                                        />
+                                        <Upload size={18} className="text-green relative z-10" />
+                                    </div>
+                                    <div>
+                                        <h3 className="text-lg font-black text-dark">{t("share_modal_title")}</h3>
+                                        <p className="text-[11px] text-dark/40 font-medium">{t("share_modal_subtitle")}</p>
+                                    </div>
+                                </div>
+                                <button
+                                    onClick={handleCloseModal}
+                                    className="w-8 h-8 rounded-full border border-green/[0.11] bg-green/[0.04] flex items-center justify-center text-dark/40 hover:bg-red-50 hover:text-red-400 hover:border-red-200 transition-all shrink-0 mt-1"
+                                >
+                                    <X size={14} />
                                 </button>
                             </div>
 
-                            <form onSubmit={handleAddContribution} className="space-y-4 md:space-y-6">
+                            <form onSubmit={handleAddContribution} className="p-6 space-y-5">
+                                {/* Resource Title */}
                                 <div className="space-y-1.5">
-                                    <label className="text-xs font-black uppercase tracking-widest text-[#112A46]/60 ml-2">Resource Title</label>
+                                    <label className="text-[10px] font-black uppercase tracking-widest text-dark/40 ml-1">{t("resource_title_label")}</label>
                                     <input
                                         type="text"
                                         required
                                         value={resourceTitle}
                                         onChange={(e) => setResourceTitle(e.target.value)}
-                                        placeholder="e.g. Physics Summary Chapter 1"
-                                        className="w-full h-12 md:h-14 px-4 md:px-6 rounded-2xl bg-gray-50 border-2 border-transparent focus:border-green/20 focus:bg-white transition-all outline-none font-bold text-[#112A46] text-sm"
+                                        placeholder={t("resource_placeholder")}
+                                        className="w-full h-12 px-4 rounded-[12px] bg-green/[0.04] border border-green/[0.11] focus:border-green/[0.35] focus:bg-white transition-all outline-none font-bold text-dark text-sm placeholder:text-dark/25 placeholder:font-medium"
                                     />
                                 </div>
 
+                                {/* Subject + Lesson */}
                                 <div className="grid grid-cols-2 gap-3">
                                     <div className="space-y-1.5">
-                                        <label className="text-xs font-black uppercase tracking-widest text-[#112A46]/60 ml-2">Subject</label>
-                                        <select
-                                            required
-                                            value={selectedSubject}
-                                            onChange={(e) => setSelectedSubject(e.target.value)}
-                                            className="w-full h-12 md:h-14 px-3 md:px-6 rounded-2xl bg-gray-50 border-2 border-transparent focus:border-green/20 focus:bg-white transition-all outline-none font-bold text-[#112A46] appearance-none text-sm"
-                                        >
-                                            <option value="">Select subject</option>
-                                            {subjects.map(s => (
-                                                <option key={s._id} value={s._id}>{s.title}</option>
-                                            ))}
-                                        </select>
+                                        <label className="text-[10px] font-black uppercase tracking-widest text-dark/40 ml-1">{t("subject_label")}</label>
+                                        <div className="relative">
+                                            <select
+                                                required
+                                                value={selectedSubject}
+                                                onChange={(e) => setSelectedSubject(e.target.value)}
+                                                className="w-full h-12 pl-4 pr-8 rounded-[12px] bg-green/[0.04] border border-green/[0.11] focus:border-green/[0.35] focus:bg-white transition-all outline-none font-bold text-dark appearance-none text-sm"
+                                            >
+                                                <option value="">{t("subject_label")}</option>
+                                                {subjects.map(s => (
+                                                    <option key={s._id} value={s._id}>{s.title}</option>
+                                                ))}
+                                            </select>
+                                            <ChevronDown size={13} className="absolute right-3 top-1/2 -translate-y-1/2 text-dark/30 pointer-events-none" />
+                                        </div>
                                     </div>
 
                                     <div className="space-y-1.5">
-                                        <label className="text-xs font-black uppercase tracking-widest text-[#112A46]/60 ml-2">Lesson</label>
-                                        <select
-                                            value={selectedLesson}
-                                            onChange={(e) => setSelectedLesson(e.target.value)}
-                                            disabled={!selectedSubject || lessons.length === 0}
-                                            className="w-full h-12 md:h-14 px-3 md:px-6 rounded-2xl bg-gray-50 border-2 border-transparent focus:border-green/20 focus:bg-white transition-all outline-none font-bold text-[#112A46] appearance-none disabled:opacity-50 text-sm"
-                                        >
-                                            <option value="">Select lesson</option>
-                                            {lessons.map(l => (
-                                                <option key={l._id} value={l._id}>{l.title}</option>
-                                            ))}
-                                        </select>
+                                        <label className="text-[10px] font-black uppercase tracking-widest text-dark/40 ml-1">{t("lesson_label")}</label>
+                                        <div className="relative">
+                                            <select
+                                                value={selectedLesson}
+                                                onChange={(e) => setSelectedLesson(e.target.value)}
+                                                disabled={!selectedSubject || lessons.length === 0}
+                                                className="w-full h-12 pl-4 pr-8 rounded-[12px] bg-green/[0.04] border border-green/[0.11] focus:border-green/[0.35] focus:bg-white transition-all outline-none font-bold text-dark appearance-none disabled:opacity-40 text-sm"
+                                            >
+                                                <option value="">{t("lesson_label")}</option>
+                                                {lessons.map(l => (
+                                                    <option key={l._id} value={l._id}>{l.title}</option>
+                                                ))}
+                                            </select>
+                                            <ChevronDown size={13} className="absolute right-3 top-1/2 -translate-y-1/2 text-dark/30 pointer-events-none" />
+                                        </div>
                                     </div>
                                 </div>
 
+                                {/* File Upload Zone */}
                                 <div className="space-y-1.5">
-                                    <label className="text-xs font-black uppercase tracking-widest text-[#112A46]/60 ml-2">File</label>
+                                    <label className="text-[10px] font-black uppercase tracking-widest text-dark/40 ml-1">File</label>
                                     <input
                                         type="file"
                                         required
@@ -443,30 +483,36 @@ export default function ContributionsPage() {
                                     />
                                     <label
                                         htmlFor="contribution-file"
-                                        className="flex flex-col items-center justify-center w-full h-24 md:h-32 rounded-2xl border-2 border-dashed border-gray-200 bg-gray-50 hover:bg-green/5 hover:border-green/20 transition-all cursor-pointer group"
+                                        className="flex flex-col items-center justify-center w-full h-28 rounded-[14px] border border-dashed border-green/[0.22] bg-green/[0.03] hover:bg-green/[0.06] hover:border-green/[0.40] transition-all cursor-pointer group"
                                     >
                                         {uploadFile ? (
                                             <div className="text-center px-4">
-                                                <FileText className="mx-auto text-green w-6 h-6 mb-1" />
-                                                <p className="text-sm font-bold text-dark truncate max-w-[200px]">{uploadFile.name}</p>
-                                                <p className="text-[10px] text-muted-foreground">{(uploadFile.size / (1024 * 1024)).toFixed(2)} MB</p>
+                                                <div className="w-9 h-9 rounded-[11px] bg-green/10 flex items-center justify-center mx-auto mb-2">
+                                                    <FileText size={16} className="text-green" />
+                                                </div>
+                                                <p className="text-sm font-bold text-dark truncate max-w-[220px]">{uploadFile.name}</p>
+                                                <p className="text-[10px] text-dark/35 font-medium mt-0.5">{(uploadFile.size / (1024 * 1024)).toFixed(2)} MB</p>
                                             </div>
                                         ) : (
                                             <>
-                                                <Plus className="text-gray-300 group-hover:text-green mb-1" size={24} />
-                                                <span className="text-sm font-bold text-gray-400">Upload PDF or Document</span>
+                                                <div className="w-9 h-9 rounded-[11px] bg-green/[0.07] group-hover:bg-green/[0.12] flex items-center justify-center mb-2 transition-colors">
+                                                    <Upload size={15} className="text-green/50 group-hover:text-green transition-colors" />
+                                                </div>
+                                                <span className="text-sm font-bold text-dark/40 group-hover:text-dark/60 transition-colors">{t("drop_file")}</span>
+                                                <span className="text-[10px] text-dark/25 font-medium mt-0.5">{t("max_size")}</span>
                                             </>
                                         )}
                                     </label>
                                 </div>
 
+                                {/* Submit */}
                                 <button
                                     disabled={isUploading}
                                     type="submit"
-                                    className="w-full h-12 md:h-16 bg-[#112A46] text-white rounded-2xl md:rounded-3xl font-black text-base md:text-lg hover:shadow-2xl hover:shadow-dark/20 transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-3"
+                                    className="w-full h-12 bg-green text-white rounded-[12px] font-bold text-sm hover:bg-green/90 hover:shadow-lg hover:shadow-green/20 hover:-translate-y-0.5 transition-all disabled:opacity-50 disabled:cursor-not-allowed disabled:translate-y-0 flex items-center justify-center gap-2"
                                 >
-                                    {isUploading ? <Loader2 className="animate-spin" size={18} /> : <Plus size={18} />}
-                                    {isUploading ? "Uploading..." : "Publish Resource"}
+                                    {isUploading ? <Loader2 className="animate-spin" size={16} /> : <Upload size={16} />}
+                                    {isUploading ? t("uploading") : t("publish_btn")}
                                 </button>
                             </form>
                         </motion.div>
@@ -487,21 +533,17 @@ export default function ContributionsPage() {
                             <div className="w-16 h-16 rounded-2xl bg-red-50 flex items-center justify-center mx-auto">
                                 <span className="text-3xl">🚫</span>
                             </div>
-                            <h3 className="text-2xl font-black text-dark">Monthly Limit Reached</h3>
-                            <p className="text-muted-foreground">
-                                You&apos;ve used all <strong>30 contributions</strong> for this month. Your count resets on the 1st of next month.
-                                <br /><br />
-                                Upgrade to <strong>Premium</strong> for unlimited contributions!
-                            </p>
+                            <h3 className="text-2xl font-black text-dark">{t("monthly_limit_title")}</h3>
+                            <p className="text-muted-foreground">{t("monthly_limit_desc")}</p>
                             <div className="flex flex-col gap-3">
                                 <a href="/pricing" className="w-full py-3 bg-green text-white font-bold rounded-2xl hover:shadow-lg transition-all text-center block">
-                                    Upgrade to Premium
+                                    {t("upgrade_premium")}
                                 </a>
                                 <button
                                     onClick={() => setShowLimitDialog(false)}
                                     className="w-full py-3 bg-gray-50 text-dark font-bold rounded-2xl hover:bg-gray-100 transition-all"
                                 >
-                                    OK, Got It
+                                    {t("ok_got_it")}
                                 </button>
                             </div>
                         </motion.div>

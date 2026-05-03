@@ -9,9 +9,9 @@ import { ChevronUp } from 'lucide-react';
 import { usePathname } from 'next/navigation';
 
 const LANGS = [
-    { code: 'en', label: 'English', flag: '🇬🇧' },
+    { code: 'en', label: 'English', flag: '🌐' },
     { code: 'fr', label: 'Français', flag: '🇫🇷' },
-    { code: 'ar', label: 'العربية', flag: '🇸🇦' },
+    { code: 'ar', label: 'العربية', flag: '🇲🇦' },
 ];
 
 export function LanguageSwitcher({ mode = 'fixed' }: { mode?: 'fixed' | 'compact' }) {
@@ -83,21 +83,25 @@ export function LanguageSwitcher({ mode = 'fixed' }: { mode?: 'fixed' | 'compact
                 <button
                     onClick={() => setIsOpen(!isOpen)}
                     className={`group flex items-center transition-all active:scale-95 ${
-                        mode === 'fixed' 
-                        ? 'gap-3 bg-white/95 backdrop-blur-xl rounded-full shadow-[0_8px_32px_rgba(0,0,0,0.12)] p-[6px_16px_6px_8px] border border-black/5 hover:border-green/30' 
-                        : 'gap-2 bg-white/10 backdrop-blur-md rounded-full p-1 border border-white/20'
+                        mode === 'fixed'
+                        ? 'gap-3 bg-white/95 backdrop-blur-xl rounded-full shadow-[0_8px_32px_rgba(0,0,0,0.12)] p-[6px_16px_6px_8px] border border-black/5 hover:border-green/30'
+                        : 'gap-1.5 bg-white/10 backdrop-blur-md rounded-full px-2.5 py-1 border border-white/20 hover:bg-white/15'
                     }`}
                 >
-                    <div className={`rounded-full bg-gradient-to-br from-[#3aaa6a] to-[#1e7a46] flex items-center justify-center text-white shadow-[0_2px_8px_rgba(58,170,106,0.2)] ${mode === 'fixed' ? 'w-8 h-8' : 'w-7 h-7'}`}>
-                        <span className={mode === 'fixed' ? 'text-lg leading-none' : 'text-sm leading-none'}>{activeLang.flag}</span>
+                    <div className={`rounded-full bg-gradient-to-br from-[#3aaa6a] to-[#1e7a46] flex items-center justify-center text-white shadow-[0_2px_8px_rgba(58,170,106,0.2)] ${mode === 'fixed' ? 'w-8 h-8' : 'w-6 h-6'}`}>
+                        <span className={mode === 'fixed' ? 'text-lg leading-none' : 'text-xs leading-none'}>{activeLang.flag}</span>
                     </div>
-                    {mode === 'fixed' && (
+                    {mode === 'fixed' ? (
                         <span className="text-sm font-bold text-dark/80 group-hover:text-dark">
                             {activeLang.label}
                         </span>
+                    ) : (
+                        <span className="text-white text-[11px] font-black tracking-wide uppercase">
+                            {activeLang.code}
+                        </span>
                     )}
                     <ChevronUp
-                        size={mode === 'fixed' ? 16 : 14}
+                        size={mode === 'fixed' ? 16 : 12}
                         className={`${mode === 'fixed' ? 'text-dark/30' : 'text-white/60'} transition-transform duration-300 ${isOpen ? 'rotate-180' : ''}`}
                     />
 

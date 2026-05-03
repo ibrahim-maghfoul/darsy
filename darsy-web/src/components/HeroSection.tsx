@@ -8,6 +8,7 @@ import { DarsyLogo } from "./DarsyLogo";
 
 // Square clockwise: Free Materials(TL)→Track Progress(TR)→Latest News(BR)→Premium Prep(BL)
 const CARD_IDS = ["card-0", "card-1", "card-2", "card-3"];
+const CARD_INDEX: Record<string, number> = Object.fromEntries(CARD_IDS.map((id, i) => [id, i]));
 const HOLD_MS        = 2200;
 const TRAVEL_MS      = 1400;
 const TAIL_LAG       = 0.30;
@@ -19,55 +20,6 @@ const WAVE_TRIGGER_T = 0.78;
 const BLOB_ANIM_MS   = 700;
 type CardPhase = 'idle' | 'entering' | 'active' | 'leaving';
 
-// ─── CSS injected once ────────────────────────────────────────────────────────
-const BLOB_CSS = `
-@keyframes card-blob-enter {
-  from { transform: translate3d(0,150%,0) scale(1.4); }
-  to   { transform: translateZ(0) scale(1.4); }
-}
-@keyframes card-blob-enter-top {
-  from { transform: translate3d(0,-150%,0) scale(1.4); }
-  to   { transform: translateZ(0) scale(1.4); }
-}
-@keyframes card-blob-leave {
-  from { transform: translateZ(0) scale(1.4); }
-  to   { transform: translate3d(0,150%,0) scale(1.4); }
-}
-@keyframes card-blob-leave-top {
-  from { transform: translateZ(0) scale(1.4); }
-  to   { transform: translate3d(0,-150%,0) scale(1.4); }
-}
-.hcard-blob { position:relative; display:block; height:100%; }
-.hcard-blob span {
-  position:absolute; top:2px; width:25%; height:100%;
-  background:#3aaa6a; border-radius:100%;
-}
-.hcard-blob span:nth-child(1){left:0%}
-.hcard-blob span:nth-child(2){left:30%}
-.hcard-blob span:nth-child(3){left:60%}
-.hcard-blob span:nth-child(4){left:90%}
-.hcard-blob.entering     span { transform:translate3d(0,150%,0)  scale(1.4); animation:card-blob-enter     0.45s forwards ease-in-out; }
-.hcard-blob.entering-top span { transform:translate3d(0,-150%,0) scale(1.4); animation:card-blob-enter-top  0.45s forwards ease-in-out; }
-.hcard-blob.active       span { transform:translateZ(0) scale(1.4); }
-.hcard-blob.leaving      span { transform:translateZ(0) scale(1.4); animation:card-blob-leave     0.45s forwards ease-in-out; }
-.hcard-blob.leaving-top  span { transform:translateZ(0) scale(1.4); animation:card-blob-leave-top 0.45s forwards ease-in-out; }
-.hcard-blob.entering     span:nth-child(1),.hcard-blob.entering-top span:nth-child(1){animation-delay:0s}
-.hcard-blob.entering     span:nth-child(2),.hcard-blob.entering-top span:nth-child(2){animation-delay:0.08s}
-.hcard-blob.entering     span:nth-child(3),.hcard-blob.entering-top span:nth-child(3){animation-delay:0.16s}
-.hcard-blob.entering     span:nth-child(4),.hcard-blob.entering-top span:nth-child(4){animation-delay:0.24s}
-.hcard-blob.leaving span:nth-child(4),.hcard-blob.leaving-top span:nth-child(4){animation-delay:0s}
-.hcard-blob.leaving span:nth-child(3),.hcard-blob.leaving-top span:nth-child(3){animation-delay:0.08s}
-.hcard-blob.leaving span:nth-child(2),.hcard-blob.leaving-top span:nth-child(2){animation-delay:0.16s}
-.hcard-blob.leaving span:nth-child(1),.hcard-blob.leaving-top span:nth-child(1){animation-delay:0.24s}
-
-@keyframes hero-cell-pulse {
-  0%, 100% { opacity: 0.55; }
-  50%       { opacity: 1; }
-}
-.hero-cell-lit {
-  animation: hero-cell-pulse 2.4s ease-in-out infinite;
-}
-`;
 
 // ─── Maths ────────────────────────────────────────────────────────────────────
 type Pt = {x:number,y:number};
@@ -107,23 +59,17 @@ function drawStraightSeg(
 }
 
 
+// Shared goo filter — defined once in HeroSection root, referenced by all cards
+const GOO_FILTER_ID = "hcard-goo";
+
 // ─── BlobWave layer ───────────────────────────────────────────────────────────
-function BlobWave({ phase, filterId }: { phase: CardPhase | 'entering-top' | 'leaving-top'; filterId: string }) {
+function BlobWave({ phase }: { phase: CardPhase | 'entering-top' | 'leaving-top' }) {
     if (phase === 'idle' || phase === 'active') return null;
     return (
         <div style={{position:'absolute',inset:0,overflow:'hidden',zIndex:0,pointerEvents:'none',borderRadius:'inherit'}}>
-            <div className={`hcard-blob ${phase}`} style={{filter:`url('#${filterId}')`}}>
+            <div className={`hcard-blob ${phase}`} style={{filter:`url('#${GOO_FILTER_ID}')`}}>
                 <span/><span/><span/><span/>
             </div>
-            <svg style={{position:'absolute',width:0,height:0}} aria-hidden="true">
-                <defs>
-                    <filter id={filterId}>
-                        <feGaussianBlur in="SourceGraphic" result="blur" stdDeviation="10"/>
-                        <feColorMatrix in="blur" mode="matrix" values="1 0 0 0 0  0 1 0 0 0  0 0 1 0 0  0 0 0 21 -7" result="goo"/>
-                        <feBlend in2="goo" in="SourceGraphic" result="mix"/>
-                    </filter>
-                </defs>
-            </svg>
         </div>
     );
 }
@@ -138,20 +84,54 @@ const DesktopCard = memo(function DesktopCard({ card, phase, isActive, badgeVal 
     const isLight = phase === 'entering' || phase === 'active';
     return (
         <div id={card.id}
-            className={`w-[clamp(130px,15vw,180px)] rounded-[14px] p-[10px_12px] flex items-center gap-[9px]
-                relative overflow-hidden transition-[box-shadow,background] duration-500 border
-                ${isLight ? 'bg-green border-green shadow-card-active' : 'bg-white border-gray-100 shadow-card'}`}>
-            <BlobWave phase={phase} filterId={`hgoo-${card.id}`}/>
-            <div className="w-8 h-8 flex-shrink-0 rounded-[9px] flex items-center justify-center relative z-10 transition-[background,color] duration-300"
-                style={isLight?{background:'rgba(255,255,255,0.25)',color:'white'}:{background:'rgba(58,170,106,0.1)',color:'#3aaa6a'}}>
-                {card.icon}
-                <span className={`absolute -top-1.5 -right-1.5 w-4 h-4 bg-white text-green text-[8px] font-bold rounded-full flex items-center justify-center shadow-[0_1px_6px_rgba(58,170,106,0.55)] transition-opacity duration-200 ${isActive?"opacity-100":"opacity-0"}`}>
+            className={`relative overflow-hidden flex items-center gap-[10px]
+                transition-all duration-500 border-[1.5px]
+                ${isLight
+                    ? 'bg-green border-green shadow-[0_6px_28px_rgba(58,170,106,0.40),0_0_0_2.5px_#3aaa6a]'
+                    : 'bg-white/90 border-[rgba(58,170,106,0.11)] shadow-[0_2px_10px_rgba(0,0,0,0.05),0_1px_3px_rgba(0,0,0,0.03)]'
+                }`}
+            style={{
+                width: 'clamp(142px,15.5vw,192px)',
+                borderRadius: '18px',
+                padding: '11px 13px',
+            }}>
+            <BlobWave phase={phase}/>
+
+            {/* Icon well */}
+            <div className="relative flex-shrink-0 flex items-center justify-center z-10 transition-all duration-300"
+                style={{
+                    width: 34, height: 34,
+                    borderRadius: 11,
+                    background: isLight
+                        ? 'rgba(255,255,255,0.22)'
+                        : 'linear-gradient(135deg, #f0faf5, #e8f5ee)',
+                    boxShadow: isLight ? '0 1px 8px rgba(0,0,0,0.10)' : 'none',
+                }}>
+                {/* Dot texture — inactive only */}
+                {!isLight && (
+                    <div className="absolute inset-0 pointer-events-none" style={{
+                        borderRadius: 11,
+                        backgroundImage: 'radial-gradient(circle, rgba(58,170,106,0.22) 1px, transparent 1px)',
+                        backgroundSize: '6px 6px',
+                    }}/>
+                )}
+                <span className={`relative z-10 transition-colors duration-300 ${isLight ? 'text-white' : 'text-[#3aaa6a]'}`}>
+                    {card.icon}
+                </span>
+                {/* Badge */}
+                <span className={`absolute -top-[5px] -right-[5px] w-[14px] h-[14px] bg-white text-green text-[7px] font-black rounded-full flex items-center justify-center shadow-[0_1px_6px_rgba(58,170,106,0.55)] transition-opacity duration-200 ${isActive ? 'opacity-100' : 'opacity-0'}`}>
                     {badgeVal}
                 </span>
             </div>
-            <div className="flex flex-col gap-[2px] min-w-0 relative z-10">
-                <div className={`text-[10px] font-semibold leading-[1.25] whitespace-nowrap overflow-hidden text-ellipsis transition-colors duration-300 ${isLight?'text-white':'text-dark'}`}>{card.title}</div>
-                <div className={`text-[9px] font-normal leading-[1.45] transition-colors duration-300 ${isLight?'text-white/75':'text-dark/50'}`}>{card.msg}</div>
+
+            {/* Text */}
+            <div className="flex flex-col gap-[3px] min-w-0 relative z-10">
+                <div className={`text-[10.5px] font-black leading-[1.2] truncate transition-colors duration-300 tracking-tight ${isLight ? 'text-white' : 'text-[#1a3a2a]'}`}>
+                    {card.title}
+                </div>
+                <div className={`text-[8.5px] font-medium leading-[1.4] truncate transition-colors duration-300 ${isLight ? 'text-white/70' : 'text-[rgba(26,58,42,0.45)]'}`}>
+                    {card.msg}
+                </div>
             </div>
         </div>
     );
@@ -245,7 +225,7 @@ function MobileCardList({ cards }: {
                         className={`rounded-2xl p-3 flex items-center gap-3 relative overflow-hidden
                             transition-[box-shadow,background] duration-500 border
                             ${isLight ? 'bg-green border-green shadow-[0_4px_20px_rgba(58,170,106,0.3)]' : 'bg-white border-gray-100 shadow-sm'}`}>
-                        <BlobWave phase={phase} filterId={`hgoo-mob-${card.id}`}/>
+                        <BlobWave phase={phase}/>
                         <div className="w-9 h-9 flex-shrink-0 rounded-xl flex items-center justify-center relative z-10 transition-[background,color] duration-300"
                             style={isLight ? {background:'rgba(255,255,255,0.25)',color:'white'} : {background:'rgba(58,170,106,0.1)',color:'#3aaa6a'}}>
                             {card.icon}
@@ -267,12 +247,12 @@ export function HeroSection() {
     const t = useTranslations('Hero');
 
     const cardsData = useMemo(() => [
-        {id:"card-0", icon:<BookOpen   size={16}/>, title:t('card0_title'), msg:t('card0_msg'), color:"#e8f5ee", iconColor:"#3aaa6a"},
-        {id:"card-1", icon:<TrendingUp size={16}/>, title:t('card1_title'), msg:t('card1_msg'), color:"#e8f5ee", iconColor:"#3aaa6a"},
-        {id:"card-2", icon:<Newspaper  size={16}/>, title:t('card2_title'), msg:t('card2_msg'), color:"#e8f5ee", iconColor:"#3aaa6a"},
-        {id:"card-3", icon:<DarsyLogo className="w-4 h-4" color="#3aaa6a" />, title:t('card3_title'), msg:t('card3_msg'), color:"#e8f5ee", iconColor:"#3aaa6a"},
+        {id:"card-0", icon:<BookOpen   size={15}/>, title:t('card0_title'), msg:t('card0_msg'), color:"#e8f5ee", iconColor:"#3aaa6a"},
+        {id:"card-1", icon:<TrendingUp size={15}/>, title:t('card1_title'), msg:t('card1_msg'), color:"#e8f5ee", iconColor:"#3aaa6a"},
+        {id:"card-2", icon:<Newspaper  size={15}/>, title:t('card2_title'), msg:t('card2_msg'), color:"#e8f5ee", iconColor:"#3aaa6a"},
+        {id:"card-3", icon:<DarsyLogo className="w-[15px] h-[15px]" color="#3aaa6a" />, title:t('card3_title'), msg:t('card3_msg'), color:"#e8f5ee", iconColor:"#3aaa6a"},
     // eslint-disable-next-line react-hooks/exhaustive-deps
-    ], []);
+    ], [t]);
 
     const [activeIdx,  setActiveIdx]  = useState(0);
     const [badgeVal,   setBadgeVal]   = useState(3);
@@ -297,6 +277,8 @@ export function HeroSection() {
         let visible = true;
         let cw = 0, ch = 0;
         const innerTimers: ReturnType<typeof setTimeout>[] = [];
+
+        const startRAF = () => { if (!rafId) rafId = requestAnimationFrame(tick); };
 
         // Position cache
         const posCache: Record<string, Pt> = {};
@@ -342,10 +324,16 @@ export function HeroSection() {
         resize();
         window.addEventListener('resize', resize);
 
-        // Visibility — pause all work when off-screen
+        // Visibility — stop RAF when off-screen, restart when back in view
         const container = document.getElementById('hero-scene-container');
-        const obs = new IntersectionObserver(([e]) => { visible = e.isIntersecting; }, { threshold: 0 });
+        const obs = new IntersectionObserver(([e]) => {
+            visible = e.isIntersecting;
+            if (visible) startRAF();
+        }, { threshold: 0 });
         if (container) obs.observe(container);
+
+        const handleVisibility = () => { if (!document.hidden && visible) startRAF(); };
+        document.addEventListener('visibilitychange', handleVisibility);
 
         const triggerArrival = (idx: number, next: number) => {
             const departId = CARD_IDS[idx], arriveId = CARD_IDS[next];
@@ -360,10 +348,9 @@ export function HeroSection() {
         };
 
         const tick = (now: number) => {
+            // Stop rescheduling when off-screen or tab hidden — IO/visibilitychange restarts us
+            if (!visible || document.hidden) { rafId = 0; return; }
             rafId = requestAnimationFrame(tick);
-
-            // Skip all work when off-screen or tab hidden
-            if (!visible || document.hidden) return;
 
             const from = getPos(CARD_IDS[aidx]);
             const to   = getPos(CARD_IDS[(aidx + 1) % 4]);
@@ -442,6 +429,7 @@ export function HeroSection() {
             cancelAnimationFrame(rafId);
             innerTimers.forEach(clearTimeout);
             window.removeEventListener('resize', resize);
+            document.removeEventListener('visibilitychange', handleVisibility);
             obs.disconnect();
         };
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -458,6 +446,17 @@ export function HeroSection() {
             id="hero-scene-container"
             className="relative flex flex-col items-stretch overflow-visible min-h-[600px] bg-green/[0.03]"
         >
+            {/* Shared goo filter — one definition for all BlobWave cards */}
+            <svg style={{ position: 'absolute', width: 0, height: 0 }} aria-hidden="true">
+                <defs>
+                    <filter id={GOO_FILTER_ID}>
+                        <feGaussianBlur in="SourceGraphic" result="blur" stdDeviation="10"/>
+                        <feColorMatrix in="blur" mode="matrix" values="1 0 0 0 0  0 1 0 0 0  0 0 1 0 0  0 0 0 21 -7" result="goo"/>
+                        <feBlend in2="goo" in="SourceGraphic" result="mix"/>
+                    </filter>
+                </defs>
+            </svg>
+
             {/* Checker texture overlay — matches PlatformFeatures "Quick Start" card */}
             <div
                 aria-hidden="true"
@@ -467,8 +466,6 @@ export function HeroSection() {
                     backgroundSize: '10px 10px',
                 }}
             />
-            <style>{BLOB_CSS}</style>
-
             {/* Canvas for line animation */}
             <canvas
                 ref={canvasRef}
@@ -476,7 +473,7 @@ export function HeroSection() {
             />
 
             {/* Badge */}
-            <div className="relative z-[3] flex justify-center pt-10 md:pt-12 opacity-0 animate-[fadeSlideUp_0.6s_ease-out_0.1s_forwards]">
+            <div className="relative z-[3] flex justify-center pt-[76px] md:pt-12 opacity-0 animate-[fadeSlideUp_0.6s_ease-out_0.1s_forwards]">
                 <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full border border-green/30 bg-green/5 text-[12px] font-semibold text-green/80 shadow-[0_0_12px_rgba(58,170,106,0.15)]">
                     <span className="w-1.5 h-1.5 rounded-full bg-green animate-pulse" />
                     {t('badge') ?? 'AI-Powered Education Platform'}
@@ -499,7 +496,7 @@ export function HeroSection() {
                     {[cardsData[0], cardsData[3]].map(card => (
                         <DesktopCard key={card.id} card={card}
                             phase={cardPhases[card.id] ?? 'idle'}
-                            isActive={activeIdx === CARD_IDS.indexOf(card.id)}
+                            isActive={activeIdx === CARD_INDEX[card.id]}
                             badgeVal={badgeVal}/>
                     ))}
                 </div>
@@ -508,7 +505,7 @@ export function HeroSection() {
                     {[cardsData[1], cardsData[2]].map(card => (
                         <DesktopCard key={card.id} card={card}
                             phase={cardPhases[card.id] ?? 'idle'}
-                            isActive={activeIdx === CARD_IDS.indexOf(card.id)}
+                            isActive={activeIdx === CARD_INDEX[card.id]}
                             badgeVal={badgeVal}/>
                     ))}
                 </div>

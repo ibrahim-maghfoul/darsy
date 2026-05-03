@@ -21,6 +21,7 @@ router.get('/lesson/:lessonId', DataController.getLessonById);
 router.get('/school-services', curriculumCache, DataController.getSchoolServices);
 router.get('/guidance-stats/global', DataController.getGlobalStats);
 router.get('/guidance-stats/:guidanceId', DataController.getGuidanceStats);
+router.get('/guidance-resources/:guidanceId', DataController.getGuidanceResourceCount);
 
 // --- Protected: user resource contribution ---
 router.post('/contribute', authMiddleware, resourceUpload.single('file'), verifyUploadedFile, DataController.contribute);

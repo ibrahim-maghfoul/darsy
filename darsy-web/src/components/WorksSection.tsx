@@ -1,8 +1,9 @@
 "use client";
 
 import { motion } from "framer-motion";
-import { useState } from "react";
+import { useState, useMemo, useRef, useEffect } from "react";
 import { useTranslations } from 'next-intl';
+import Image from "next/image";
 
 
 const floatingIcons = [
@@ -46,21 +47,32 @@ const floatingIcons = [
 export function WorksSection() {
     const [hoveredIdx, setHoveredIdx] = useState<number | null>(null);
     const t = useTranslations('Works');
+    const sectionRef = useRef<HTMLElement>(null);
 
-    const items = [
+    const [floatRunning, setFloatRunning] = useState(false);
+    useEffect(() => {
+        const obs = new IntersectionObserver(
+            ([e]) => setFloatRunning(e.isIntersecting),
+            { threshold: 0 }
+        );
+        if (sectionRef.current) obs.observe(sectionRef.current);
+        return () => obs.disconnect();
+    }, []);
+
+    const items = useMemo(() => [
         { num: "01", label: t('item1_label'), desc: t('item1_desc') },
         { num: "02", label: t('item2_label'), desc: t('item2_desc') },
         { num: "03", label: t('item3_label'), desc: t('item3_desc') },
         { num: "04", label: t('item4_label'), desc: t('item4_desc') },
-    ];
+    ], [t]);
 
     return (
-        <section className="bg-[#f4f6f3] min-h-screen relative overflow-hidden flex items-center justify-center p-[80px_clamp(20px,8vw,120px)_120px] md:p-[100px_clamp(24px,8vw,120px)]">
+        <section ref={sectionRef} className="bg-[#f4f6f3] relative overflow-hidden flex items-center justify-center p-[60px_clamp(20px,6vw,80px)_80px] md:p-[100px_clamp(24px,8vw,120px)] md:min-h-screen">
             {floatingIcons.map((icon) => (
                 <div
                     key={icon.id}
                     className={`absolute pointer-events-none animate-[wFloat_6s_ease-in-out_infinite] will-change-transform ${icon.className}`}
-                    style={{ animationDelay: `${icon.delay}s` } as any}
+                    style={{ animationDelay: `${icon.delay}s`, animationPlayState: floatRunning ? 'running' : 'paused' } as React.CSSProperties}
                 >
                     <div className="rounded-[22px] bg-white/90 border border-white/90 shadow-[0_8px_32px_rgba(58,170,106,0.15),0_2px_8px_rgba(0,0,0,0.06)] flex items-center justify-center w-full h-full">
                         {icon.content}
@@ -68,8 +80,11 @@ export function WorksSection() {
                 </div>
             ))}
 
-            <div className="absolute top-[32%] right-[4%] w-[150px] h-[150px] rounded-[50%_50%_50%_44%_/_50%_50%_44%_50%] overflow-hidden shadow-[0_12px_40px_rgba(0,0,0,0.2)] border-4 border-white/90 animate-[wFloat_6s_ease-in-out_infinite] delay-[0.5s] [--wdy:-10px] [--wr:0deg] hidden md:block will-change-transform">
-                <img src="https://i.pravatar.cc/260?img=44" alt="person" className="w-full h-full object-cover block" />
+            <div
+                className="absolute top-[32%] right-[4%] w-[150px] h-[150px] rounded-[50%_50%_50%_44%_/_50%_50%_44%_50%] overflow-hidden shadow-[0_12px_40px_rgba(0,0,0,0.2)] border-4 border-white/90 animate-[wFloat_6s_ease-in-out_infinite] delay-[0.5s] [--wdy:-10px] [--wr:0deg] hidden md:block will-change-transform"
+                style={{ animationPlayState: floatRunning ? 'running' : 'paused' }}
+            >
+                <Image src="https://i.pravatar.cc/260?img=44" alt="" fill className="object-cover" sizes="150px" />
             </div>
 
             <div className="max-w-[780px] w-full relative z-2 text-left">
@@ -91,7 +106,7 @@ export function WorksSection() {
                                 {`{ ${item.num} }`}
                             </span>
                             <div className="relative">
-                                <span className={`text-[clamp(28px,8vw,96px)] md:text-[clamp(42px,7vw,96px)] font-bold text-dark tracking-[-0.04em] leading-[1.05] transition-colors relative inline-block`}>
+                                <span className={`text-[clamp(26px,7vw,96px)] md:text-[clamp(42px,7vw,96px)] font-bold text-dark tracking-[-0.04em] leading-[1.05] transition-colors relative inline-block`}>
                                     {item.label}
                                     {hoveredIdx === i && (
                                         <motion.span

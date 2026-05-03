@@ -49,7 +49,7 @@ export function TeamSection() {
     [currentPage, shuffledTeam]);
 
     return (
-        <section className="bg-[#f0f2ee] pt-24 pb-8 md:pb-16 px-[clamp(24px,6vw,80px)] overflow-hidden font-roboto">
+        <section className="bg-[#f0f2ee] pt-24 pb-16 md:pb-24 px-[clamp(24px,6vw,80px)] font-roboto">
             <div className="text-center mb-16">
                 <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full border border-green/30 bg-green/5 text-[12px] font-semibold text-green/80 shadow-[0_0_12px_rgba(58,170,106,0.15)] mb-4">
                     <span className="w-1.5 h-1.5 rounded-full bg-green animate-pulse" />
@@ -64,12 +64,12 @@ export function TeamSection() {
             </div>
 
             <div
-                className="max-w-[1200px] mx-auto min-h-[180px] md:min-h-[520px]"
+                className="max-w-[1200px] mx-auto"
                 onMouseEnter={() => setIsHovered(true)}
                 onMouseLeave={() => setIsHovered(false)}
             >
-                <div className="relative min-h-[140px] md:min-h-[400px]">
-                    <div className="grid grid-cols-3 gap-2 md:gap-8 items-start w-full absolute top-0 left-0">
+                <div className="relative">
+                    <div className="grid grid-cols-3 gap-2 md:gap-8 items-start w-full">
                         {visibleMembers.map((member, i) => (
                             <div
                                 key={`${member.id}-${animKey}`}

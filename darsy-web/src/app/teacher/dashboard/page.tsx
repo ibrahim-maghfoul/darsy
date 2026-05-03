@@ -1,10 +1,10 @@
 "use client";
 
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useRef } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import {
     Plus, Users, Star, MessageCircle, Copy, Trash2, BookOpen,
-    Loader2, X, Check, Bell, ChevronDown, ChevronUp, GraduationCap, Settings, Video
+    Loader2, X, Check, Bell, ChevronDown, ChevronUp, GraduationCap, Settings, Video, LogOut
 } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
 import { useSnackbar } from "@/contexts/SnackbarContext";
@@ -27,7 +27,7 @@ interface RoomRequests {
 }
 
 export default function TeacherDashboardPage() {
-    const { user, loading: authLoading, getPhotoURL } = useAuth();
+    const { user, loading: authLoading, getPhotoURL, logout } = useAuth();
     const { showSnackbar } = useSnackbar();
     const router = useRouter();
 
@@ -267,6 +267,13 @@ export default function TeacherDashboardPage() {
                             <Settings size={12} />
                             Settings
                         </Link>
+                        <button
+                            onClick={() => logout().then(() => router.push("/"))}
+                            className="flex items-center gap-1.5 px-3 py-1.5 bg-red-500/20 backdrop-blur-sm border border-red-400/30 rounded-xl text-red-200 text-xs font-semibold hover:bg-red-500/35 transition-all"
+                        >
+                            <LogOut size={12} />
+                            Sign Out
+                        </button>
                     </div>
                 </div>
             </div>

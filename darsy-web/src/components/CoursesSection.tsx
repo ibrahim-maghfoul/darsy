@@ -1,7 +1,7 @@
 "use client";
 
 import { motion, useInView } from "framer-motion";
-import { useRef, useState, useEffect, memo } from "react";
+import { useRef, memo } from "react";
 import { useTranslations, useLocale } from 'next-intl';
 import { ChevronRight } from "lucide-react";
 
@@ -27,21 +27,17 @@ const AIIcon = () => (
 const ROUNDED_HEX = `url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Cpath d='M 57 7 L 84 22.5 Q 91 26.5 91 34.5 L 91 65.5 Q 91 73.5 84 77.5 L 57 93 Q 50 97 43 93 L 16 77.5 Q 9 73.5 9 65.5 L 9 34.5 Q 9 26.5 16 22.5 L 43 7 Q 50 3 57 7 Z' fill='%23000'/%3E%3C/svg%3E") center / 100% 100% no-repeat`;
 
 
-const ServiceCard = memo(function ServiceCard({ course, index, isInView, height }: { course: any; index: number; isInView: boolean; height: number }) {
+const ServiceCard = memo(function ServiceCard({ course, index, isInView }: { course: any; index: number; isInView: boolean }) {
     const t = useTranslations('Courses');
     const locale = useLocale();
     const isAr = locale === 'ar';
-    const [hovered, setHovered] = useState(false);
 
     return (
         <motion.div
             key={course.id}
-            initial={{ opacity: 0, y: 36 }}
+            initial={{ opacity: 0, y: 24 }}
             animate={isInView ? { opacity: 1, y: 0 } : {}}
-            transition={{ delay: index * 0.12, duration: 0.65, ease: [0.22, 1, 0.36, 1] }}
-            onMouseEnter={() => setHovered(true)}
-            onMouseLeave={() => setHovered(false)}
-            style={{ minHeight: height }}
+            transition={{ delay: index * 0.08, duration: 0.45, ease: [0.22, 1, 0.36, 1] }}
             className={`group rounded-[28px] p-[24px_20px] md:p-[36px_32px] relative overflow-hidden flex flex-col justify-end shrink-0 ${course.className}`}
         >
             {/* Texture overlay */}
@@ -57,9 +53,9 @@ const ServiceCard = memo(function ServiceCard({ course, index, isInView, height 
 
             {/* Wave fill animation */}
             <motion.div
-                initial={{ scale: 0, opacity: 0.6 }}
-                animate={hovered ? { scale: 20, opacity: 0 } : { scale: 0, opacity: 0.6 }}
-                transition={{ duration: 1.1, ease: [0.22, 1, 0.36, 1] }}
+                initial={{ scale: 0, opacity: 0.5 }}
+                whileHover={{ scale: 18, opacity: 0 }}
+                transition={{ duration: 0.65, ease: [0.22, 1, 0.36, 1] }}
                 style={{
                     position: "absolute",
                     width: 40,
@@ -129,9 +125,6 @@ const ServiceCard = memo(function ServiceCard({ course, index, isInView, height 
     );
 });
 
-const DESKTOP_H: Record<number, number> = { 1: 480, 2: 240, 3: 120 };
-const MOBILE_H: Record<number, number> = { 1: 280, 2: 200, 3: 90 };
-
 // Module-level — avoids recreating on every render
 const COURSES = [
     {
@@ -157,15 +150,6 @@ export function CoursesSection() {
     const gridRef = useRef<HTMLDivElement>(null);
     const isInView = useInView(gridRef, { once: true, amount: 0.08 });
     const t = useTranslations('Courses');
-    const [isMobile, setIsMobile] = useState(false);
-
-    useEffect(() => {
-        const mq = window.matchMedia('(max-width: 767px)');
-        setIsMobile(mq.matches);
-        const handler = (e: MediaQueryListEvent) => setIsMobile(e.matches);
-        mq.addEventListener('change', handler);
-        return () => mq.removeEventListener('change', handler);
-    }, []);
 
     return (
         <section className="bg-[#f0f5f0] p-[100px_clamp(24px,6vw,80px)_120px] relative overflow-hidden">
@@ -189,7 +173,6 @@ export function CoursesSection() {
                         course={course}
                         index={i}
                         isInView={isInView}
-                        height={isMobile ? MOBILE_H[course.id] : DESKTOP_H[course.id]}
                     />
                 ))}
             </div>
