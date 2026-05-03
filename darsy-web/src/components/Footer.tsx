@@ -71,20 +71,20 @@ export function Footer() {
                     {/* Product Column */}
                     <div className="flex flex-col gap-3">
                         <h4 className="text-[11px] font-black tracking-widest uppercase text-white mb-1">{t('product')}</h4>
-                        <Link href="/explore" className="text-[13px] text-white/50 hover:text-white transition-colors">{t('explore')}</Link>
-                        <Link href="/pricing" className="text-[13px] text-white/50 hover:text-white transition-colors">{t('pricing')}</Link>
-                        <Link href="/services" className="text-[13px] text-white/50 hover:text-white transition-colors">{t('services')}</Link>
-                        <Link href="/news" className="text-[13px] text-white/50 hover:text-white transition-colors">{t('news')}</Link>
-                        <Link href="/instructors" className="text-[13px] text-white/50 hover:text-white transition-colors">{t('instructors')}</Link>
-                        <Link href="/download" className="text-[13px] text-white/50 hover:text-white transition-colors">{t('download')}</Link>
+                        <Link href="/explore" className="text-[13px] text-white/50 hover:text-white transition-colors py-1.5 -my-1.5 inline-block">{t('explore')}</Link>
+                        <Link href="/pricing" className="text-[13px] text-white/50 hover:text-white transition-colors py-1.5 -my-1.5 inline-block">{t('pricing')}</Link>
+                        <Link href="/services" className="text-[13px] text-white/50 hover:text-white transition-colors py-1.5 -my-1.5 inline-block">{t('services')}</Link>
+                        <Link href="/news" className="text-[13px] text-white/50 hover:text-white transition-colors py-1.5 -my-1.5 inline-block">{t('news')}</Link>
+                        <Link href="/instructors" className="text-[13px] text-white/50 hover:text-white transition-colors py-1.5 -my-1.5 inline-block">{t('instructors')}</Link>
+                        <Link href="/download" className="text-[13px] text-white/50 hover:text-white transition-colors py-1.5 -my-1.5 inline-block">{t('download')}</Link>
                     </div>
 
                     {/* Company Column */}
                     <div className="flex flex-col gap-3">
                         <h4 className="text-[11px] font-black tracking-widest uppercase text-white mb-1">{t('company')}</h4>
-                        <Link href="/about" className="text-[13px] text-white/50 hover:text-white transition-colors">{t('about')}</Link>
-                        <Link href="/contact" className="text-[13px] text-white/50 hover:text-white transition-colors">{t('contact')}</Link>
-                        <Link href="/report" className="text-[13px] text-white/50 hover:text-white transition-colors">{t('report')}</Link>
+                        <Link href="/about" className="text-[13px] text-white/50 hover:text-white transition-colors py-1.5 -my-1.5 inline-block">{t('about')}</Link>
+                        <Link href="/contact" className="text-[13px] text-white/50 hover:text-white transition-colors py-1.5 -my-1.5 inline-block">{t('contact')}</Link>
+                        <Link href="/report" className="text-[13px] text-white/50 hover:text-white transition-colors py-1.5 -my-1.5 inline-block">{t('report')}</Link>
                     </div>
 
                     {/* Newsletter */}
