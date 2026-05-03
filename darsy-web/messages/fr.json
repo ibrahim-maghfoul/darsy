@@ -655,7 +655,9 @@
         "loading": "Chargement...",
         "title": "Instructeurs",
         "subtitle": "Apprenez auprès d'instructeurs approuvés de notre communauté",
-        "empty": "Aucun instructeur disponible pour l'instant",
+        "empty": "Aucun instructeur pour l'instant",
+        "empty_cta_desc": "Soyez parmi les premiers à partager vos connaissances avec les élèves marocains.",
+        "empty_cta": "Devenir instructeur",
         "course": "cours",
         "courses": "cours",
         "viewProfile": "Voir le profil"

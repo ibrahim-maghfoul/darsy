@@ -656,7 +656,9 @@
         "loading": "Loading...",
         "title": "Instructors",
         "subtitle": "Learn from approved instructors in our community",
-        "empty": "No instructors available yet",
+        "empty": "No instructors yet",
+        "empty_cta_desc": "Be among the first to share your knowledge with Moroccan students.",
+        "empty_cta": "Apply as Instructor",
         "course": "course",
         "courses": "courses",
         "viewProfile": "View Profile"
