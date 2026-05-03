@@ -145,21 +145,81 @@
             "tap_to_collapse": "appuyer pour réduire"
         },
         "cards": {
-            "ctr":  { "front": "Explorer",          "back_title": "Toutes les fonctions", "back_desc": "Cliquez pour développer." },
-            "i1":   { "front": "Analytique",        "back_title": "Votre progrès",        "back_desc": "Suivez chaque victoire." },
-            "i2":   { "front": "Messages",          "back_title": "Boîte de réception",   "back_desc": "Chattez avec vos mentors." },
-            "i3":   { "front": "Assistance",        "back_title": "Aide 24/7",            "back_desc": "Nous sommes toujours là." },
-            "i4":   { "front": "Cours",             "back_title": "Bibliothèque complète","back_desc": "1 200+ leçons." },
-            "oTOP": { "front": "Premium",           "back_title": "Débloquer plus",       "back_desc": "Ressources exclusives." },
-            "oRA":  { "front": "Sessions en direct","back_title": "Rejoindre en direct",  "back_desc": "Interaction en temps réel." },
-            "oBOT": { "front": "Mode hors ligne",   "back_title": "Sauvegarder les données","back_desc": "Apprenez n'importe où." },
-            "oLA":  { "front": "Communauté",        "back_title": "Discussion",           "back_desc": "Parlez avec vos pairs." },
-            "oTL":  { "front": "Démarrage rapide",  "back_title": "Raccourcis",           "back_desc": "Lancez tout rapidement." },
-            "oLM":  { "front": "Sécurité",          "back_title": "Protégé",              "back_desc": "Vos données sont en sécurité." },
-            "oBL":  { "front": "Langues",           "back_title": "International",        "back_desc": "20+ langues." },
-            "oTR":  { "front": "Notifications",     "back_title": "Alertes",              "back_desc": "Ne manquez rien." },
-            "oRM":  { "front": "Classement",        "back_title": "Palmarès",             "back_desc": "Concourez et progressez." },
-            "oBR":  { "front": "Certificats",       "back_title": "Vos certificats",      "back_desc": "Téléchargez et partagez." }
+            "ctr": {
+                "front": "Explorer",
+                "back_title": "Toutes les fonctions",
+                "back_desc": "Cliquez pour développer."
+            },
+            "i1": {
+                "front": "Analytique",
+                "back_title": "Votre progrès",
+                "back_desc": "Suivez chaque victoire."
+            },
+            "i2": {
+                "front": "Messages",
+                "back_title": "Boîte de réception",
+                "back_desc": "Chattez avec vos mentors."
+            },
+            "i3": {
+                "front": "Assistance",
+                "back_title": "Aide 24/7",
+                "back_desc": "Nous sommes toujours là."
+            },
+            "i4": {
+                "front": "Cours",
+                "back_title": "Bibliothèque complète",
+                "back_desc": "1 200+ leçons."
+            },
+            "oTOP": {
+                "front": "Premium",
+                "back_title": "Débloquer plus",
+                "back_desc": "Ressources exclusives."
+            },
+            "oRA": {
+                "front": "Sessions en direct",
+                "back_title": "Rejoindre en direct",
+                "back_desc": "Interaction en temps réel."
+            },
+            "oBOT": {
+                "front": "Mode hors ligne",
+                "back_title": "Sauvegarder les données",
+                "back_desc": "Apprenez n'importe où."
+            },
+            "oLA": {
+                "front": "Communauté",
+                "back_title": "Discussion",
+                "back_desc": "Parlez avec vos pairs."
+            },
+            "oTL": {
+                "front": "Démarrage rapide",
+                "back_title": "Raccourcis",
+                "back_desc": "Lancez tout rapidement."
+            },
+            "oLM": {
+                "front": "Sécurité",
+                "back_title": "Protégé",
+                "back_desc": "Vos données sont en sécurité."
+            },
+            "oBL": {
+                "front": "Langues",
+                "back_title": "International",
+                "back_desc": "20+ langues."
+            },
+            "oTR": {
+                "front": "Notifications",
+                "back_title": "Alertes",
+                "back_desc": "Ne manquez rien."
+            },
+            "oRM": {
+                "front": "Classement",
+                "back_title": "Palmarès",
+                "back_desc": "Concourez et progressez."
+            },
+            "oBR": {
+                "front": "Certificats",
+                "back_title": "Vos certificats",
+                "back_desc": "Téléchargez et partagez."
+            }
         }
     },
     "Footer": {
@@ -410,10 +470,11 @@
         "contact_btn": "Contacter notre équipe"
     },
     "NotFound": {
-        "title": "On dirait que vous êtes perdu dans le programme.",
-        "desc": "Nous n'avons pas pu trouver la page que vous recherchez. Elle a peut-être été déplacée ou supprimée.",
+        "badge": "Page introuvable",
+        "title": "Oops! Mauvais chemin.",
+        "description": "La page que vous cherchez n'existe pas ou a été déplacée.",
         "back_home": "Retour à l'accueil",
-        "go_back": "Retourner"
+        "explore": "Explorer les cours"
     },
     "Common": {
         "start_learning": "Commencer l'apprentissage",
@@ -658,13 +719,6 @@
         "subscription_management": "Gestion de l'abonnement",
         "coming_soon": "Les fonctionnalités de paiement et d'abonnement seront bientôt disponibles."
     },
-    "NotFound": {
-        "badge": "Page introuvable",
-        "title": "Oops! Mauvais chemin.",
-        "description": "La page que vous cherchez n'existe pas ou a été déplacée.",
-        "back_home": "Retour à l'accueil",
-        "explore": "Explorer les cours"
-    },
     "JoinRoom": {
         "classroom": "Salle de classe",
         "members": "membres",
@@ -742,5 +796,17 @@
         "videos": "Vidéos",
         "progress": "Progression",
         "cta": "Parcourir les matières"
+    },
+    "CookieBanner": {
+        "title": "Nous utilisons des cookies",
+        "desc": "Darsy utilise des cookies pour vous garder connecté pendant {days} jours et améliorer votre expérience.",
+        "privacy": "Politique de confidentialité",
+        "details": "Ce que nous stockons",
+        "essential": "Essentiels",
+        "essential_desc": "Session, consentement",
+        "analytics": "Analytiques",
+        "analytics_desc": "Pages, langue, référent",
+        "decline": "Refuser",
+        "accept": "Tout accepter"
     }
 }

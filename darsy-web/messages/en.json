@@ -145,21 +145,81 @@
             "tap_to_collapse": "tap to collapse"
         },
         "cards": {
-            "ctr":  { "front": "Explore",        "back_title": "All Features",   "back_desc": "Click to expand." },
-            "i1":   { "front": "Analytics",      "back_title": "Your Progress",  "back_desc": "Track every win." },
-            "i2":   { "front": "Messages",       "back_title": "Inbox",          "back_desc": "Chat with mentors." },
-            "i3":   { "front": "Support",        "back_title": "24/7 Help",      "back_desc": "We are always here." },
-            "i4":   { "front": "Courses",        "back_title": "Full Library",   "back_desc": "1,200+ lessons." },
-            "oTOP": { "front": "Premium",        "back_title": "Unlock More",    "back_desc": "Exclusive resources." },
-            "oRA":  { "front": "Live Sessions",  "back_title": "Join Live",      "back_desc": "Real-time interaction." },
-            "oBOT": { "front": "Offline Mode",   "back_title": "Save Data",      "back_desc": "Learn anywhere." },
-            "oLA":  { "front": "Community",      "back_title": "Discussion",     "back_desc": "Talk with peers." },
-            "oTL":  { "front": "Quick Start",    "back_title": "Shortcuts",      "back_desc": "Launch anything fast." },
-            "oLM":  { "front": "Security",       "back_title": "Protected",      "back_desc": "Your data is safe." },
-            "oBL":  { "front": "Languages",      "back_title": "Worldwide",      "back_desc": "20+ languages." },
-            "oTR":  { "front": "Notifications",  "back_title": "Alerts",         "back_desc": "Never miss a beat." },
-            "oRM":  { "front": "Leaderboard",    "back_title": "Rankings",       "back_desc": "Compete & rise." },
-            "oBR":  { "front": "Certificates",   "back_title": "Your Certs",     "back_desc": "Download & share." }
+            "ctr": {
+                "front": "Explore",
+                "back_title": "All Features",
+                "back_desc": "Click to expand."
+            },
+            "i1": {
+                "front": "Analytics",
+                "back_title": "Your Progress",
+                "back_desc": "Track every win."
+            },
+            "i2": {
+                "front": "Messages",
+                "back_title": "Inbox",
+                "back_desc": "Chat with mentors."
+            },
+            "i3": {
+                "front": "Support",
+                "back_title": "24/7 Help",
+                "back_desc": "We are always here."
+            },
+            "i4": {
+                "front": "Courses",
+                "back_title": "Full Library",
+                "back_desc": "1,200+ lessons."
+            },
+            "oTOP": {
+                "front": "Premium",
+                "back_title": "Unlock More",
+                "back_desc": "Exclusive resources."
+            },
+            "oRA": {
+                "front": "Live Sessions",
+                "back_title": "Join Live",
+                "back_desc": "Real-time interaction."
+            },
+            "oBOT": {
+                "front": "Offline Mode",
+                "back_title": "Save Data",
+                "back_desc": "Learn anywhere."
+            },
+            "oLA": {
+                "front": "Community",
+                "back_title": "Discussion",
+                "back_desc": "Talk with peers."
+            },
+            "oTL": {
+                "front": "Quick Start",
+                "back_title": "Shortcuts",
+                "back_desc": "Launch anything fast."
+            },
+            "oLM": {
+                "front": "Security",
+                "back_title": "Protected",
+                "back_desc": "Your data is safe."
+            },
+            "oBL": {
+                "front": "Languages",
+                "back_title": "Worldwide",
+                "back_desc": "20+ languages."
+            },
+            "oTR": {
+                "front": "Notifications",
+                "back_title": "Alerts",
+                "back_desc": "Never miss a beat."
+            },
+            "oRM": {
+                "front": "Leaderboard",
+                "back_title": "Rankings",
+                "back_desc": "Compete & rise."
+            },
+            "oBR": {
+                "front": "Certificates",
+                "back_title": "Your Certs",
+                "back_desc": "Download & share."
+            }
         }
     },
     "Footer": {
@@ -411,10 +471,11 @@
         "contact_btn": "Contact our team"
     },
     "NotFound": {
-        "title": "Looks like you're lost in the curriculum.",
-        "desc": "We couldn't find the page you were looking for. It might have been moved or deleted.",
+        "badge": "Page not found",
+        "title": "Oops! Wrong path.",
+        "description": "The page you're looking for doesn't exist or has been moved.",
         "back_home": "Back to Home",
-        "go_back": "Go Back"
+        "explore": "Explore Courses"
     },
     "Common": {
         "start_learning": "Start Learning",
@@ -659,13 +720,6 @@
         "subscription_management": "Subscription Management",
         "coming_soon": "Payment and subscription features are coming soon."
     },
-    "NotFound": {
-        "badge": "Page not found",
-        "title": "Oops! Wrong path.",
-        "description": "The page you're looking for doesn't exist or has been moved.",
-        "back_home": "Back to Home",
-        "explore": "Explore Courses"
-    },
     "JoinRoom": {
         "classroom": "Classroom",
         "members": "members",
@@ -743,5 +797,17 @@
         "videos": "Videos",
         "progress": "Progress",
         "cta": "Browse All Subjects"
+    },
+    "CookieBanner": {
+        "title": "We use cookies",
+        "desc": "Darsy uses cookies to keep you signed in for {days} days and improve your experience.",
+        "privacy": "Privacy policy",
+        "details": "What we store",
+        "essential": "Essential",
+        "essential_desc": "Session, consent",
+        "analytics": "Analytics",
+        "analytics_desc": "Pages, language, referrer",
+        "decline": "Decline",
+        "accept": "Accept all"
     }
 }

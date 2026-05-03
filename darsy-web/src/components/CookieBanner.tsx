@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react';
 import { Cookie, Shield, BarChart2, X } from 'lucide-react';
 import Link from 'next/link';
+import { useTranslations } from 'next-intl';
 
 const COOKIE_KEY = 'darsy_consent';
 const CONSENT_DAYS = 15;
@@ -31,6 +32,7 @@ function saveVisitorMeta(accepted: boolean) {
 }
 
 export default function CookieBanner() {
+    const t = useTranslations('CookieBanner');
     const [visible, setVisible] = useState(false);
     const [showDetails, setShowDetails] = useState(false);
 
@@ -77,10 +79,10 @@ export default function CookieBanner() {
                             </div>
 
                             <div className="flex-1 min-w-0">
-                                <h3 className="font-bold text-dark text-base leading-tight">We use cookies 🍪</h3>
+                                <h3 className="font-bold text-dark text-base leading-tight">{t('title')}</h3>
                                 <p className="text-sm text-dark/60 mt-1 leading-snug">
-                                    Darsy uses cookies to keep you signed in for {CONSENT_DAYS} days and improve your experience.{' '}
-                                    <Link href="/privacy" className="text-green hover:underline font-semibold">Privacy policy</Link>
+                                    {t('desc', { days: CONSENT_DAYS })}{' '}
+                                    <Link href="/privacy" className="text-green hover:underline font-semibold">{t('privacy')}</Link>
                                 </p>
                             </div>
 
@@ -98,7 +100,7 @@ export default function CookieBanner() {
                             className="text-xs text-dark/40 hover:text-green flex items-center gap-1.5 mb-4 transition-colors font-medium"
                         >
                             <span className="transition-transform duration-200" style={{ display: 'inline-block', transform: showDetails ? 'rotate(90deg)' : 'none' }}>›</span>
-                            What we store
+                            {t('details')}
                         </button>
 
                         {showDetails && (
@@ -106,15 +108,15 @@ export default function CookieBanner() {
                                 <div className="flex items-start gap-2 bg-green/5 border border-green/15 rounded-2xl p-3">
                                     <Shield size={13} className="text-green mt-0.5 flex-shrink-0" />
                                     <div>
-                                        <p className="text-xs font-bold text-dark">Essential</p>
-                                        <p className="text-xs text-dark/50">Session, consent</p>
+                                        <p className="text-xs font-bold text-dark">{t('essential')}</p>
+                                        <p className="text-xs text-dark/50">{t('essential_desc')}</p>
                                     </div>
                                 </div>
                                 <div className="flex items-start gap-2 bg-blue-50 border border-blue-100 rounded-2xl p-3">
                                     <BarChart2 size={13} className="text-blue-500 mt-0.5 flex-shrink-0" />
                                     <div>
-                                        <p className="text-xs font-bold text-dark">Analytics</p>
-                                        <p className="text-xs text-dark/50">Pages, language, referrer</p>
+                                        <p className="text-xs font-bold text-dark">{t('analytics')}</p>
+                                        <p className="text-xs text-dark/50">{t('analytics_desc')}</p>
                                     </div>
                                 </div>
                             </div>
@@ -126,13 +128,13 @@ export default function CookieBanner() {
                                 onClick={decline}
                                 className="flex-1 py-2.5 border border-gray-200 hover:border-green/30 rounded-2xl text-sm font-semibold text-dark/60 hover:text-dark hover:bg-green/5 transition-all"
                             >
-                                Decline
+                                {t('decline')}
                             </button>
                             <button
                                 onClick={accept}
                                 className="flex-1 py-2.5 bg-green text-white rounded-2xl text-sm font-bold hover:bg-green/85 transition-all shadow-md shadow-green/25"
                             >
-                                Accept all
+                                {t('accept')}
                             </button>
                         </div>
                     </div>
