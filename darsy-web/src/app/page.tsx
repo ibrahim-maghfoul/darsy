@@ -23,7 +23,7 @@ function LazySection({ children, minHeight = 400 }: { children: React.ReactNode;
     if (!el) return;
     const io = new IntersectionObserver(
       ([entry]) => { if (entry.isIntersecting) { setMounted(true); io.disconnect(); } },
-      { rootMargin: "400px" }
+      { rootMargin: "2000px" }
     );
     io.observe(el);
     return () => io.disconnect();
