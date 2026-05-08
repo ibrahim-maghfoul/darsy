@@ -1,7 +1,7 @@
-# Darsy Database — Mongoose Models
+# Udarsy Database — Mongoose Models
 
-All models in [darsy-backend/src/models/](../darsy-backend/src/models/).
-MongoDB connection: `darsy-backend/src/config/database.ts` — maxPoolSize 10, serverSelectionTimeoutMS 5000.
+All models in [udarsy-backend/src/models/](../udarsy-backend/src/models/).
+MongoDB connection: `udarsy-backend/src/config/database.ts` — maxPoolSize 10, serverSelectionTimeoutMS 5000.
 
 ---
 

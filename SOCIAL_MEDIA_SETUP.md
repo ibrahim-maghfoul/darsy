@@ -1,4 +1,4 @@
-# Darsy — Social Media Pages Setup
+# Udarsy — Social Media Pages Setup
 
 Everything you need to create and fill all 4 social media pages.
 Copy-paste ready for each platform's creation form.
@@ -9,15 +9,15 @@ Copy-paste ready for each platform's creation form.
 
 | Field | Value |
 |-------|-------|
-| Brand name | **Darsy** |
+| Brand name | **Udarsy** |
 | Tagline (AR) | **درسي — تعلّم، تقدّم، تفوّق** |
-| Tagline (FR) | **Darsy — Apprends, Progresse, Réussis** |
+| Tagline (FR) | **Udarsy — Apprends, Progresse, Réussis** |
 | Brand color | `#3aaa6a` (green) |
 | Secondary color | `#111111` (black) |
 | Market | Morocco 🇲🇦 |
 | Target audience | Students 13–22, secondary school, Brevet, BAC |
-| Website | darsy.ma *(or your actual domain)* |
-| Email | contact@darsy.ma |
+| Website | udarsy.ma *(or your actual domain)* |
+| Email | contact@udarsy.ma |
 | Country | Morocco |
 | Languages | Arabic + French (post bilingually) |
 
@@ -37,7 +37,7 @@ Use these prompts in any AI image generator (Midjourney, DALL·E 3, Adobe Firefl
 
 ### Option B — Wordmark logo
 
-> Minimal flat wordmark logo. The word **"Darsy"** in bold modern geometric sans-serif typeface, all lowercase, color white, on a solid **#3aaa6a green** rectangle background. To the left of the text, a small flat icon: a stylized open book with a subtle graduation cap above it, in white. Perfect horizontal alignment. Clean professional look, no shadows, no gradients, no decorative elements. Flat design. Suitable for a Facebook page cover and website header. Aspect ratio 3:1 wide.
+> Minimal flat wordmark logo. The word **"Udarsy"** in bold modern geometric sans-serif typeface, all lowercase, color white, on a solid **#3aaa6a green** rectangle background. To the left of the text, a small flat icon: a stylized open book with a subtle graduation cap above it, in white. Perfect horizontal alignment. Clean professional look, no shadows, no gradients, no decorative elements. Flat design. Suitable for a Facebook page cover and website header. Aspect ratio 3:1 wide.
 
 ---
 
@@ -49,7 +49,7 @@ Use these prompts in any AI image generator (Midjourney, DALL·E 3, Adobe Firefl
 
 ### Option D — Combined AR+FR minimal
 
-> Clean flat logo. Bold letter **"D"** in white, slightly stylized — the vertical bar of the D has a small stack of horizontal lines (like a book spine). Solid **#3aaa6a green** circular background (not square). Below the circle: the word **"Darsy"** in dark **#111111** bold sans-serif and next to it **"درسي"** in the same weight Arabic font, both on a transparent/white background. Flat vector style, no shadows, professional, modern, educational brand feel.
+> Clean flat logo. Bold letter **"D"** in white, slightly stylized — the vertical bar of the D has a small stack of horizontal lines (like a book spine). Solid **#3aaa6a green** circular background (not square). Below the circle: the word **"Udarsy"** in dark **#111111** bold sans-serif and next to it **"درسي"** in the same weight Arabic font, both on a transparent/white background. Flat vector style, no shadows, professional, modern, educational brand feel.
 
 ---
 
@@ -57,7 +57,7 @@ Use these prompts in any AI image generator (Midjourney, DALL·E 3, Adobe Firefl
 
 | Tool | Notes |
 |------|-------|
-| **Ideogram** | Best for text rendering — use it if you need "Darsy" or "درسي" readable in the logo |
+| **Ideogram** | Best for text rendering — use it if you need "Udarsy" or "درسي" readable in the logo |
 | **Midjourney** | Best for style and aesthetics — use `--style raw --ar 1:1` |
 | **DALL·E 3** | Good for following detailed instructions accurately |
 | **Adobe Firefly** | Best for brand-safe, clean commercial results |
@@ -71,7 +71,7 @@ Use these prompts in any AI image generator (Midjourney, DALL·E 3, Adobe Firefl
 
 ## Profile Photo
 
-> Use a square logo: white **"D"** lettermark or full "Darsy" wordmark on a solid `#3aaa6a` green background.
+> Use a square logo: white **"D"** lettermark or full "Udarsy" wordmark on a solid `#3aaa6a` green background.
 > Minimum size: **400×400 px** (upload at 1000×1000 px for best quality across all platforms).
 
 ---
@@ -93,11 +93,11 @@ Use these prompts in any AI image generator (Midjourney, DALL·E 3, Adobe Firefl
 
 | Field | Value |
 |-------|-------|
-| **Page name** | Darsy \| درسي |
+| **Page name** | Udarsy \| درسي |
 | **Category** | Education Website |
-| **Username / URL** | `@darsyapp` → `facebook.com/darsyapp` |
-| **Website** | https://darsy.ma |
-| **Email** | contact@darsy.ma |
+| **Username / URL** | `@udarsyapp` → `facebook.com/udarsyapp` |
+| **Website** | https://udarsy.ma |
+| **Email** | contact@udarsy.ma |
 | **Phone** | *(add your Moroccan number)* |
 | **Country** | Morocco |
 | **Languages** | Arabic, French |
@@ -106,7 +106,7 @@ Use these prompts in any AI image generator (Midjourney, DALL·E 3, Adobe Firefl
 
 ```
 منصة درسي للتعليم في المغرب — دروس، تمارين، وامتحانات للثانوي والباك والبريفي.
-Darsy, la plateforme éducative marocaine — cours, exercices et examens pour le collège, lycée et bac.
+Udarsy, la plateforme éducative marocaine — cours, exercices et examens pour le collège, lycée et bac.
 ```
 
 ## Long Description / About (for "Our Story" section)
@@ -124,9 +124,9 @@ Darsy, la plateforme éducative marocaine — cours, exercices et examens pour l
 
 ---
 
-Darsy est la première plateforme éducative numérique conçue spécialement pour les élèves marocains.
+Udarsy est la première plateforme éducative numérique conçue spécialement pour les élèves marocains.
 
-Darsy propose :
+Udarsy propose :
 ✅ Des cours PDF et vidéos alignés sur le programme officiel marocain
 ✅ Des exercices et examens pour tous les niveaux (collège, lycée, bac)
 ✅ Un suivi de progression en temps réel
@@ -134,14 +134,14 @@ Darsy propose :
 ✅ Un calendrier scolaire national intégré
 ✅ Gratuit — avec des plans Pro et Premium pour aller plus loin
 
-🌐 darsy.ma
+🌐 udarsy.ma
 ```
 
 ## Page Settings to Configure
 - [ ] Page transparency — set to "Education"
-- [ ] Action button — **"En savoir plus"** → link to `https://darsy.ma`
+- [ ] Action button — **"En savoir plus"** → link to `https://udarsy.ma`
 - [ ] Pinned post — announcement post (see content ideas below)
-- [ ] Milestone — "Darsy launched" with launch date
+- [ ] Milestone — "Udarsy launched" with launch date
 - [ ] Enable reviews — Yes
 - [ ] Messaging — turn on, set auto-reply (see below)
 
@@ -149,12 +149,12 @@ Darsy propose :
 
 ```
 مرحباً! 👋 شكراً على تواصلك مع درسي.
-للاستفسارات، زر موقعنا: darsy.ma
-أو راسلنا على: contact@darsy.ma
+للاستفسارات، زر موقعنا: udarsy.ma
+أو راسلنا على: contact@udarsy.ma
 
 Bonjour ! Merci de nous contacter.
-Pour toute question, visitez : darsy.ma
-Ou écrivez-nous : contact@darsy.ma
+Pour toute question, visitez : udarsy.ma
+Ou écrivez-nous : contact@udarsy.ma
 ```
 
 ---
@@ -168,11 +168,11 @@ Ou écrivez-nous : contact@darsy.ma
 | Field | Value |
 |-------|-------|
 | **Account type** | Creator or Business |
-| **Display name** | Darsy \| درسي |
-| **Username / handle** | `@darsy.ma` |
+| **Display name** | Udarsy \| درسي |
+| **Username / handle** | `@udarsy.ma` |
 | **Category** | Education |
-| **Website** | https://darsy.ma |
-| **Email** | contact@darsy.ma |
+| **Website** | https://udarsy.ma |
+| **Email** | contact@udarsy.ma |
 | **Country** | Morocco |
 
 ## Bio (150 chars max)
@@ -181,7 +181,7 @@ Ou écrivez-nous : contact@darsy.ma
 📚 منصة تعليمية مغربية
 🎓 باك・بريفي・ثانوي
 ✅ دروس・تمارين・امتحانات
-🌐 darsy.ma
+🌐 udarsy.ma
 ```
 
 *(Alternative — French-first version)*
@@ -189,7 +189,7 @@ Ou écrivez-nous : contact@darsy.ma
 📚 Plateforme éd. marocaine
 🎓 Bac・Brevet・Lycée
 ✅ Cours・Exercices・Examens
-🌐 darsy.ma
+🌐 udarsy.ma
 ```
 
 *(Alternative — Bilingual)*
@@ -197,14 +197,14 @@ Ou écrivez-nous : contact@darsy.ma
 📚 تعلّم بالمغربي 🇲🇦
 دروس・تمارين・امتحانات للباك والبريفي
 Cours・Exos・Bac・Brevet
-👇 darsy.ma
+👇 udarsy.ma
 ```
 
 ## Link in Bio
 
 Use a Linktree-style landing or direct link:
 ```
-https://darsy.ma
+https://udarsy.ma
 ```
 
 ## Story Highlights to Create (after launch)
@@ -229,18 +229,18 @@ https://darsy.ma
 | Field | Value |
 |-------|-------|
 | **Account type** | Business |
-| **Display name** | Darsy \| درسي |
-| **Username / handle** | `@darsy.ma` |
+| **Display name** | Udarsy \| درسي |
+| **Username / handle** | `@udarsy.ma` |
 | **Category** | Education |
-| **Website** | https://darsy.ma |
-| **Email** | contact@darsy.ma |
+| **Website** | https://udarsy.ma |
+| **Email** | contact@udarsy.ma |
 | **Country** | Morocco |
 
 ## Bio (80 chars max)
 
 ```
 📚 تعلّم بالمغربي 🇲🇦 | الباك والبريفي
-darsy.ma
+udarsy.ma
 ```
 
 *(Alternative)*
@@ -259,7 +259,7 @@ darsy.ma
 | **Teacher feature** | 60-sec intro to a platform teacher | 1×/week |
 | **"Did you know?"** | Curriculum facts in Darija | 2×/week |
 | **Student result story** | Before/after testimonials | 1×/month |
-| **Platform tutorial** | How to use a feature on Darsy | 1×/week |
+| **Platform tutorial** | How to use a feature on Udarsy | 1×/week |
 
 ## Hashtag Sets
 
@@ -270,7 +270,7 @@ darsy.ma
 
 **French set:**
 ```
-#Bac2025 #BacMaroc #BacMaroc2025 #Brevet #EtudesMaroc #CoursGratuits #Darsy #ApprendreEnMaroc
+#Bac2025 #BacMaroc #BacMaroc2025 #Brevet #EtudesMaroc #CoursGratuits #Udarsy #ApprendreEnMaroc
 ```
 
 **Mixed (best performing):**
@@ -289,27 +289,27 @@ darsy.ma
 | Field | Value |
 |-------|-------|
 | **Account type** | Public Profile (Creator / Business) |
-| **Display name** | Darsy \| درسي |
-| **Username** | `darsyapp` |
+| **Display name** | Udarsy \| درسي |
+| **Username** | `udarsyapp` |
 | **Category** | Education |
-| **Website** | https://darsy.ma |
-| **Email** | contact@darsy.ma |
+| **Website** | https://udarsy.ma |
+| **Email** | contact@udarsy.ma |
 | **Country** | Morocco |
 
 ## Bio (100 chars max)
 
 ```
-📚 منصة تعليمية مغربية 🇲🇦 | الباك・البريفي・الثانوي | darsy.ma
+📚 منصة تعليمية مغربية 🇲🇦 | الباك・البريفي・الثانوي | udarsy.ma
 ```
 
 *(Alternative)*
 ```
-🎓 Cours Bac & Brevet Maroc | تعلّم معنا | darsy.ma
+🎓 Cours Bac & Brevet Maroc | تعلّم معنا | udarsy.ma
 ```
 
 ## Snapchat Public Profile Setup Checklist
 
-- [ ] Profile photo — Darsy logo (green background)
+- [ ] Profile photo — Udarsy logo (green background)
 - [ ] Cover story thumbnail — student-focused image
 - [ ] Enable **Story** posting — repurpose TikTok vertical videos
 - [ ] Enable **Spotlight** submissions — short educational clips
@@ -320,7 +320,7 @@ darsy.ma
 
 - Repurpose all TikTok videos directly (same 9:16 format)
 - Use **Snap Map** to tag content as Morocco-based
-- Create **AR Lens** with Darsy branding for students to share
+- Create **AR Lens** with Udarsy branding for students to share
 - Post during Moroccan school hours (7–9am) and after (4–7pm)
 
 ---
@@ -331,8 +331,8 @@ darsy.ma
 
 | | Facebook | Instagram | TikTok | Snapchat |
 |--|----------|-----------|--------|----------|
-| **Handle** | @darsyapp | @darsy.ma | @darsy.ma | darsyapp |
-| **Display name** | Darsy \| درسي | Darsy \| درسي | Darsy \| درسي | Darsy \| درسي |
+| **Handle** | @udarsyapp | @udarsy.ma | @udarsy.ma | udarsyapp |
+| **Display name** | Udarsy \| درسي | Udarsy \| درسي | Udarsy \| درسي | Udarsy \| درسي |
 | **Account type** | Page | Business | Business | Public Profile |
 | **Category** | Education Website | Education | Education | Education |
 | **Primary audience** | Students 15–22, parents | Students 15–22 | Students 13–20 | Students 13–20 |
@@ -353,7 +353,7 @@ darsy.ma
 المنصة التعليمية المغربية الجديدة لطلاب الباكالوريا والبريفي والثانوي.
 
 دروس PDF・فيديوهات・تمارين・امتحانات
-كل هذا مجاناً على darsy.ma
+كل هذا مجاناً على udarsy.ma
 
 شارك مع صاحبك اللي محتاج 👇
 #درسي #الباكالوريا #المغرب
@@ -361,15 +361,15 @@ darsy.ma
 
 **French:**
 ```
-🎉 Darsy est là !
+🎉 Udarsy est là !
 
 La nouvelle plateforme éducative marocaine pour les élèves du bac, brevet et lycée.
 
 Cours PDF・Vidéos・Exercices・Examens
-Tout ça gratuitement sur darsy.ma
+Tout ça gratuitement sur udarsy.ma
 
 Partage avec un(e) ami(e) qui en a besoin 👇
-#Darsy #BacMaroc #Maroc
+#Udarsy #BacMaroc #Maroc
 ```
 
 ## Post 2 — Feature Highlight
@@ -377,7 +377,7 @@ Partage avec un(e) ami(e) qui en a besoin 👇
 ```
 📚 كيفاش تستعمل درسي؟
 
-1️⃣ دخل على darsy.ma
+1️⃣ دخل على udarsy.ma
 2️⃣ اختار مستواك الدراسي
 3️⃣ اختار المادة
 4️⃣ بدا تتعلم — مجاناً!
@@ -392,7 +392,7 @@ Partage avec un(e) ami(e) qui en a besoin 👇
 "نجاحك مش بالحظ — نجاحك بالمجهود والأدوات الصح" 💪
 
 درسي هنا يساعدك تنجح في الباك والبريفي.
-ابدا اليوم: darsy.ma
+ابدا اليوم: udarsy.ma
 
 #الباكالوريا2025 #درسي #نجاح
 ```
@@ -401,9 +401,9 @@ Partage avec un(e) ami(e) qui en a besoin 👇
 
 # Important Notes
 
-- **Username availability:** Check `@darsy.ma` and `@darsyapp` on all platforms before committing — claim both if possible.
+- **Username availability:** Check `@udarsy.ma` and `@udarsyapp` on all platforms before committing — claim both if possible.
 - **Verification:** Apply for the blue checkmark on Facebook and Instagram once you reach 1,000 followers.
 - **Consistency:** Use the exact same profile photo and cover across all platforms.
-- **Link in bio:** Always point to `darsy.ma` — consider a `/social` landing page that tracks which platform sends traffic.
+- **Link in bio:** Always point to `udarsy.ma` — consider a `/social` landing page that tracks which platform sends traffic.
 - **Language:** Post in Arabic first, French second. Darija performs best on TikTok/Snapchat with Moroccan youth.
-- **Content calendar:** Use the N8N `social-media-autopilot` and `ai-content-calendar` workflows already built in `darsy-marketing/n8n/workflows/` to automate posting once pages are set up.
+- **Content calendar:** Use the N8N `social-media-autopilot` and `ai-content-calendar` workflows already built in `udarsy-marketing/n8n/workflows/` to automate posting once pages are set up.

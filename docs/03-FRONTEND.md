@@ -1,14 +1,14 @@
-# Darsy Web Frontend (darsy-web) — Function Reference
+# Udarsy Web Frontend (udarsy-web) — Function Reference
 
 - Framework: Next.js 16 (App Router) + React 19 + TypeScript
 - Styling: Tailwind CSS + SCSS modules
-- i18n: next-intl — locales `ar` (RTL), `fr`, `en`; messages in [darsy-web/messages/](../darsy-web/messages/)
+- i18n: next-intl — locales `ar` (RTL), `fr`, `en`; messages in [udarsy-web/messages/](../udarsy-web/messages/)
 - State: Context (Auth) + server components + ad-hoc hooks
-- API: axios via [darsy-web/src/lib/api.ts](../darsy-web/src/lib/api.ts)
+- API: axios via [udarsy-web/src/lib/api.ts](../udarsy-web/src/lib/api.ts)
 
 ---
 
-## Libraries ([src/lib/](../darsy-web/src/lib/))
+## Libraries ([src/lib/](../udarsy-web/src/lib/))
 
 ### api.ts
 - Exports a configured `axios` instance pointing to `process.env.NEXT_PUBLIC_API_URL` (default `http://localhost:5000/api`).
@@ -41,7 +41,7 @@
 
 ---
 
-## Types ([src/types/index.ts](../darsy-web/src/types/index.ts))
+## Types ([src/types/index.ts](../udarsy-web/src/types/index.ts))
 
 Key interfaces:
 - `School`, `Level`, `Guidance`, `Subject`, `Lesson` (+ nested `CoursePdf`, `Video`, `Exercice`, `Exam`, `Resource`).
@@ -52,7 +52,7 @@ Key interfaces:
 
 ---
 
-## Contexts ([src/contexts/](../darsy-web/src/contexts/))
+## Contexts ([src/contexts/](../udarsy-web/src/contexts/))
 
 ### AuthContext.tsx — `AuthProvider`
 Exposes `useAuth()`:
@@ -73,7 +73,7 @@ Exposes `useAuth()`:
 
 ---
 
-## Services ([src/services/](../darsy-web/src/services/))
+## Services ([src/services/](../udarsy-web/src/services/))
 
 ### data.ts
 - `getSchools()` — `GET /data/schools`, cached.
@@ -113,7 +113,7 @@ Exposes `useAuth()`:
 
 ---
 
-## Pages ([src/app/](../darsy-web/src/app/))
+## Pages ([src/app/](../udarsy-web/src/app/))
 
 | Route                                  | File                                                      | Purpose |
 |----------------------------------------|-----------------------------------------------------------|---------|
@@ -155,7 +155,7 @@ Exposes `useAuth()`:
 
 ---
 
-## Components ([src/components/](../darsy-web/src/components/))
+## Components ([src/components/](../udarsy-web/src/components/))
 
 ### PageTransition.tsx (new)
 Wraps children in a fade/slide animation on route change. Uses `usePathname()` as key.

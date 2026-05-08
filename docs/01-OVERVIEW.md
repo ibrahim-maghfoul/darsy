@@ -1,8 +1,8 @@
-# Darsy — Project Overview
+# Udarsy — Project Overview
 
-## What Darsy Is
+## What Udarsy Is
 
-Darsy is a full-stack educational platform for Moroccan students (Secondary school, BAC prep, Brevet).
+Udarsy is a full-stack educational platform for Moroccan students (Secondary school, BAC prep, Brevet).
 It combines a curriculum browser, real-time chat, teacher/instructor systems, news, contributions
 hub, calendar, and a marketing automation backend.
 
@@ -14,13 +14,13 @@ hub, calendar, and a marketing automation backend.
 ## Repository Layout
 
 ```
-Darsy/
-├── darsy-web/          # Next.js 16 frontend (main website)
-├── darsy-backend/      # Node.js + Express API (TypeScript)
-├── darsy-admin/        # React 19 + Vite admin panel
-├── darsy-marketing/    # Marketing assets + N8N workflows
+Udarsy/
+├── udarsy-web/          # Next.js 16 frontend (main website)
+├── udarsy-backend/      # Node.js + Express API (TypeScript)
+├── udarsy-admin/        # React 19 + Vite admin panel
+├── udarsy-marketing/    # Marketing assets + N8N workflows
 │   └── n8n/            # 27 pre-built automation workflows
-└── darsy-inspirations/ # Design references
+└── udarsy-inspirations/ # Design references
 ```
 
 ## High-Level Tech Stack
@@ -62,13 +62,13 @@ Darsy/
 
 ```
 # Backend
-cd darsy-backend && npm run dev    # port 5000
+cd udarsy-backend && npm run dev    # port 5000
 
 # Frontend
-cd darsy-web && npm run dev        # port 3000
+cd udarsy-web && npm run dev        # port 3000
 
 # Admin
-cd darsy-admin && npm run dev      # port 5173
+cd udarsy-admin && npm run dev      # port 5173
 
 # N8N
 docker run -d --name n8n -p 5678:5678 -v n8n_data:/home/node/.n8n docker.n8n.io/n8nio/n8n
@@ -80,7 +80,7 @@ See `docs/08-SETUP-AND-RELEASE.md` for full environment + release steps.
 
 - `01-OVERVIEW.md` — this file
 - `02-BACKEND.md` — every controller, route, middleware, util, socket
-- `03-FRONTEND.md` — every page, service, context, lib in darsy-web
+- `03-FRONTEND.md` — every page, service, context, lib in udarsy-web
 - `04-ADMIN.md` — every admin page, route, utility
 - `05-DATABASE-MODELS.md` — complete Mongoose schemas
 - `06-API-REFERENCE.md` — every endpoint with params + auth

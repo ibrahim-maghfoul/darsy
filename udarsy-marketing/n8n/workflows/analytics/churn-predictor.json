@@ -1,0 +1,467 @@
+{
+  "name": "Udarsy AI Churn Predictor",
+  "nodes": [
+    {
+      "parameters": {
+        "rule": {
+          "interval": [
+            {
+              "field": "cronExpression",
+              "expression": "0 6 * * *"
+            }
+          ]
+        }
+      },
+      "id": "trigger-daily-6am",
+      "name": "Daily 6AM",
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.2,
+      "position": [
+        0,
+        300
+      ]
+    },
+    {
+      "parameters": {
+        "operation": "aggregate",
+        "collection": "users",
+        "query": "={{ JSON.stringify([\n  {\n    $match: {\n      role: 'user',\n      updatedAt: { $gte: new Date(new Date().setDate(new Date().getDate() - 90)) }\n    }\n  },\n  {\n    $project: {\n      _id: 1,\n      displayName: 1,\n      email: 1,\n      subscription: 1,\n      createdAt: 1,\n      updatedAt: 1,\n      points: 1,\n      city: 1,\n      'progress.totalLessons': 1,\n      'progress.completedLessons': 1,\n      'progress.learningTime': 1,\n      'progress.videosWatched': 1,\n      'progress.documentsOpened': 1,\n      'progress.usageTime': 1,\n      'progress.timeSpentHistory': 1,\n      lessonsCount: { $size: { $ifNull: ['$progress.lessons', []] } },\n      lastLessonAccess: {\n        $max: '$progress.lessons.lastAccessed'\n      },\n      avgTimePerLesson: {\n        $cond: {\n          if: { $gt: [{ $size: { $ifNull: ['$progress.lessons', []] } }, 0] },\n          then: { $avg: '$progress.lessons.totalTimeSpent' },\n          else: 0\n        }\n      },\n      completionRate: {\n        $cond: {\n          if: { $gt: ['$progress.totalLessons', 0] },\n          then: { $divide: ['$progress.completedLessons', '$progress.totalLessons'] },\n          else: 0\n        }\n      }\n    }\n  }\n]) }}"
+      },
+      "id": "mongo-active-users",
+      "name": "MongoDB: Get Active Users with Activity",
+      "type": "n8n-nodes-base.mongoDb",
+      "typeVersion": 1.2,
+      "position": [
+        250,
+        300
+      ],
+      "credentials": {
+        "mongoDb": {
+          "id": "MONGO_CREDENTIAL_ID",
+          "name": "Udarsy MongoDB"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "const users = $input.all().map(item => item.json);\nconst now = new Date();\n\nfunction calculateEngagementScore(user) {\n  const scores = {};\n\n  // 1. Recency Score (0-25): How recently did they use the platform?\n  const lastActive = new Date(user.updatedAt || user.createdAt);\n  const daysSinceActive = Math.floor((now - lastActive) / (1000 * 60 * 60 * 24));\n  if (daysSinceActive <= 1) scores.recency = 25;\n  else if (daysSinceActive <= 3) scores.recency = 20;\n  else if (daysSinceActive <= 7) scores.recency = 15;\n  else if (daysSinceActive <= 14) scores.recency = 8;\n  else if (daysSinceActive <= 30) scores.recency = 3;\n  else scores.recency = 0;\n\n  // 2. Frequency Score (0-25): Login/usage pattern from timeSpentHistory\n  const history = user.progress?.timeSpentHistory || [];\n  const last7Days = history.filter(h => {\n    const d = new Date(h.date);\n    return (now - d) / (1000 * 60 * 60 * 24) <= 7;\n  });\n  const activeDaysLast7 = last7Days.filter(h => h.minutes > 0).length;\n  scores.frequency = Math.min(25, Math.round((activeDaysLast7 / 7) * 25));\n\n  // 3. Depth Score (0-25): How deeply do they engage?\n  const lessonsViewed = user.lessonsCount || 0;\n  const completionRate = user.completionRate || 0;\n  const videosWatched = user.progress?.videosWatched || 0;\n  const docsOpened = user.progress?.documentsOpened || 0;\n\n  let depthRaw = 0;\n  depthRaw += Math.min(8, lessonsViewed * 0.8);  // up to 8 points for lessons\n  depthRaw += completionRate * 8;                  // up to 8 points for completion\n  depthRaw += Math.min(5, videosWatched * 0.5);   // up to 5 points for videos\n  depthRaw += Math.min(4, docsOpened * 0.4);      // up to 4 points for docs\n  scores.depth = Math.min(25, Math.round(depthRaw));\n\n  // 4. Trend Score (0-25): Is engagement increasing or declining?\n  const last14Days = history.filter(h => {\n    const d = new Date(h.date);\n    return (now - d) / (1000 * 60 * 60 * 24) <= 14;\n  }).sort((a, b) => new Date(a.date) - new Date(b.date));\n\n  if (last14Days.length >= 4) {\n    const midpoint = Math.floor(last14Days.length / 2);\n    const firstHalf = last14Days.slice(0, midpoint);\n    const secondHalf = last14Days.slice(midpoint);\n    const avgFirst = firstHalf.reduce((s, h) => s + h.minutes, 0) / firstHalf.length;\n    const avgSecond = secondHalf.reduce((s, h) => s + h.minutes, 0) / secondHalf.length;\n\n    if (avgSecond >= avgFirst * 1.2) scores.trend = 25;       // Growing 20%+\n    else if (avgSecond >= avgFirst) scores.trend = 18;         // Stable or slight growth\n    else if (avgSecond >= avgFirst * 0.7) scores.trend = 10;  // Slight decline\n    else if (avgSecond >= avgFirst * 0.4) scores.trend = 4;   // Significant decline\n    else scores.trend = 0;                                     // Severe decline\n  } else {\n    scores.trend = 12; // Not enough data, assume neutral\n  }\n\n  const totalScore = scores.recency + scores.frequency + scores.depth + scores.trend;\n\n  // Determine risk level\n  let riskLevel;\n  if (totalScore >= 65) riskLevel = 'low';\n  else if (totalScore >= 40) riskLevel = 'medium';\n  else riskLevel = 'high';\n\n  return {\n    userId: user._id,\n    displayName: user.displayName,\n    email: user.email,\n    city: user.city,\n    subscription: user.subscription,\n    daysSinceActive,\n    lessonsViewed: user.lessonsCount,\n    totalLearningTime: user.progress?.learningTime || 0,\n    scores,\n    totalScore,\n    riskLevel,\n    riskReasons: [\n      scores.recency <= 8 ? `Inactive for ${daysSinceActive} days` : null,\n      scores.frequency <= 8 ? `Only ${activeDaysLast7}/7 active days last week` : null,\n      scores.depth <= 8 ? 'Low content engagement' : null,\n      scores.trend <= 4 ? 'Engagement declining significantly' : null\n    ].filter(Boolean)\n  };\n}\n\nconst scoredUsers = users.map(calculateEngagementScore);\n\n// Sort by risk (highest risk first)\nscoredUsers.sort((a, b) => a.totalScore - b.totalScore);\n\nconst summary = {\n  totalAnalyzed: scoredUsers.length,\n  highRisk: scoredUsers.filter(u => u.riskLevel === 'high').length,\n  mediumRisk: scoredUsers.filter(u => u.riskLevel === 'medium').length,\n  lowRisk: scoredUsers.filter(u => u.riskLevel === 'low').length,\n  avgScore: scoredUsers.length > 0 ? Math.round(scoredUsers.reduce((s, u) => s + u.totalScore, 0) / scoredUsers.length) : 0\n};\n\nreturn [{ json: { summary, users: scoredUsers } }];"
+      },
+      "id": "calculate-engagement",
+      "name": "Calculate Engagement Scores",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        500,
+        300
+      ]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://api.openai.com/v1/chat/completions",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "openAiApi",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ JSON.stringify({ model: \"gpt-4o\", messages: [{\"role\":\"system\",\"content\":\"You are a churn prediction analyst for Udarsy, a Moroccan educational platform targeting BAC and Brevet students in Morocco. Platform languages: Arabic (Darija + MSA) and French. Currency: MAD (Moroccan Dirham). Analyze user engagement data and identify patterns that predict churn. Provide specific, actionable insights. Be concise.\"},{\"role\":\"user\",\"content\":\"=Analyze these user engagement scores and churn risk data:\\n\\nSummary: {{ JSON.stringify($json.summary) }}\\n\\nHigh-risk users (top 20): {{ JSON.stringify($json.users.filter(u => u.riskLevel === 'high').slice(0, 20), null, 2) }}\\n\\nProvide:\\n1. Key churn patterns you see\\n2. Which user segments are most at risk\\n3. Recommended intervention strategies for each risk level\\n4. Any surprising patterns\"}], temperature: 0.3, max_tokens: 1000 }) }}",
+        "options": {
+          "response": {
+            "response": {
+              "responseFormat": "json"
+            }
+          }
+        }
+      },
+      "id": "ai-churn-analysis",
+      "name": "AI: Identify Churn Patterns",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        750,
+        300
+      ],
+      "credentials": {
+        "openAiApi": {
+          "id": "openai-api",
+          "name": "OpenAI account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "const data = $('Calculate Engagement Scores').first().json;\nconst users = data.users;\n\nconst highRisk = users.filter(u => u.riskLevel === 'high');\nconst mediumRisk = users.filter(u => u.riskLevel === 'medium');\nconst lowRisk = users.filter(u => u.riskLevel === 'low');\n\nreturn [\n  { json: { segment: 'high', users: highRisk } },\n  { json: { segment: 'medium', users: mediumRisk } },\n  { json: { segment: 'low', users: lowRisk } }\n];"
+      },
+      "id": "segment-users",
+      "name": "Segment by Risk Level",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1000,
+        300
+      ],
+      "outputs": [
+        "main",
+        "main",
+        "main"
+      ]
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "string": [
+            {
+              "value1": "={{ $json.segment }}",
+              "operation": "equals",
+              "value2": "high"
+            }
+          ]
+        }
+      },
+      "id": "if-high-risk",
+      "name": "If High Risk",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2,
+      "position": [
+        1200,
+        100
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "const highRiskUsers = $json.users || [];\n\n// Process each high-risk user for intervention\nconst interventions = highRiskUsers.slice(0, 50).map(user => {\n  const isPremium = user.subscription?.plan !== 'free';\n  \n  return {\n    email: user.email,\n    displayName: user.displayName,\n    userId: user.userId,\n    totalScore: user.totalScore,\n    daysSinceActive: user.daysSinceActive,\n    riskReasons: user.riskReasons,\n    intervention: {\n      type: 'immediate',\n      emailSubject: isPremium \n        ? `${user.displayName}, nous avons remarque votre absence - voici un cadeau!`\n        : `${user.displayName}, revenez sur Udarsy - offre speciale pour vous!`,\n      offerType: isPremium ? 'extended_premium_week' : 'free_premium_3_days',\n      personalizedMessage: true\n    }\n  };\n});\n\nreturn interventions.map(i => ({ json: i }));"
+      },
+      "id": "prepare-high-risk-intervention",
+      "name": "Prepare High Risk Interventions",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1450,
+        0
+      ]
+    },
+    {
+      "parameters": {
+        "fromEmail": "={{ $env.UDARSY_EMAIL_FROM || 'hello@udarsy.dz' }}",
+        "toEmail": "={{ $json.email }}",
+        "subject": "={{ $json.intervention.emailSubject }}",
+        "html": "=<div style=\"font-family: 'Segoe UI', Arial, sans-serif; max-width: 600px; margin: 0 auto;\">\n  <div style=\"background: linear-gradient(135deg, #6366f1, #8b5cf6); padding: 30px; border-radius: 12px 12px 0 0; text-align: center;\">\n    <h1 style=\"color: white; margin: 0;\">Udarsy</h1>\n    <p style=\"color: rgba(255,255,255,0.85); margin: 8px 0 0;\">Nous pensons a vous!</p>\n  </div>\n  <div style=\"padding: 24px; background: white; border: 1px solid #e5e7eb;\">\n    <p>Bonjour <strong>{{ $json.displayName }}</strong>,</p>\n    <p>Cela fait <strong>{{ $json.daysSinceActive }} jours</strong> que nous ne vous avons pas vu sur Udarsy. Vos etudes nous manquent!</p>\n    <p>Pour vous encourager a revenir, nous vous offrons:</p>\n    <div style=\"background: #faf5ff; border: 2px solid #8b5cf6; border-radius: 8px; padding: 16px; text-align: center; margin: 16px 0;\">\n      <h2 style=\"color: #6366f1; margin: 0;\">{{ $json.intervention.offerType === 'free_premium_3_days' ? '3 Jours Premium GRATUITS' : '1 Semaine Premium OFFERTE' }}</h2>\n      <p style=\"color: #6b7280; margin: 8px 0 0;\">Acces illimite a tous les cours et ressources</p>\n    </div>\n    <a href=\"https://udarsy.dz/profile?utm_source=churn_email&utm_medium=email&utm_campaign=win_back\" style=\"display: block; text-align: center; background: #6366f1; color: white; padding: 14px; border-radius: 8px; text-decoration: none; font-weight: 600;\">Revenir sur Udarsy</a>\n  </div>\n  <div style=\"padding: 16px; text-align: center; color: #9ca3af; font-size: 12px; border: 1px solid #e5e7eb; border-top: 0; border-radius: 0 0 12px 12px;\">\n    <p>Udarsy - La plateforme educative algerienne</p>\n  </div>\n</div>"
+      },
+      "id": "send-intervention-email",
+      "name": "Send Intervention Email",
+      "type": "n8n-nodes-base.emailSend",
+      "typeVersion": 2.1,
+      "position": [
+        1700,
+        0
+      ],
+      "credentials": {
+        "smtp": {
+          "id": "SMTP_CREDENTIAL_ID",
+          "name": "Udarsy SMTP"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "string": [
+            {
+              "value1": "={{ $json.segment }}",
+              "operation": "equals",
+              "value2": "medium"
+            }
+          ]
+        }
+      },
+      "id": "if-medium-risk",
+      "name": "If Medium Risk",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2,
+      "position": [
+        1200,
+        350
+      ]
+    },
+    {
+      "parameters": {
+        "operation": "appendOrUpdate",
+        "documentId": {
+          "__rl": true,
+          "mode": "id",
+          "value": "={{ $env.GSHEET_REENGAGEMENT_QUEUE_ID }}"
+        },
+        "sheetName": {
+          "__rl": true,
+          "mode": "name",
+          "value": "Re-engagement Queue"
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "Date Added": "={{ new Date().toISOString().split('T')[0] }}",
+            "User ID": "={{ $json.users.map(u => u.userId).join(', ') }}",
+            "Count": "={{ $json.users.length }}",
+            "Avg Score": "={{ Math.round($json.users.reduce((s, u) => s + u.totalScore, 0) / Math.max($json.users.length, 1)) }}",
+            "Status": "pending"
+          }
+        }
+      },
+      "id": "add-to-reengagement",
+      "name": "Add to Re-engagement Queue",
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.5,
+      "position": [
+        1450,
+        350
+      ],
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "GSHEET_CREDENTIAL_ID",
+          "name": "Google Sheets OAuth2"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "appendOrUpdate",
+        "documentId": {
+          "__rl": true,
+          "mode": "id",
+          "value": "={{ $env.GSHEET_CHURN_PREDICTIONS_ID }}"
+        },
+        "sheetName": {
+          "__rl": true,
+          "mode": "name",
+          "value": "Daily Predictions"
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "Date": "={{ new Date().toISOString().split('T')[0] }}",
+            "Total Analyzed": "={{ $('Calculate Engagement Scores').first().json.summary.totalAnalyzed }}",
+            "High Risk": "={{ $('Calculate Engagement Scores').first().json.summary.highRisk }}",
+            "Medium Risk": "={{ $('Calculate Engagement Scores').first().json.summary.mediumRisk }}",
+            "Low Risk": "={{ $('Calculate Engagement Scores').first().json.summary.lowRisk }}",
+            "Avg Score": "={{ $('Calculate Engagement Scores').first().json.summary.avgScore }}",
+            "Interventions Sent": "={{ $('Prepare High Risk Interventions').all().length }}"
+          }
+        }
+      },
+      "id": "save-predictions-sheets",
+      "name": "Save Predictions to Google Sheets",
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.5,
+      "position": [
+        1700,
+        500
+      ],
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "GSHEET_CREDENTIAL_ID",
+          "name": "Google Sheets OAuth2"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "chatId": "={{ $env.TELEGRAM_GROWTH_CHAT_ID }}",
+        "text": "=**Udarsy Daily Churn Risk Report**\n_{{ new Date().toISOString().split('T')[0] }}_\n\n**Users Analyzed:** {{ $('Calculate Engagement Scores').first().json.summary.totalAnalyzed }}\n**Avg Engagement Score:** {{ $('Calculate Engagement Scores').first().json.summary.avgScore }}/100\n\n**Risk Breakdown:**\n- High Risk: {{ $('Calculate Engagement Scores').first().json.summary.highRisk }}\n- Medium Risk: {{ $('Calculate Engagement Scores').first().json.summary.mediumRisk }}\n- Low Risk: {{ $('Calculate Engagement Scores').first().json.summary.lowRisk }}\n\n**Actions Taken:**\n- Intervention emails sent to high-risk users\n- Medium-risk users added to re-engagement queue\n\n**AI Insights:**\n{{ $('AI: Identify Churn Patterns').first().json.message?.content || 'Analysis complete' }}",
+        "parseMode": "Markdown"
+      },
+      "id": "telegram-churn-summary",
+      "name": "Daily Churn Summary to Telegram",
+      "type": "n8n-nodes-base.telegram",
+      "typeVersion": 1.2,
+      "position": [
+        1700,
+        700
+      ],
+      "credentials": {
+        "telegramApi": {
+          "id": "XKvv8ek8iXO8xWJT",
+          "name": "Telegram account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "run-churn",
+        "responseMode": "immediatelyAfterReceive",
+        "options": {}
+      },
+      "id": "webhook-trigger-bot",
+      "name": "Webhook Trigger (from Bot)",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2,
+      "position": [
+        0,
+        420
+      ],
+      "webhookId": "run-churn"
+    },
+    {
+      "parameters": {
+        "jsCode": "// Gets chatId from Telegram command center webhook, or falls back to env var\nconst fromWebhook = $input.first().json.body?.chatId;\nconst chatId = fromWebhook || $env.TELEGRAM_CHAT_ID;\nreturn [{ json: { chatId } }];"
+      },
+      "id": "get-chat-id-bot",
+      "name": "Get ChatId",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        240,
+        360
+      ]
+    }
+  ],
+  "connections": {
+    "Daily 6AM": {
+      "main": [
+        [
+          {
+            "node": "Get ChatId",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "MongoDB: Get Active Users with Activity": {
+      "main": [
+        [
+          {
+            "node": "Calculate Engagement Scores",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Calculate Engagement Scores": {
+      "main": [
+        [
+          {
+            "node": "AI: Identify Churn Patterns",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Segment by Risk Level",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Segment by Risk Level": {
+      "main": [
+        [
+          {
+            "node": "If High Risk",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "If Medium Risk",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "If High Risk": {
+      "main": [
+        [
+          {
+            "node": "Prepare High Risk Interventions",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        []
+      ]
+    },
+    "Prepare High Risk Interventions": {
+      "main": [
+        [
+          {
+            "node": "Send Intervention Email",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "If Medium Risk": {
+      "main": [
+        [
+          {
+            "node": "Add to Re-engagement Queue",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        []
+      ]
+    },
+    "AI: Identify Churn Patterns": {
+      "main": [
+        [
+          {
+            "node": "Save Predictions to Google Sheets",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Daily Churn Summary to Telegram",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Webhook Trigger (from Bot)": {
+      "main": [
+        [
+          {
+            "node": "Get ChatId",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Get ChatId": {
+      "main": [
+        [
+          {
+            "node": "MongoDB: Get Active Users with Activity",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "settings": {
+    "executionOrder": "v1",
+    "saveManualExecutions": true,
+    "callerPolicy": "workflowsFromSameOwner"
+  },
+  "staticData": null,
+  "tags": [
+    {
+      "name": "analytics"
+    },
+    {
+      "name": "churn"
+    },
+    {
+      "name": "ai"
+    }
+  ],
+  "meta": {
+    "templateCredsSetupCompleted": false,
+    "instanceId": "udarsy-production"
+  }
+}

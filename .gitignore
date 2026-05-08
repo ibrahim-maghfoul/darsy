@@ -17,8 +17,8 @@
 
 # Uploads and Data
 **/data/
-**/darsy-data/
-**/darsy-assets/
+**/udarsy-data/
+**/udarsy-assets/
 **/uploads/
 !**/uploads/.gitkeep
 
@@ -32,3 +32,4 @@
 Thumbs.db
 **/.vscode/
 **/.idea/
+.gstack/

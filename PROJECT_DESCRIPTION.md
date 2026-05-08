@@ -1,8 +1,8 @@
-# Darsy — Full Project Description
+# Udarsy — Full Project Description
 
 ## Overview
 
-**Darsy** is a comprehensive, full-stack educational platform built for Moroccan students (secondary school, BAC prep, and Brevet levels). It delivers curriculum-aligned learning content in Arabic (Darija + MSA), French, and English, with real-time interaction, teacher and instructor systems, marketing automation, and a full admin control panel.
+**Udarsy** is a comprehensive, full-stack educational platform built for Moroccan students (secondary school, BAC prep, and Brevet levels). It delivers curriculum-aligned learning content in Arabic (Darija + MSA), French, and English, with real-time interaction, teacher and instructor systems, marketing automation, and a full admin control panel.
 
 ---
 
@@ -27,20 +27,20 @@
 ## Repository Structure
 
 ```
-Darsy/
-├── darsy-web/           # Next.js 16 — main user-facing website
-├── darsy-backend/       # Node.js + Express (TypeScript) — REST API + Socket.io
-├── darsy-admin/         # React 19 + Vite — internal admin panel
-├── darsy-marketing/     # N8N automation workflows + marketing assets
+Udarsy/
+├── udarsy-web/           # Next.js 16 — main user-facing website
+├── udarsy-backend/       # Node.js + Express (TypeScript) — REST API + Socket.io
+├── udarsy-admin/         # React 19 + Vite — internal admin panel
+├── udarsy-marketing/     # N8N automation workflows + marketing assets
 │   └── n8n/
 │       ├── workflows/   # 33 pre-built n8n workflow JSON files
 │       └── docs/        # Setup guides per workflow category
-└── darsy-inspirations/  # Design references and UI inspiration
+└── udarsy-inspirations/  # Design references and UI inspiration
 ```
 
 ---
 
-## 1. Frontend — `darsy-web`
+## 1. Frontend — `udarsy-web`
 
 **Stack:** Next.js 16, React 19, TypeScript, Tailwind CSS, next-intl, SCSS modules
 
@@ -86,17 +86,17 @@ Darsy/
 
 ### Key Frontend Architecture
 
-- **API client:** `darsy-web/src/lib/api.ts`
-- **Auth context:** `darsy-web/src/contexts/AuthContext.tsx`
-- **Data services:** `darsy-web/src/services/data.ts`, `progress.ts`
-- **i18n messages:** `darsy-web/messages/ar.json`, `en.json`, `fr.json`
-- **Caching:** `darsy-web/src/lib/cache.ts`
-- **Constants:** `darsy-web/src/lib/constants.ts`
-- **Page transitions:** `darsy-web/src/components/PageTransition.tsx`
+- **API client:** `udarsy-web/src/lib/api.ts`
+- **Auth context:** `udarsy-web/src/contexts/AuthContext.tsx`
+- **Data services:** `udarsy-web/src/services/data.ts`, `progress.ts`
+- **i18n messages:** `udarsy-web/messages/ar.json`, `en.json`, `fr.json`
+- **Caching:** `udarsy-web/src/lib/cache.ts`
+- **Constants:** `udarsy-web/src/lib/constants.ts`
+- **Page transitions:** `udarsy-web/src/components/PageTransition.tsx`
 
 ---
 
-## 2. Backend — `darsy-backend`
+## 2. Backend — `udarsy-backend`
 
 **Stack:** Node.js, Express, TypeScript, Mongoose, Socket.io, JWT, bcryptjs, Nodemailer, Helmet, CORS, rate limiting
 
@@ -105,7 +105,7 @@ Darsy/
 ### File Structure
 
 ```
-darsy-backend/src/
+udarsy-backend/src/
 ├── server.ts                  # Entry point — Express + Socket.io init
 ├── config/
 │   ├── index.ts               # Environment variables
@@ -181,7 +181,7 @@ Plans:
 
 ---
 
-## 3. Admin Panel — `darsy-admin`
+## 3. Admin Panel — `udarsy-admin`
 
 **Stack:** React 19, Vite, JavaScript (JSX)
 
@@ -223,16 +223,16 @@ Plans:
 
 The admin panel includes several AI-powered tools:
 
-- **Content Creator** (`ContentCreator.jsx`) — Generates social media content (text + AI images) with brand-consistent prompts. Supports white and green themes matching Darsy's `#3aaa6a` brand color. Generates platform-specific posts for Instagram, Facebook, Twitter.
+- **Content Creator** (`ContentCreator.jsx`) — Generates social media content (text + AI images) with brand-consistent prompts. Supports white and green themes matching Udarsy's `#3aaa6a` brand color. Generates platform-specific posts for Instagram, Facebook, Twitter.
 - **Poster Generation** (`PosterGeneration.jsx`) — AI poster generator using structured image prompts with strict brand color enforcement.
 - **Launch Ideas** (`LaunchIdeas.jsx`) — AI-assisted product/feature launch ideation.
 - **Content Analytics** (`ContentAnalytics.jsx`) — Performance tracking for generated content.
 
 ---
 
-## 4. Marketing Automation — `darsy-marketing/n8n`
+## 4. Marketing Automation — `udarsy-marketing/n8n`
 
-**Stack:** N8N v2.14.2, Docker, ngrok (for webhooks), Telegram Bot (`darsyschoolbot`)
+**Stack:** N8N v2.14.2, Docker, ngrok (for webhooks), Telegram Bot (`udarsyschoolbot`)
 
 ### 27 Pre-built Workflows (33 JSON files)
 
@@ -351,7 +351,7 @@ The admin panel includes several AI-powered tools:
 |--------|-------------|
 | `cdc7840` | First commit — initial project setup |
 | `c5d2bde` | Download script, MongoDB mobile connection, progress tracking, news scraping |
-| `6ed6257` | darsy-backend source files included in monorepo |
+| `6ed6257` | udarsy-backend source files included in monorepo |
 | `f72589b` | Responsiveness improvements, admin panel edits, code optimization, teacher + instructor systems |
 | `a85b7e1` | Added Kinderly API keys |
 

@@ -1,4 +1,4 @@
-# Darsy — Setup & Release Guide
+# Udarsy — Setup & Release Guide
 
 ## Prerequisites
 
@@ -12,13 +12,13 @@
 
 ## Environment Variables
 
-### Backend — `darsy-backend/.env`
+### Backend — `udarsy-backend/.env`
 
 ```
 NODE_ENV=development
 PORT=5000
 
-MONGO_URI=mongodb://localhost:27017/darsy
+MONGO_URI=mongodb://localhost:27017/udarsy
 
 # JWT
 JWT_ACCESS_SECRET=change-me-access
@@ -39,7 +39,7 @@ EMAIL_HOST=smtp.example.com
 EMAIL_PORT=587
 EMAIL_USER=...
 EMAIL_PASS=...
-EMAIL_FROM="Darsy <noreply@darsy.app>"
+EMAIL_FROM="Udarsy <noreply@udarsy.app>"
 
 # Google OAuth
 GOOGLE_CLIENT_ID=...
@@ -55,7 +55,7 @@ OPENROUTER_API_KEY=...
 GEMINI_API_KEY=...
 ```
 
-### Frontend — `darsy-web/.env.local`
+### Frontend — `udarsy-web/.env.local`
 
 ```
 NEXT_PUBLIC_API_URL=http://localhost:5000/api
@@ -63,14 +63,14 @@ NEXT_PUBLIC_SOCKET_URL=http://localhost:5000
 NEXT_PUBLIC_GOOGLE_CLIENT_ID=...
 ```
 
-### Admin — `darsy-admin/.env`
+### Admin — `udarsy-admin/.env`
 
 ```
 VITE_API_URL=http://localhost:5000/api
 VITE_SOCKET_URL=http://localhost:5000
 ```
 
-(Admin also reads AI provider keys from `darsy-backend/keys.json` via the Poster route; keep that file out of source control.)
+(Admin also reads AI provider keys from `udarsy-backend/keys.json` via the Poster route; keep that file out of source control.)
 
 ---
 
@@ -78,38 +78,38 @@ VITE_SOCKET_URL=http://localhost:5000
 
 ```bash
 # 1. Clone and install all projects
-cd darsy-backend && npm install
-cd ../darsy-web && npm install
-cd ../darsy-admin && npm install
+cd udarsy-backend && npm install
+cd ../udarsy-web && npm install
+cd ../udarsy-admin && npm install
 
-# 2. Seed MongoDB (optional) — use darsy-backend/scripts/seed-*.ts helpers
+# 2. Seed MongoDB (optional) — use udarsy-backend/scripts/seed-*.ts helpers
 
 # 3. Ensure uploads directories exist
-mkdir -p darsy-backend/data/{images,resources,videos,documents,verifications,posters}
+mkdir -p udarsy-backend/data/{images,resources,videos,documents,verifications,posters}
 ```
 
 ---
 
 ## Running Locally
 
-Use the helper scripts in `darsy-servers/`:
+Use the helper scripts in `udarsy-servers/`:
 
 ```bash
 # Start everything
-darsy-servers/start-backend.cmd
-darsy-servers/start-web.cmd
-darsy-servers/start-admin.cmd
+udarsy-servers/start-backend.cmd
+udarsy-servers/start-web.cmd
+udarsy-servers/start-admin.cmd
 
 # Kill all
-darsy-servers/"kill all servers.cmd"
+udarsy-servers/"kill all servers.cmd"
 ```
 
 Or manually:
 
 ```bash
-cd darsy-backend && npm run dev       # port 5000
-cd darsy-web && npm run dev           # port 3000
-cd darsy-admin && npm run dev         # port 5173
+cd udarsy-backend && npm run dev       # port 5000
+cd udarsy-web && npm run dev           # port 3000
+cd udarsy-admin && npm run dev         # port 5173
 ```
 
 Health check: `GET http://localhost:5000/health` → `{ status: "ok" }`.
@@ -120,17 +120,17 @@ Health check: `GET http://localhost:5000/health` → `{ status: "ok" }`.
 
 ```bash
 # Backend
-cd darsy-backend
+cd udarsy-backend
 npm run build
 npm run start
 
 # Frontend
-cd darsy-web
+cd udarsy-web
 npm run build
 npm run start    # Next.js production server
 
 # Admin
-cd darsy-admin
+cd udarsy-admin
 npm run build
 # serve ./dist via any static host
 ```
@@ -143,12 +143,12 @@ Backend serves uploads from `data/`:
 
 | URL                        | Disk path                                 |
 |----------------------------|-------------------------------------------|
-| `/data/images/...`         | `darsy-backend/data/images/`              |
-| `/data/resources/...`      | `darsy-backend/data/resources/`           |
-| `/data/videos/...`         | `darsy-backend/data/videos/`              |
-| `/data/documents/...`      | `darsy-backend/data/documents/`           |
-| `/data/verifications/...`  | `darsy-backend/data/verifications/`       |
-| `/data/posters/...`        | `darsy-backend/data/posters/` (no cache)  |
+| `/data/images/...`         | `udarsy-backend/data/images/`              |
+| `/data/resources/...`      | `udarsy-backend/data/resources/`           |
+| `/data/videos/...`         | `udarsy-backend/data/videos/`              |
+| `/data/documents/...`      | `udarsy-backend/data/documents/`           |
+| `/data/verifications/...`  | `udarsy-backend/data/verifications/`       |
+| `/data/posters/...`        | `udarsy-backend/data/posters/` (no cache)  |
 
 Cache: `maxAge: 7d` for everything except posters (0).
 
@@ -182,7 +182,7 @@ Inside workflows, MongoDB connection host must be `host.docker.internal`, not `l
 - [ ] All feature flags removed from temporary toggles.
 
 ### Secrets & Config
-- [ ] `.env` files not committed (`darsy-backend/keys.json` is gitignored).
+- [ ] `.env` files not committed (`udarsy-backend/keys.json` is gitignored).
 - [ ] Prod `JWT_ACCESS_SECRET`, `JWT_REFRESH_SECRET`, `COOKIE_SECRET` rotated.
 - [ ] Telegram bot token regenerated (previous value was exposed).
 - [ ] Google OAuth redirect URIs match prod domain.

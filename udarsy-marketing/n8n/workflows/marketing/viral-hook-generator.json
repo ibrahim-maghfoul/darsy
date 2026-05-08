@@ -1,0 +1,645 @@
+{
+  "name": "Udarsy Viral Hook Generator",
+  "nodes": [
+    {
+      "parameters": {
+        "rule": {
+          "interval": [
+            {
+              "field": "cronExpression",
+              "expression": "0 7 * * *"
+            }
+          ]
+        }
+      },
+      "id": "trigger-daily-7am",
+      "name": "Daily at 7AM",
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.2,
+      "position": [
+        0,
+        300
+      ]
+    },
+    {
+      "parameters": {
+        "method": "GET",
+        "url": "https://trends.google.com/trends/api/dailytrends",
+        "sendQuery": true,
+        "queryParameters": {
+          "parameters": [
+            {
+              "name": "hl",
+              "value": "ar"
+            },
+            {
+              "name": "tz",
+              "value": "-60"
+            },
+            {
+              "name": "geo",
+              "value": "MA"
+            },
+            {
+              "name": "ns",
+              "value": "15"
+            }
+          ]
+        },
+        "options": {
+          "response": {
+            "response": {
+              "responseFormat": "text"
+            }
+          }
+        }
+      },
+      "id": "fetch-trends-morocco",
+      "name": "Fetch Trends: Morocco",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        240,
+        180
+      ]
+    },
+    {
+      "parameters": {
+        "method": "GET",
+        "url": "https://trends.google.com/trends/api/dailytrends",
+        "sendQuery": true,
+        "queryParameters": {
+          "parameters": [
+            {
+              "name": "hl",
+              "value": "fr"
+            },
+            {
+              "name": "tz",
+              "value": "-60"
+            },
+            {
+              "name": "geo",
+              "value": "MA"
+            },
+            {
+              "name": "ns",
+              "value": "15"
+            }
+          ]
+        },
+        "options": {
+          "response": {
+            "response": {
+              "responseFormat": "text"
+            }
+          }
+        }
+      },
+      "id": "fetch-trends-morocco",
+      "name": "Fetch Trends: Morocco",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        240,
+        360
+      ]
+    },
+    {
+      "parameters": {
+        "method": "GET",
+        "url": "={{ $env.UDARSY_API_BASE_URL }}/api/data/stats",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "x-api-key",
+              "value": "={{ $env.UDARSY_API_KEY }}"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "fetch-udarsy-stats",
+      "name": "Fetch Udarsy Stats",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        240,
+        540
+      ]
+    },
+    {
+      "parameters": {
+        "method": "GET",
+        "url": "={{ $env.UDARSY_API_BASE_URL }}/api/data/lessons?limit=5&sort=-createdAt",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "x-api-key",
+              "value": "={{ $env.UDARSY_API_KEY }}"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "fetch-udarsy-latest",
+      "name": "Fetch Udarsy Latest Content",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        240,
+        720
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "// Parse Google Trends responses and combine all context\nconst moroccoRaw = $('Fetch Trends: Morocco').first().json.data || '';\nconst stats = $('Fetch Udarsy Stats').first().json;\nconst latestContent = $('Fetch Udarsy Latest Content').first().json;\n\n// Parse trends (Google Trends returns JSONP-like format, strip prefix)\nlet moroccoTrends = [];\n\ntry {\n  const moroccoJson = JSON.parse(moroccoRaw.replace(/^\\)\\]\\}\\'\\n/, ''));\n  moroccoTrends = moroccoJson.default?.trendingSearchesDays?.[0]?.trendingSearches?.map(t => t.title?.query) || [];\n} catch (e) {\n  moroccoTrends = ['education', 'bac 2026', 'university'];\n}\n\ntry {\n  const moroccoJson = JSON.parse(moroccoRaw.replace(/^\\)\\]\\}\\'\\n/, ''));\n  moroccoTrends = moroccoJson.default?.trendingSearchesDays?.[0]?.trendingSearches?.map(t => t.title?.query) || [];\n} catch (e) {\n  moroccoTrends = ['education', 'baccalaureat', 'universite'];\n}\n\nreturn [{\n  json: {\n    morocco_trends: moroccoTrends.slice(0, 10),\n    udarsy_stats: stats,\n    latest_content: latestContent,\n    date: new Date().toISOString().split('T')[0]\n  }\n}];"
+      },
+      "id": "combine-context",
+      "name": "Combine All Context",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        500,
+        400
+      ]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://api.openai.com/v1/chat/completions",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "openAiApi",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ JSON.stringify({ model: \"gpt-4o\", messages: [{\"role\":\"system\",\"content\":\"You are a viral marketing expert specializing in educational platforms in North Africa (Morocco). You understand Arabic social media culture, Moroccan dialect, and what makes educational content go viral among students aged 15-25.\\n\\nYour task: Generate 10 viral social media hook ideas for Udarsy (دارسي), a Moroccan educational platform targeting BAC and Brevet students. Currency: MAD. School calendar: BAC in June, Brevet in May, back to school in September.\\n\\nFor EACH hook, provide:\\n1. hook_ar: The hook in Arabic (Moroccan dialect)\\n2. hook_fr: The hook in French\\n3. hook_en: The hook in English\\n4. platform: Best platform (instagram/tiktok/facebook/twitter)\\n5. format: Content format (reel/carousel/story/post/thread)\\n6. virality_score: 1-10 prediction of viral potential\\n7. reasoning: Why this could go viral (in English)\\n8. cta: Call to action\\n9. hashtags: 5 relevant hashtags\\n10. tie_to_trend: Which trend this connects to (if any)\\n\\nRespond with a JSON array of 10 objects.\\n\\nGuidelines:\\n- Use relatable student humor and situations\\n- Reference exam seasons, study struggles, university life\\n- Leverage current trends from the provided data\\n- Mix educational value with entertainment\\n- Include hooks that work for Reels/TikTok (short-form video)\\n- Some hooks should promote Udarsy features directly\\n- Some should be pure value/entertainment that builds brand awareness\"},{\"role\":\"user\",\"content\":\"=Date: {{ $json.date }}\\n\\nTrending in Morocco: {{ $json.morocco_trends.join(', ') }}\\n\\nUdarsy stats: {{ JSON.stringify($json.udarsy_stats || {}) }}\\nLatest content: {{ JSON.stringify($json.latest_content?.data?.slice(0, 3) || []) }}\\n\\nGenerate 10 viral hook ideas!\"}], temperature: 0.9, max_tokens: 4000 }) }}",
+        "options": {
+          "response": {
+            "response": {
+              "responseFormat": "json"
+            }
+          }
+        }
+      },
+      "id": "ai-generate-hooks",
+      "name": "GPT-4o: Generate 10 Hooks",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        740,
+        400
+      ],
+      "credentials": {
+        "openAiApi": {
+          "id": "openai-api",
+          "name": "OpenAI account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "const item = $input.first().json;\nconst content = item.message?.content || item.choices?.[0]?.message?.content || '[]';\n\nlet hooks;\ntry {\n  // Handle potential markdown code fences\n  const cleaned = content.replace(/```json\\n?/g, '').replace(/```\\n?/g, '').trim();\n  hooks = JSON.parse(cleaned);\n} catch (e) {\n  hooks = [{ hook_ar: 'Parse error', hook_fr: 'Parse error', hook_en: content, virality_score: 0 }];\n}\n\n// Sort by virality score descending\nhooks.sort((a, b) => (b.virality_score || 0) - (a.virality_score || 0));\n\n// Return each hook as a separate item\nreturn hooks.map((hook, i) => ({\n  json: {\n    ...hook,\n    rank: i + 1\n  }\n}));"
+      },
+      "id": "parse-and-score-hooks",
+      "name": "Parse & Score Hooks",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        980,
+        400
+      ]
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {},
+          "conditions": [
+            {
+              "leftValue": "={{ $json.rank }}",
+              "rightValue": 3,
+              "operator": {
+                "type": "number",
+                "operation": "lte"
+              }
+            }
+          ]
+        }
+      },
+      "id": "pick-top-3",
+      "name": "Pick Top 3",
+      "type": "n8n-nodes-base.filter",
+      "typeVersion": 2,
+      "position": [
+        1200,
+        400
+      ]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://api.openai.com/v1/images/generations",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "openAiApi",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ JSON.stringify({ model: \"dall-e-3\", prompt: Create a vibrant, eye-catching social media thumbnail for an educational platform called 'Udarsy'. Theme: {{ $json.hook_en }}. Style: Modern, youthful, North African aesthetic with blue and green brand colors. Include subtle Arabic calligraphy elements. No text in the image. Professional, clean, Instagram-worthy., n: 1, size: \"1024x1024\", quality: \"standard\", style: \"vivid\" }) }}",
+        "options": {}
+      },
+      "id": "dalle-generate-visual",
+      "name": "DALL-E: Generate Visual",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        1440,
+        400
+      ],
+      "credentials": {
+        "openAiApi": {
+          "id": "openai-api",
+          "name": "OpenAI account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "method": "GET",
+        "url": "={{ $json.data?.[0]?.url || $json.url }}",
+        "options": {
+          "response": {
+            "response": {
+              "responseFormat": "file"
+            }
+          }
+        }
+      },
+      "id": "download-dalle-image",
+      "name": "Download Image",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        1660,
+        400
+      ]
+    },
+    {
+      "parameters": {
+        "operation": "upload",
+        "folderId": {
+          "__rl": true,
+          "mode": "id",
+          "value": "={{ $env.GDRIVE_HOOKS_FOLDER_ID }}"
+        },
+        "name": "=hook_{{ $json.rank }}_{{ $now.format('yyyyMMdd') }}.png",
+        "options": {}
+      },
+      "id": "save-image-gdrive",
+      "name": "Save to Google Drive",
+      "type": "n8n-nodes-base.googleDrive",
+      "typeVersion": 3,
+      "position": [
+        1880,
+        400
+      ],
+      "credentials": {
+        "googleDriveOAuth2Api": {
+          "id": "gdrive-cred",
+          "name": "Google Drive - Udarsy"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "sendMessage",
+        "chatId": "={{ $env.TELEGRAM_CHAT_ID }}",
+        "text": "=🔥 **Viral Hook #{{ $json.rank }}** (Score: {{ $json.virality_score }}/10)\n\n🇩🇿 {{ $json.hook_ar }}\n🇫🇷 {{ $json.hook_fr }}\n🇬🇧 {{ $json.hook_en }}\n\n📱 Platform: {{ $json.platform }}\n🎬 Format: {{ $json.format }}\n💡 Why viral: {{ $json.reasoning }}\n📣 CTA: {{ $json.cta }}\n🏷️ {{ $json.hashtags?.join(' ') || $json.hashtags }}\n🔗 Trend: {{ $json.tie_to_trend || 'Original' }}\n\n📁 Visual saved to Drive",
+        "additionalFields": {
+          "parse_mode": "Markdown"
+        }
+      },
+      "id": "telegram-send-hooks",
+      "name": "Telegram: Send Hook Details",
+      "type": "n8n-nodes-base.telegram",
+      "typeVersion": 1.2,
+      "position": [
+        2100,
+        400
+      ],
+      "credentials": {
+        "telegramApi": {
+          "id": "telegram-cred",
+          "name": "Telegram Bot - Udarsy Marketing"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "append",
+        "documentId": {
+          "__rl": true,
+          "mode": "id",
+          "value": "={{ $env.CONTENT_IDEAS_SHEET_ID }}"
+        },
+        "sheetName": {
+          "__rl": true,
+          "mode": "name",
+          "value": "Content Ideas"
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "date": "={{ $now.format('yyyy-MM-dd') }}",
+            "rank": "={{ $json.rank }}",
+            "hook_ar": "={{ $json.hook_ar }}",
+            "hook_fr": "={{ $json.hook_fr }}",
+            "hook_en": "={{ $json.hook_en }}",
+            "platform": "={{ $json.platform }}",
+            "format": "={{ $json.format }}",
+            "virality_score": "={{ $json.virality_score }}",
+            "reasoning": "={{ $json.reasoning }}",
+            "cta": "={{ $json.cta }}",
+            "hashtags": "={{ Array.isArray($json.hashtags) ? $json.hashtags.join(', ') : $json.hashtags }}",
+            "trend_tie": "={{ $json.tie_to_trend || '' }}",
+            "visual_link": "={{ $json.webViewLink || '' }}",
+            "status": "idea"
+          }
+        },
+        "options": {}
+      },
+      "id": "save-to-content-ideas",
+      "name": "Save to Content Ideas Sheet",
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.5,
+      "position": [
+        2320,
+        400
+      ],
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "google-sheets-cred",
+          "name": "Google Sheets - Udarsy"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "append",
+        "documentId": {
+          "__rl": true,
+          "mode": "id",
+          "value": "={{ $env.CONTENT_IDEAS_SHEET_ID }}"
+        },
+        "sheetName": {
+          "__rl": true,
+          "mode": "name",
+          "value": "All Hooks Archive"
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "date": "={{ $now.format('yyyy-MM-dd') }}",
+            "rank": "={{ $json.rank }}",
+            "hook_ar": "={{ $json.hook_ar }}",
+            "hook_fr": "={{ $json.hook_fr }}",
+            "hook_en": "={{ $json.hook_en }}",
+            "platform": "={{ $json.platform }}",
+            "format": "={{ $json.format }}",
+            "virality_score": "={{ $json.virality_score }}",
+            "status": "archived"
+          }
+        },
+        "options": {}
+      },
+      "id": "archive-all-hooks",
+      "name": "Archive All 10 Hooks",
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.5,
+      "position": [
+        1200,
+        600
+      ],
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "google-sheets-cred",
+          "name": "Google Sheets - Udarsy"
+        }
+      },
+      "notes": "Archives all 10 hooks (not just top 3) for future reference"
+    },
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "run-viral-hooks",
+        "responseMode": "immediatelyAfterReceive",
+        "options": {}
+      },
+      "id": "webhook-trigger-bot",
+      "name": "Webhook Trigger (from Bot)",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2,
+      "position": [
+        0,
+        420
+      ],
+      "webhookId": "run-viral-hooks"
+    },
+    {
+      "parameters": {
+        "jsCode": "// Gets chatId from Telegram command center webhook, or falls back to env var\nconst fromWebhook = $input.first().json.body?.chatId;\nconst chatId = fromWebhook || $env.TELEGRAM_CHAT_ID;\nreturn [{ json: { chatId } }];"
+      },
+      "id": "get-chat-id-bot",
+      "name": "Get ChatId",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        240,
+        360
+      ]
+    }
+  ],
+  "connections": {
+    "Daily at 7AM": {
+      "main": [
+        [
+          {
+            "node": "Get ChatId",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Fetch Trends: Morocco": {
+      "main": [
+        [
+          {
+            "node": "Combine All Context",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Fetch Udarsy Stats": {
+      "main": [
+        [
+          {
+            "node": "Combine All Context",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Fetch Udarsy Latest Content": {
+      "main": [
+        [
+          {
+            "node": "Combine All Context",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Combine All Context": {
+      "main": [
+        [
+          {
+            "node": "GPT-4o: Generate 10 Hooks",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "GPT-4o: Generate 10 Hooks": {
+      "main": [
+        [
+          {
+            "node": "Parse & Score Hooks",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Parse & Score Hooks": {
+      "main": [
+        [
+          {
+            "node": "Pick Top 3",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Archive All 10 Hooks",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Pick Top 3": {
+      "main": [
+        [
+          {
+            "node": "DALL-E: Generate Visual",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "DALL-E: Generate Visual": {
+      "main": [
+        [
+          {
+            "node": "Download Image",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Download Image": {
+      "main": [
+        [
+          {
+            "node": "Save to Google Drive",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Save to Google Drive": {
+      "main": [
+        [
+          {
+            "node": "Telegram: Send Hook Details",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Telegram: Send Hook Details": {
+      "main": [
+        [
+          {
+            "node": "Save to Content Ideas Sheet",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Webhook Trigger (from Bot)": {
+      "main": [
+        [
+          {
+            "node": "Get ChatId",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Get ChatId": {
+      "main": [
+        [
+          {
+            "node": "Fetch Trends: Morocco",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "settings": {
+    "executionOrder": "v1",
+    "saveManualExecutions": true,
+    "callerPolicy": "workflowsFromSameOwner"
+  },
+  "staticData": null,
+  "tags": [
+    {
+      "name": "marketing"
+    },
+    {
+      "name": "viral"
+    },
+    {
+      "name": "content-generation"
+    },
+    {
+      "name": "udarsy"
+    }
+  ],
+  "triggerCount": 1,
+  "updatedAt": "2026-04-02T00:00:00.000Z",
+  "versionId": "1.0.0"
+}

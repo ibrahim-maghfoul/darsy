@@ -1,13 +1,13 @@
-# Darsy Project - Claude Knowledge Base
+# Udarsy Project - Claude Knowledge Base
 
 This file is automatically read by Claude Code at the start of every conversation.
 It contains everything Claude needs to know about this project without re-exploring it.
 
 ---
 
-## What is Darsy?
+## What is Udarsy?
 
-Darsy is a **full-stack educational platform** targeting Moroccan students (secondary school, BAC prep, Brevet).
+Udarsy is a **full-stack educational platform** targeting Moroccan students (secondary school, BAC prep, Brevet).
 - **Market:** Morocco
 - **Languages:** Arabic (Darija + MSA), French, English — full i18n support
 - **Monetization:** Freemium — Free / Pro (100 MAD/mo or 900 MAD/yr) / Premium (200 MAD/mo or 1900 MAD/yr)
@@ -18,13 +18,13 @@ Darsy is a **full-stack educational platform** targeting Moroccan students (seco
 ## Repository Structure
 
 ```
-Darsy/
-├── darsy-web/          # Next.js 16 frontend (main website)
-├── darsy-backend/      # Node.js + Express API (TypeScript)
-├── darsy-admin/        # React 19 + Vite admin panel
-├── darsy-marketing/    # Marketing assets
+Udarsy/
+├── udarsy-web/          # Next.js 16 frontend (main website)
+├── udarsy-backend/      # Node.js + Express API (TypeScript)
+├── udarsy-admin/        # React 19 + Vite admin panel
+├── udarsy-marketing/    # Marketing assets
 │   └── n8n/            # N8N automation workflows (see below)
-└── darsy-inspirations/ # Design references
+└── udarsy-inspirations/ # Design references
 ```
 
 ---
@@ -48,8 +48,8 @@ Darsy/
 
 ## Backend
 
-- **Entry:** `darsy-backend/src/server.ts`
-- **Config:** `darsy-backend/src/config/index.ts` (env vars), `database.ts` (MongoDB connection)
+- **Entry:** `udarsy-backend/src/server.ts`
+- **Config:** `udarsy-backend/src/config/index.ts` (env vars), `database.ts` (MongoDB connection)
 - **Local dev port:** `5000`
 - **API base:** `http://localhost:5000/api`
 
@@ -205,14 +205,14 @@ Darsy/
 
 ---
 
-## Frontend — darsy-web
+## Frontend — udarsy-web
 
 - **Framework:** Next.js 16 with App Router
 - **Styling:** Tailwind CSS + SCSS modules
-- **i18n:** next-intl — messages in `darsy-web/messages/ar.json`, `en.json`, `fr.json`
-- **API client:** `darsy-web/src/lib/api.ts`
-- **Auth context:** `darsy-web/src/contexts/AuthContext.tsx`
-- **Services:** `darsy-web/src/services/data.ts`, `progress.ts`
+- **i18n:** next-intl — messages in `udarsy-web/messages/ar.json`, `en.json`, `fr.json`
+- **API client:** `udarsy-web/src/lib/api.ts`
+- **Auth context:** `udarsy-web/src/contexts/AuthContext.tsx`
+- **Services:** `udarsy-web/src/services/data.ts`, `progress.ts`
 
 ### All Pages
 | Route | Description |
@@ -243,11 +243,11 @@ Darsy/
 
 ---
 
-## Admin Panel — darsy-admin
+## Admin Panel — udarsy-admin
 
 - **Framework:** React 19 + Vite
-- **Entry:** `darsy-admin/src/App.jsx`
-- **Layout:** `darsy-admin/src/components/Layout.jsx`
+- **Entry:** `udarsy-admin/src/App.jsx`
+- **Layout:** `udarsy-admin/src/components/Layout.jsx`
 
 ### Admin Pages
 | Page | Route | Function |
@@ -273,9 +273,9 @@ Darsy/
 
 ## N8N Marketing Automation
 
-**Location:** `darsy-marketing/n8n/`
+**Location:** `udarsy-marketing/n8n/`
 **N8N instance:** Local Docker, `http://localhost:5678`
-**Full setup guide:** `darsy-marketing/n8n/docs/credentials-setup-guide.md`
+**Full setup guide:** `udarsy-marketing/n8n/docs/credentials-setup-guide.md`
 
 ### All Workflows Built (27 total)
 
@@ -377,7 +377,7 @@ CONTENT_SHEET_ID
 
 1. **First commit** — Initial project setup
 2. **Second commit** (`c5d2bde`) — Download script, mobile MongoDB connection, progress tracking, news scraping
-3. **Third commit** (`6ed6257`) — darsy-backend source files included in main repo
+3. **Third commit** (`6ed6257`) — udarsy-backend source files included in main repo
 4. **Latest commit** (`f72589b`) — Responsiveness improvements, admin panel edits, code optimization, teacher and instructor systems added
 
 ---
@@ -387,9 +387,9 @@ CONTENT_SHEET_ID
 - **Never re-explore the full codebase** — all key info is in this file
 - **Backend port is 5000** — not 3000
 - **MongoDB Docker networking** — use `host.docker.internal` not `localhost` when n8n calls MongoDB
-- **All n8n workflows** are pre-built in `darsy-marketing/n8n/workflows/`
-- **N8N docs** are in `darsy-marketing/n8n/docs/` — full setup guides per workflow category
-- **This file lives at** `C:\Users\ibo\Desktop\Darsy\CLAUDE.md` — root of the workspace, auto-loaded by Claude Code
+- **All n8n workflows** are pre-built in `udarsy-marketing/n8n/workflows/`
+- **N8N docs** are in `udarsy-marketing/n8n/docs/` — full setup guides per workflow category
+- **This file lives at** `C:\Users\ibo\Desktop\Udarsy\CLAUDE.md` — root of the workspace, auto-loaded by Claude Code
 - **User is building n8n workflows** as their main current focus — help debug via screenshots, build new workflows on request, reference the existing 27 workflows before building new ones
 - **Platform language:** Mix of Arabic Darija, French, English in content — always consider bilingual output
 - **Platform is Moroccan** (not Algerian) — currency MAD, Moroccan school calendar, Moroccan cities
@@ -402,7 +402,7 @@ CONTENT_SHEET_ID
 - **N8N container:** Docker, named `n8n`, port 5678
 - **Tunnel solution:** ngrok (required — N8N_TUNNEL=true no longer works in v2.14+)
 - **Webhook URL env var:** Set via `-e WEBHOOK_URL=https://xxxx.ngrok-free.app/` in docker run command
-- **Telegram Bot:** `darsyschoolbot` — token must be regenerated (was exposed in chat)
+- **Telegram Bot:** `udarsyschoolbot` — token must be regenerated (was exposed in chat)
 - **Command Center workflow:** ✅ Working — published and receiving Telegram messages
 - **How to start ngrok each session:**
   ```bash

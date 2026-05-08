@@ -1,4 +1,4 @@
-# Darsy Design System
+# Udarsy Design System
 
 > Reference for all UI/UX decisions. Read this before creating or modifying any component.
 
@@ -48,11 +48,30 @@ rgba(58, 170, 106, 0.75)  — chip text
 - **Font family fallback:** `var(--font-cairo), sans-serif`
 - **Text direction:** LTR default, RTL when `locale === 'ar'`
 
+### Mobile-first type scale
+
+| Role | px range | Mobile (base) | Desktop |
+|------|----------|---------------|---------|
+| Large display / hero | 32–48px | `text-3xl` (30px) | `md:text-5xl lg:text-7xl` |
+| Page title | 24–32px | `text-2xl` (24px) | `md:text-4xl` |
+| Section heading | 20–24px | `text-xl` (20px) | `md:text-2xl` |
+| Subheading | 18–20px | `text-lg` (18px) | `md:text-xl` |
+| Body text | 16px | `text-base` | — |
+| Secondary body | 14–15px | `text-sm` | — |
+| Caption / helper | 12–13px | `text-xs` | — |
+| Tiny labels | 10–11px | `text-[10px]`–`text-[11px]` | — |
+
+**Rules:**
+- Minimum body text is **16px** (`text-base`) — never use `text-sm` for paragraph copy
+- Line height: `leading-relaxed` (1.625) for body, `leading-tight` (1.25) for headings
+- Minimum tap target: **44×44px** — buttons and interactive elements must meet this
+- Never use bare `text-5xl`, `text-6xl`, `text-7xl` without a mobile prefix (`text-3xl md:text-5xl …`)
+
 ### Scale used in components
 | Role | Size | Weight |
 |------|------|--------|
-| Page title | `text-3xl` / `text-4xl` | `font-black` (900) |
-| Section heading | `text-2xl` | `font-black` (900) |
+| Page title | `text-2xl md:text-4xl` | `font-black` (900) |
+| Section heading | `text-xl md:text-2xl` | `font-black` (900) |
 | Section subtext | `text-sm` | `font-normal` (400), muted `rgba(26,58,42,0.4)` |
 | Card title | `0.88–0.9rem` | `font-bold` (700) |
 | Service card title | `text-sm` (14px) | `font-bold` (700) |

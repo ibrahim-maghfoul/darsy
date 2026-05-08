@@ -1,0 +1,441 @@
+{
+  "name": "Udarsy - Competitor Intelligence Spy",
+  "nodes": [
+    {
+      "parameters": {},
+      "id": "manual-trigger",
+      "name": "Run Manually",
+      "type": "n8n-nodes-base.manualTrigger",
+      "typeVersion": 1,
+      "position": [
+        -240,
+        380
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "const fromWebhook = $input.first().json.body?.chatId;\nconst chatId = fromWebhook || '6537042237';\nreturn [{ json: { chatId } }];"
+      },
+      "id": "get-chat-id",
+      "name": "Get ChatId",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        240,
+        380
+      ]
+    },
+    {
+      "parameters": {
+        "operation": "read",
+        "documentId": {
+          "__rl": true,
+          "mode": "id",
+          "value": "1hv1HJ-3asbHwve7sAAEqI6n2IuMlihQyfzk-7CENGvY"
+        },
+        "sheetName": {
+          "__rl": true,
+          "mode": "name",
+          "value": "competitors"
+        },
+        "options": {}
+      },
+      "id": "read-last-snapshot",
+      "name": "Read Last Snapshot",
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.5,
+      "position": [
+        480,
+        380
+      ],
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "GEdm4SCZIB4132yL",
+          "name": "Google Sheets account"
+        }
+      },
+      "alwaysOutputData": true,
+      "onError": "continueRegularOutput"
+    },
+    {
+      "parameters": {
+        "jsCode": "const rows = $input.all().map(i => i.json).filter(r => Object.keys(r).length > 0);\nlet chatId = \"YOUR_CHAT_ID\";\ntry { chatId = $(\"Get ChatId\").first().json.chatId || \"YOUR_CHAT_ID\"; } catch(e) {}\nconst output = rows.length > 0 ? rows.map(r=>({...r,__chatId:chatId})) : [{__chatId:chatId}];\nreturn output.map(r=>({json:r}));"
+      },
+      "id": "inject-chatid",
+      "name": "Inject ChatId",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        720,
+        380
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "const previousRows = $input.all().map(i => i.json);\nconst chatId = previousRows[0]?.__chatId || \"YOUR_CHAT_ID\";\n\nconst competitors = [\n  { name: \"Telmidtv\",     urls: [\"https://www.telmidtv.com/\"] },\n  { name: \"Darsna\",       urls: [\"https://www.darsna.ma/\"] },\n  { name: \"Sawbona\",      urls: [\"https://www.sawbona.ma/\"] },\n  { name: \"Oustad\",       urls: [\"https://www.oustad.ma/\"] },\n  { name: \"Moutamadris\",  urls: [\"https://www.moutamadris.ma/\"] }\n];\n\nconst items = [];\ncompetitors.forEach(comp => {\n  comp.urls.forEach(url => {\n    items.push({ json: { competitor_name: comp.name, url, chatId, previousRows } });\n  });\n});\n\nreturn items;"
+      },
+      "id": "define-competitors",
+      "name": "Define Competitors",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        960,
+        380
+      ]
+    },
+    {
+      "parameters": {
+        "url": "={{ $json.url }}",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "User-Agent",
+              "value": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36"
+            },
+            {
+              "name": "Accept",
+              "value": "text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,*/*;q=0.8"
+            },
+            {
+              "name": "Accept-Language",
+              "value": "fr-FR,fr;q=0.9,ar;q=0.8,en-US;q=0.7"
+            },
+            {
+              "name": "Accept-Encoding",
+              "value": "gzip, deflate, br"
+            },
+            {
+              "name": "Cache-Control",
+              "value": "no-cache"
+            }
+          ]
+        },
+        "options": {
+          "response": {
+            "response": {
+              "responseFormat": "text"
+            }
+          },
+          "timeout": 20000,
+          "redirect": {
+            "redirect": {
+              "followRedirects": true,
+              "maxRedirects": 5
+            }
+          }
+        }
+      },
+      "id": "scrape-pages",
+      "name": "Scrape Competitor Pages",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        1200,
+        380
+      ],
+      "onError": "continueRegularOutput"
+    },
+    {
+      "parameters": {
+        "jsCode": "const item = $input.first().json;\nconst comp = $('Define Competitors').first().json;\n\n// Detect DNS / network errors (onError:continueRegularOutput passes them through as JSON)\nif (item.error || item.code === 'ENOTFOUND' || (typeof item === 'object' && JSON.stringify(item).includes('ENOTFOUND'))) {\n  const previousRows = comp.previousRows || [];\n  const key = `${comp.competitor_name}::${comp.url}`;\n  const prev = previousRows.find(r => `${r.competitor_name}::${r.url}` === key);\n  return [{ json: {\n    competitor_name: comp.competitor_name,\n    url: comp.url,\n    chatId: comp.chatId,\n    page_title: prev?.page_title || 'UNREACHABLE',\n    meta_description: prev?.meta_description || '',\n    headings: prev?.headings || '',\n    text_preview: 'Site could not be reached (DNS/network error)',\n    previous_title: prev?.page_title || 'First scan',\n    title_changed: false,\n    previous_headings: prev?.headings || '',\n    is_first_scan: !prev,\n    scraped_at: new Date().toISOString()\n  }}];\n}\n\n// n8n HTTP text response can land in different fields depending on version\nconst html = (typeof item === 'string' ? item : item.data || item.body || item.html || item.text || JSON.stringify(item));\n\n\nconst titleMatch = html.match(/<title[^>]*>([^<]+)<\\/title>/i);\nconst title = titleMatch ? titleMatch[1].trim() : 'N/A';\n\nconst metaMatch = html.match(/<meta[^>]*name=[\"']description[\"'][^>]*content=[\"']([^\"']+)[\"']/i);\nconst metaDesc = metaMatch ? metaMatch[1].trim() : '';\n\nconst headings = [];\nfor (const m of html.matchAll(/<h[1-3][^>]*>([^<]+)<\\/h[1-3]>/gi)) {\n  headings.push(m[1].trim());\n  if (headings.length >= 8) break;\n}\n\nconst textContent = html\n  .replace(/<script[\\s\\S]*?<\\/script>/gi, '')\n  .replace(/<style[\\s\\S]*?<\\/style>/gi, '')\n  .replace(/<[^>]+>/g, ' ')\n  .replace(/\\s+/g, ' ').trim().substring(0, 2000);\n\nconst previousRows = comp.previousRows || [];\nconst key = `${comp.competitor_name}::${comp.url}`;\nconst prev = previousRows.find(r => `${r.competitor_name}::${r.url}` === key);\n\nreturn [{\n  json: {\n    competitor_name: comp.competitor_name,\n    url: comp.url,\n    chatId: comp.chatId,\n    page_title: title,\n    meta_description: metaDesc,\n    headings: headings.join(' | '),\n    text_preview: textContent,\n    previous_title: prev?.page_title || 'First scan',\n    title_changed: prev ? title !== prev.page_title : false,\n    previous_headings: prev?.headings || '',\n    is_first_scan: !prev,\n    scraped_at: new Date().toISOString()\n  }\n}];"
+      },
+      "id": "extract-content",
+      "name": "Extract & Compare",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1440,
+        380
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "const allResults = $input.all().map(i => i.json);\nconst chatId = allResults[0]?.chatId || 'YOUR_CHAT_ID';\nreturn [{ json: { competitors: allResults, chatId } }];"
+      },
+      "id": "aggregate",
+      "name": "Aggregate Results",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1680,
+        380
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "const data = $input.first().json;\nconst today = new Date().toISOString().split('T')[0];\n\nconst prompt = `You are a competitive intelligence analyst for Udarsy, a Moroccan educational platform targeting BAC and Brevet students in Morocco.\n\nAll competitors are Moroccan platforms. Analyze their pages with Moroccan context in mind (Moroccan curriculum, Arabic/French bilingual content, MAD pricing, Moroccan school calendar). Compare current vs previous data and identify changes:\n\n${JSON.stringify(data.competitors, null, 2)}\n\nOutput ONLY valid JSON (no markdown, no code block, no explanation):\n{\"report_date\":\"${today}\",\"executive_summary\":\"2-3 sentence overview in English\",\"competitors\":[{\"name\":\"...\",\"changes_detected\":true,\"changes\":[{\"type\":\"...\",\"description\":\"...\",\"significance\":\"high/medium/low\",\"udarsy_action\":\"...\"}],\"overall_assessment\":\"...\"}],\"strategic_recommendations\":[{\"priority\":\"high/medium/low\",\"action\":\"...\",\"reasoning\":\"...\"}],\"content_gaps\":[\"Content competitors have that Udarsy doesn't\"]}`;\n\nconst body = {\n  model: 'gpt-4o',\n  max_tokens: 2000,\n  messages: [\n    { role: 'system', content: 'You are a competitive intelligence analyst. Always respond with valid JSON only — no markdown, no code blocks.' },\n    { role: 'user', content: prompt }\n  ]\n};\n\nreturn [{ json: { body, chatId: data.chatId } }];"
+      },
+      "id": "build-prompt",
+      "name": "Build AI Prompt",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1920,
+        380
+      ]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://api.openai.com/v1/chat/completions",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "openAiApi",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ JSON.stringify($json.body) }}",
+        "options": {}
+      },
+      "id": "ai-report",
+      "name": "AI Generate Report",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        2160,
+        380
+      ],
+      "credentials": {
+        "openAiApi": {
+          "id": "openai-api",
+          "name": "OpenAI account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "const raw = $input.first().json;\nconst chatId = $('Build AI Prompt').first().json.chatId;\n\nlet report;\ntry {\n  const text = raw.choices?.[0]?.message?.content || JSON.stringify(raw);\n  const cleaned = text.replace(/^```json\\s*/i, '').replace(/```\\s*$/i, '').trim();\n  report = JSON.parse(cleaned);\n} catch(e) {\n  report = { executive_summary: 'Report parsing failed: ' + e.message, competitors: [] };\n}\n\nlet msg = `🕵️ *Competitor Intelligence Report*\\n📅 ${report.report_date || new Date().toISOString().split('T')[0]}\\n\\n`;\nmsg += `📋 *Summary:* ${report.executive_summary || 'N/A'}\\n\\n`;\n\n(report.competitors || []).forEach(comp => {\n  const icon = comp.changes_detected ? '🔴' : '🟢';\n  msg += `${icon} *${comp.name}*\\n`;\n  (comp.changes || []).slice(0, 2).forEach(c => {\n    msg += `   • [${c.significance}] ${c.description}\\n`;\n  });\n  if (!comp.changes?.length) msg += `   No changes\\n`;\n  msg += '\\n';\n});\n\nif (report.strategic_recommendations?.length) {\n  msg += `🎯 *Actions for Udarsy:*\\n`;\n  report.strategic_recommendations.slice(0, 3).forEach((r, i) => {\n    msg += `  ${i+1}. [${r.priority}] ${r.action}\\n`;\n  });\n}\n\nconst competitors = $('Aggregate Results').first().json.competitors;\nreturn [{ json: { message: msg.substring(0, 4000), chatId, competitors } }];"
+      },
+      "id": "format-report",
+      "name": "Format Report",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        2400,
+        380
+      ]
+    },
+    {
+      "parameters": {
+        "chatId": "={{ $json.chatId }}",
+        "text": "={{ $json.message }}",
+        "additionalFields": {
+          "parse_mode": "Markdown"
+        }
+      },
+      "id": "telegram-report",
+      "name": "Send Report to Telegram",
+      "type": "n8n-nodes-base.telegram",
+      "typeVersion": 1.2,
+      "position": [
+        2640,
+        260
+      ],
+      "credentials": {
+        "telegramApi": {
+          "id": "XKvv8ek8iXO8xWJT",
+          "name": "Telegram account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "append",
+        "documentId": {
+          "__rl": true,
+          "mode": "id",
+          "value": "1hv1HJ-3asbHwve7sAAEqI6n2IuMlihQyfzk-7CENGvY"
+        },
+        "sheetName": {
+          "__rl": true,
+          "mode": "name",
+          "value": "competitors"
+        },
+        "columns": {
+          "mappingMode": "autoMapInputData"
+        },
+        "options": {}
+      },
+      "id": "save-snapshot",
+      "name": "Save Snapshot to Sheets",
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.5,
+      "position": [
+        2640,
+        500
+      ],
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "GEdm4SCZIB4132yL",
+          "name": "Google Sheets account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "run-competitor-spy",
+        "responseMode": "immediatelyAfterReceive",
+        "options": {}
+      },
+      "id": "webhook-trigger-bot",
+      "name": "Webhook Trigger (from Bot)",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2,
+      "position": [
+        -240,
+        540
+      ],
+      "webhookId": "run-competitor-spy"
+    }
+  ],
+  "connections": {
+    "Run Manually": {
+      "main": [
+        [
+          {
+            "node": "Get ChatId",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Webhook Trigger (from Bot)": {
+      "main": [
+        [
+          {
+            "node": "Get ChatId",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Get ChatId": {
+      "main": [
+        [
+          {
+            "node": "Read Last Snapshot",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Read Last Snapshot": {
+      "main": [
+        [
+          {
+            "node": "Inject ChatId",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Inject ChatId": {
+      "main": [
+        [
+          {
+            "node": "Define Competitors",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Define Competitors": {
+      "main": [
+        [
+          {
+            "node": "Scrape Competitor Pages",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Scrape Competitor Pages": {
+      "main": [
+        [
+          {
+            "node": "Extract & Compare",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Extract & Compare": {
+      "main": [
+        [
+          {
+            "node": "Aggregate Results",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Aggregate Results": {
+      "main": [
+        [
+          {
+            "node": "Build AI Prompt",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Build AI Prompt": {
+      "main": [
+        [
+          {
+            "node": "AI Generate Report",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "AI Generate Report": {
+      "main": [
+        [
+          {
+            "node": "Format Report",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Format Report": {
+      "main": [
+        [
+          {
+            "node": "Send Report to Telegram",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Save Snapshot to Sheets",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "tags": [
+    {
+      "name": "marketing"
+    },
+    {
+      "name": "competitor"
+    }
+  ]
+}

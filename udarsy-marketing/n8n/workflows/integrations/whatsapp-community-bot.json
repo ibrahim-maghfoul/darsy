@@ -1,0 +1,333 @@
+{
+  "name": "WhatsApp Community Bot",
+  "nodes": [
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "whatsapp-webhook",
+        "responseMode": "responseNode",
+        "options": {}
+      },
+      "id": "whatsapp-webhook",
+      "name": "WhatsApp Webhook",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2,
+      "position": [
+        0,
+        0
+      ],
+      "webhookId": "whatsapp-webhook"
+    },
+    {
+      "parameters": {
+        "jsCode": "// Parse WhatsApp Cloud API webhook payload\nconst body = $input.first().json.body;\nconst entry = body.entry?.[0];\nconst changes = entry?.changes?.[0];\nconst value = changes?.value;\n\nif (!value?.messages?.[0]) {\n  return [{ json: { skip: true } }];\n}\n\nconst message = value.messages[0];\nconst contact = value.contacts?.[0];\n\nreturn [{\n  json: {\n    skip: false,\n    from: message.from,\n    name: contact?.profile?.name || 'Unknown',\n    text: message.text?.body || message.caption || '',\n    type: message.type,\n    timestamp: message.timestamp,\n    messageId: message.id\n  }\n}];"
+      },
+      "id": "parse-message",
+      "name": "Parse WhatsApp Message",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        220,
+        0
+      ]
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "conditions": [
+            {
+              "leftValue": "={{ $json.skip }}",
+              "rightValue": "false",
+              "operator": {
+                "type": "boolean",
+                "operation": "false"
+              }
+            }
+          ]
+        }
+      },
+      "id": "is-valid",
+      "name": "Valid Message?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2,
+      "position": [
+        440,
+        0
+      ]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://api.openai.com/v1/chat/completions",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "openAiApi",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ JSON.stringify({ model: \"gpt-4o\", messages: [{\"role\":\"system\",\"content\":\"You are Udarsy's WhatsApp assistant. Udarsy is a Moroccan educational platform for students. You help with:\\n- Questions about Udarsy features, pricing, and how to use the platform\\n- Finding specific lessons or subjects\\n- Technical support and troubleshooting\\n- General education advice\\n\\nRules:\\n- Reply in the same language the user writes in (Arabic Darija, French, or English)\\n- Be friendly, helpful, and concise\\n- For complex issues you can't solve, say you'll escalate to the team\\n- Never make up information about pricing or features\\n\\nUdarsy features: Free/Pro(100MAD/mo)/Premium(200MAD/mo) plans, curriculum for all Moroccan school levels, video lessons, PDF courses, exercises, exams, progress tracking, chat rooms, teacher system, contributions hub.\\n\\nOutput JSON:\\n{\\n  \\\"intent\\\": \\\"question|feedback|bug|share_request|greeting|other\\\",\\n  \\\"confidence\\\": 0.0-1.0,\\n  \\\"reply\\\": \\\"your response to the user\\\",\\n  \\\"needs_escalation\\\": true/false,\\n  \\\"escalation_reason\\\": \\\"reason if escalation needed\\\"\\n}\"},{\"role\":\"user\",\"content\":\"User {{ $json.name }} says: {{ $json.text }}\"}], temperature: 0.5, max_tokens: 1000 }) }}",
+        "options": {
+          "response": {
+            "response": {
+              "responseFormat": "json"
+            }
+          }
+        }
+      },
+      "id": "ai-respond",
+      "name": "AI - Generate Response",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        660,
+        0
+      ],
+      "credentials": {
+        "openAiApi": {
+          "id": "openai-api",
+          "name": "OpenAI account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "const response = $input.first().json.message.content;\nlet parsed;\ntry { parsed = JSON.parse(response); } catch(e) {\n  const m = response.match(/```(?:json)?\\s*([\\s\\S]*?)```/);\n  parsed = JSON.parse(m[1].trim());\n}\nconst msg = $('Parse WhatsApp Message').first().json;\nreturn [{ json: { ...parsed, from: msg.from, name: msg.name, originalText: msg.text } }];"
+      },
+      "id": "parse-ai",
+      "name": "Parse AI Response",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        880,
+        0
+      ]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "=https://graph.facebook.com/v19.0/{{ $env.WHATSAPP_PHONE_ID }}/messages",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Authorization",
+              "value": "=Bearer {{ $env.WHATSAPP_TOKEN }}"
+            }
+          ]
+        },
+        "sendBody": true,
+        "bodyParameters": {
+          "parameters": [
+            {
+              "name": "messaging_product",
+              "value": "whatsapp"
+            },
+            {
+              "name": "to",
+              "value": "={{ $json.from }}"
+            },
+            {
+              "name": "type",
+              "value": "text"
+            },
+            {
+              "name": "text",
+              "value": "={{ JSON.stringify({ body: $json.reply }) }}"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "send-whatsapp-reply",
+      "name": "Send WhatsApp Reply",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        1100,
+        0
+      ]
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "conditions": [
+            {
+              "leftValue": "={{ $('Parse AI Response').first().json.needs_escalation }}",
+              "rightValue": "true",
+              "operator": {
+                "type": "boolean",
+                "operation": "true"
+              }
+            }
+          ]
+        }
+      },
+      "id": "needs-escalation",
+      "name": "Needs Escalation?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2,
+      "position": [
+        1320,
+        0
+      ]
+    },
+    {
+      "parameters": {
+        "operation": "sendMessage",
+        "chatId": "YOUR_TELEGRAM_CHAT_ID",
+        "text": "=🆘 *WhatsApp Escalation*\n\nFrom: {{ $('Parse AI Response').first().json.name }} ({{ $('Parse AI Response').first().json.from }})\nIntent: {{ $('Parse AI Response').first().json.intent }}\nMessage: {{ $('Parse AI Response').first().json.originalText }}\n\nReason: {{ $('Parse AI Response').first().json.escalation_reason }}\nAI reply sent: {{ $('Parse AI Response').first().json.reply }}",
+        "additionalFields": {
+          "parse_mode": "Markdown"
+        }
+      },
+      "id": "telegram-escalate",
+      "name": "Escalate to Telegram",
+      "type": "n8n-nodes-base.telegram",
+      "typeVersion": 1.2,
+      "position": [
+        1540,
+        -100
+      ],
+      "credentials": {
+        "telegramApi": {
+          "id": "XKvv8ek8iXO8xWJT",
+          "name": "Telegram account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "appendOrUpdate",
+        "documentId": {
+          "__rl": true,
+          "mode": "id",
+          "value": "={{ $env.CONTENT_SHEET_ID }}"
+        },
+        "sheetName": "WhatsApp_Log",
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "timestamp": "={{ $now.format('yyyy-MM-dd HH:mm') }}",
+            "user": "={{ $('Parse AI Response').first().json.name }}",
+            "phone": "={{ $('Parse AI Response').first().json.from }}",
+            "message": "={{ $('Parse AI Response').first().json.originalText }}",
+            "intent": "={{ $('Parse AI Response').first().json.intent }}",
+            "confidence": "={{ $('Parse AI Response').first().json.confidence }}",
+            "reply": "={{ $('Parse AI Response').first().json.reply }}",
+            "escalated": "={{ $('Parse AI Response').first().json.needs_escalation }}"
+          }
+        },
+        "options": {}
+      },
+      "id": "log-sheets",
+      "name": "Log to Sheets",
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.5,
+      "position": [
+        1540,
+        200
+      ],
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "GEdm4SCZIB4132yL",
+          "name": "Google Sheets account"
+        }
+      }
+    }
+  ],
+  "connections": {
+    "WhatsApp Webhook": {
+      "main": [
+        [
+          {
+            "node": "Parse WhatsApp Message",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Parse WhatsApp Message": {
+      "main": [
+        [
+          {
+            "node": "Valid Message?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Valid Message?": {
+      "main": [
+        [
+          {
+            "node": "AI - Generate Response",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        []
+      ]
+    },
+    "AI - Generate Response": {
+      "main": [
+        [
+          {
+            "node": "Parse AI Response",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Parse AI Response": {
+      "main": [
+        [
+          {
+            "node": "Send WhatsApp Reply",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Send WhatsApp Reply": {
+      "main": [
+        [
+          {
+            "node": "Needs Escalation?",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Log to Sheets",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Needs Escalation?": {
+      "main": [
+        [
+          {
+            "node": "Escalate to Telegram",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        []
+      ]
+    }
+  },
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "tags": [
+    {
+      "name": "integrations"
+    },
+    {
+      "name": "whatsapp"
+    }
+  ]
+}

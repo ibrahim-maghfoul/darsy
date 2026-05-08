@@ -1,8 +1,8 @@
-# Darsy — N8N Automation Workflows
+# Udarsy — N8N Automation Workflows
 
-Location: [darsy-marketing/n8n/workflows/](../darsy-marketing/n8n/workflows/)
+Location: [udarsy-marketing/n8n/workflows/](../udarsy-marketing/n8n/workflows/)
 Instance: Local Docker, `http://localhost:5678` (container named `n8n`)
-Setup guide: [darsy-marketing/n8n/docs/credentials-setup-guide.md](../darsy-marketing/n8n/docs/credentials-setup-guide.md)
+Setup guide: [udarsy-marketing/n8n/docs/credentials-setup-guide.md](../udarsy-marketing/n8n/docs/credentials-setup-guide.md)
 
 ## Running N8N
 
@@ -121,6 +121,6 @@ CONTENT_SHEET_ID
 
 ## Command Center
 
-- Custom workflow wired to Telegram bot `darsyschoolbot`.
+- Custom workflow wired to Telegram bot `udarsyschoolbot`.
 - Used as a one-chat control surface to trigger any of the 27 workflows on demand.
 - Token regeneration required on release (bot token was exposed in previous sessions).

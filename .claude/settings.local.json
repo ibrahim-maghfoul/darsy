@@ -8,24 +8,24 @@
       "Bash(npx vite:*)",
       "Bash(npm install:*)",
       "Read(//tmp/**)",
-      "Bash(grep -r seed-stats /c/Users/ibo/Desktop/Darsy/darsy-backend --include=*.ts --include=*.js --include=*.json)",
-      "Bash(grep -r \"from.*seed-stats\\\\|import.*seed-stats\\\\|require.*seed-stats\" /c/Users/ibo/Desktop/Darsy --include=*.ts --include=*.js --include=*.json)",
-      "Bash(find /c/Users/ibo/Desktop/Darsy/darsy-web/src/app -name \"*.tsx\" -exec wc -l {} +)",
+      "Bash(grep -r seed-stats /c/Users/ibo/Desktop/Udarsy/udarsy-backend --include=*.ts --include=*.js --include=*.json)",
+      "Bash(grep -r \"from.*seed-stats\\\\|import.*seed-stats\\\\|require.*seed-stats\" /c/Users/ibo/Desktop/Udarsy --include=*.ts --include=*.js --include=*.json)",
+      "Bash(find /c/Users/ibo/Desktop/Udarsy/udarsy-web/src/app -name \"*.tsx\" -exec wc -l {} +)",
       "Bash(xargs grep:*)",
-      "Bash(grep -c console. /c/Users/ibo/Desktop/Darsy/darsy-backend/src/**/*.ts)",
-      "Bash(grep -r \"pickers\\\\|DatePicker\" /c/Users/ibo/Desktop/Darsy/darsy-web --include=*.tsx --include=*.ts --include=*.css)",
-      "Bash(find darsy-backend:*)",
-      "Bash(find darsy-script:*)",
+      "Bash(grep -c console. /c/Users/ibo/Desktop/Udarsy/udarsy-backend/src/**/*.ts)",
+      "Bash(grep -r \"pickers\\\\|DatePicker\" /c/Users/ibo/Desktop/Udarsy/udarsy-web --include=*.tsx --include=*.ts --include=*.css)",
+      "Bash(find udarsy-backend:*)",
+      "Bash(find udarsy-script:*)",
       "Bash(git check-ignore:*)",
       "Bash(python3 -c \"import json,sys; p=json.load\\(sys.stdin\\); deps=list\\(p.get\\(''''dependencies'''',{}\\).keys\\(\\)\\); print\\(''''\\\\n''''.join\\(deps\\)\\)\")",
       "Bash(git submodule:*)",
-      "Bash(ls darsy-backend/*.js darsy-backend/*.ts)",
-      "Bash(ls darsy-backend/*.txt darsy-backend/*.log darsy-web/*.txt darsy-web/*.log)",
+      "Bash(ls udarsy-backend/*.js udarsy-backend/*.ts)",
+      "Bash(ls udarsy-backend/*.txt udarsy-backend/*.log udarsy-web/*.txt udarsy-web/*.log)",
       "Bash(echo \"EXIT:$?\")"
     ],
     "additionalDirectories": [
       "\\tmp",
-      "c:\\Users\\ibo\\Desktop\\Darsy\\darsy-admin\\src\\components"
+      "c:\\Users\\ibo\\Desktop\\Udarsy\\udarsy-admin\\src\\components"
     ]
   }
 }

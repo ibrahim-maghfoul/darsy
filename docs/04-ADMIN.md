@@ -1,4 +1,4 @@
-# Darsy Admin Panel (darsy-admin) — Function Reference
+# Udarsy Admin Panel (udarsy-admin) — Function Reference
 
 - Framework: React 19 + Vite
 - Routing: React Router (BrowserRouter) with lazy-loaded pages + Suspense
@@ -7,7 +7,7 @@
 
 ---
 
-## Entry ([src/App.jsx](../darsy-admin/src/App.jsx))
+## Entry ([src/App.jsx](../udarsy-admin/src/App.jsx))
 
 ```
 <BrowserRouter>
@@ -28,7 +28,7 @@ Maps legacy tab IDs to router paths (dashboard → `/`, `instructor-apps` → `/
 
 ---
 
-## Routes ([App.jsx](../darsy-admin/src/App.jsx))
+## Routes ([App.jsx](../udarsy-admin/src/App.jsx))
 
 | Path                          | Component              | Purpose |
 |-------------------------------|------------------------|---------|
@@ -58,7 +58,7 @@ Maps legacy tab IDs to router paths (dashboard → `/`, `instructor-apps` → `/
 
 ---
 
-## Sidebar ([src/components/Sidebar.jsx](../darsy-admin/src/components/Sidebar.jsx))
+## Sidebar ([src/components/Sidebar.jsx](../udarsy-admin/src/components/Sidebar.jsx))
 
 Sections (`SECTIONS` array):
 - **Overview** — Dashboard, Users
@@ -76,7 +76,7 @@ Each item uses a `lucide-react` icon. The sidebar is a fixed-position `<aside>` 
 
 ---
 
-## Layout ([src/components/Layout.jsx](../darsy-admin/src/components/Layout.jsx))
+## Layout ([src/components/Layout.jsx](../udarsy-admin/src/components/Layout.jsx))
 
 - Renders `<Sidebar>` + top bar + `<main>{children}</main>`.
 - Mobile: hamburger toggles `isOpen`.
@@ -84,13 +84,13 @@ Each item uses a `lucide-react` icon. The sidebar is a fixed-position `<aside>` 
 
 ---
 
-## Auth ([src/context/AuthContext.jsx](../darsy-admin/src/context/AuthContext.jsx))
+## Auth ([src/context/AuthContext.jsx](../udarsy-admin/src/context/AuthContext.jsx))
 
 Exposes `useAuth()`:
 - `user` — admin user object from backend.
 - `login(email, password)` — calls `POST /auth/login`; rejects if `role !== 'admin'`; stores:
-  - `darsy_admin_user` — serialized user
-  - `darsy_backend_token` — JWT access token
+  - `udarsy_admin_user` — serialized user
+  - `udarsy_backend_token` — JWT access token
 - `logout()` — clears localStorage + state.
 - `loading` — gate for protected content.
 
@@ -98,12 +98,12 @@ Exposes `useAuth()`:
 
 ---
 
-## Utilities ([src/utils/](../darsy-admin/src/utils/))
+## Utilities ([src/utils/](../udarsy-admin/src/utils/))
 
 ### adminFetch.js
 - `BASE_URL = 'http://localhost:5000/api'`.
 - `adminFetch(path, options)` — wraps `fetch` with:
-  - `Authorization: Bearer ${localStorage.darsy_backend_token}`.
+  - `Authorization: Bearer ${localStorage.udarsy_backend_token}`.
   - JSON content-type when body is an object.
   - `res.ok` → returns parsed JSON; otherwise throws `Error(body.error || res.statusText)`.
 
@@ -131,7 +131,7 @@ Other util files (imageService, keys loader, etc.) are imported by individual pa
 
 ---
 
-## Pages ([src/pages/](../darsy-admin/src/pages/))
+## Pages ([src/pages/](../udarsy-admin/src/pages/))
 
 ### Dashboard.jsx
 - Fetches counts via `adminFetch('/user/admin/stats')` (or composed calls).

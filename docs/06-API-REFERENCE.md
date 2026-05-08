@@ -1,4 +1,4 @@
-# Darsy API Reference
+# Udarsy API Reference
 
 Base URL: `http://localhost:5000/api`
 Auth header: `Authorization: Bearer <access-token>` (also supported via signed cookie).

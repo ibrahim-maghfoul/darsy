@@ -1,0 +1,483 @@
+{
+  "name": "Udarsy - Subscription Upgrade Nudge",
+  "nodes": [
+    {
+      "parameters": {
+        "rule": {
+          "interval": [
+            {
+              "triggerAtHour": 9
+            }
+          ]
+        }
+      },
+      "id": "cron-daily-9am",
+      "name": "Daily 9AM Trigger",
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.2,
+      "position": [
+        240,
+        400
+      ],
+      "notes": "Runs daily at 9AM to find free users who are hitting usage limits"
+    },
+    {
+      "parameters": {
+        "operation": "aggregate",
+        "collection": "users",
+        "query": "[\n  {\n    \"$match\": {\n      \"subscription.plan\": \"free\",\n      \"role\": \"user\",\n      \"$or\": [\n        { \"progress.completedLessons\": { \"$gte\": 10 } },\n        { \"progress.documentsOpened\": { \"$gte\": 8 } },\n        { \"progress.videosWatched\": { \"$gte\": 15 } },\n        { \"progress.learningTime\": { \"$gte\": 600 } }\n      ]\n    }\n  },\n  {\n    \"$addFields\": {\n      \"engagementScore\": {\n        \"$add\": [\n          { \"$multiply\": [ \"$progress.completedLessons\", 3 ] },\n          { \"$multiply\": [ \"$progress.documentsOpened\", 2 ] },\n          { \"$multiply\": [ \"$progress.videosWatched\", 2 ] },\n          { \"$divide\": [ \"$progress.learningTime\", 60 ] }\n        ]\n      }\n    }\n  },\n  {\n    \"$sort\": { \"engagementScore\": -1 }\n  },\n  {\n    \"$project\": {\n      \"_id\": 1,\n      \"displayName\": 1,\n      \"email\": 1,\n      \"progress.completedLessons\": 1,\n      \"progress.documentsOpened\": 1,\n      \"progress.videosWatched\": 1,\n      \"progress.learningTime\": 1,\n      \"engagementScore\": 1,\n      \"subscription\": 1,\n      \"createdAt\": 1,\n      \"level\": 1\n    }\n  }\n]",
+        "options": {}
+      },
+      "id": "mongo-power-free-users",
+      "name": "MongoDB: Find Power Free Users",
+      "type": "n8n-nodes-base.mongoDb",
+      "typeVersion": 1.1,
+      "position": [
+        480,
+        400
+      ],
+      "credentials": {
+        "mongoDb": {
+          "id": "MONGO_CREDENTIAL_ID",
+          "name": "Udarsy MongoDB"
+        }
+      },
+      "notes": "Finds free-plan users with high engagement: 10+ lessons, 8+ documents, 15+ videos, or 10+ hours learning time. Calculates engagement score for prioritization."
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://api.openai.com/v1/chat/completions",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "openAiApi",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ JSON.stringify({ model: \"gpt-4o\", messages: [{\"role\":\"system\",\"content\":\"You are a conversion copywriter for Udarsy, a Moroccan educational platform targeting BAC and Brevet students in Morocco. Subscription prices are in MAD (Pro: 100 MAD/month, Premium: 200 MAD/month). Write personalized upgrade messages in Arabic (Moroccan Darija). Be warm, not pushy. Highlight what the user has already achieved and what premium unlocks for them. Keep it under 150 words.\"},{\"role\":\"user\",\"content\":\"=Write a personalized upgrade nudge for this user:\\n- Name: {{ $json.displayName }}\\n- Completed lessons: {{ $json.progress?.completedLessons || 0 }}\\n- Documents opened: {{ $json.progress?.documentsOpened || 0 }}\\n- Videos watched: {{ $json.progress?.videosWatched || 0 }}\\n- Learning time: {{ Math.round(($json.progress?.learningTime || 0) / 60) }} hours\\n- Level: {{ $json.level?.level || 'not set' }}\\n- School: {{ $json.level?.school || 'not set' }}\\n\\nWrite just the email body content in Arabic HTML (no full document). Mention their specific achievements. Suggest premium benefits most relevant to their usage pattern.\"}], temperature: 0.7, max_tokens: 500 }) }}",
+        "options": {
+          "response": {
+            "response": {
+              "responseFormat": "json"
+            }
+          }
+        }
+      },
+      "id": "ai-personalize",
+      "name": "AI: Personalize Upgrade Message",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        740,
+        400
+      ],
+      "credentials": {
+        "openAiApi": {
+          "id": "openai-api",
+          "name": "OpenAI account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "const item = $input.first().json;\nconst aiContent = item.text || item.message?.content || '';\nconst userData = $('MongoDB: Find Power Free Users').first().json;\n\nconst html = `<!DOCTYPE html>\n<html dir=\"rtl\" lang=\"ar\">\n<head><meta charset=\"UTF-8\"><style>\nbody { font-family: 'Segoe UI', Tahoma, sans-serif; background: #f4f6f9; margin: 0; padding: 0; direction: rtl; }\n.container { max-width: 600px; margin: 20px auto; background: #fff; border-radius: 12px; overflow: hidden; box-shadow: 0 2px 12px rgba(0,0,0,.08); }\n.header { background: linear-gradient(135deg, #6C63FF, #9b59b6); padding: 40px 30px; text-align: center; color: #fff; }\n.header h1 { margin: 0; font-size: 26px; }\n.body { padding: 30px; color: #444; line-height: 1.8; }\n.achievement { display: flex; align-items: center; background: #f0f0ff; padding: 12px; border-radius: 8px; margin: 8px 0; }\n.achievement .icon { font-size: 24px; margin-left: 12px; }\n.achievement .text { font-size: 14px; }\n.price-box { background: linear-gradient(135deg, #fff9e6, #fff3cd); border: 2px dashed #f39c12; border-radius: 12px; padding: 20px; text-align: center; margin: 20px 0; }\n.price-box .price { font-size: 32px; font-weight: 700; color: #e67e22; }\n.cta { display: block; width: fit-content; margin: 24px auto; padding: 16px 48px; background: linear-gradient(135deg, #6C63FF, #9b59b6); color: #fff; text-decoration: none; border-radius: 8px; font-size: 18px; font-weight: 700; }\n.footer { text-align: center; padding: 20px; color: #999; font-size: 12px; border-top: 1px solid #eee; }\n</style></head>\n<body><div class=\"container\">\n  <div class=\"header\"><h1>   Premium</h1></div>\n  <div class=\"body\">\n    ${aiContent}\n    <div class=\"achievement\"><div class=\"icon\">&#128218;</div><div class=\"text\">${userData.progress?.completedLessons || 0}   </div></div>\n    <div class=\"achievement\"><div class=\"icon\">&#128196;</div><div class=\"text\">${userData.progress?.documentsOpened || 0}   </div></div>\n    <div class=\"achievement\"><div class=\"icon\">&#127909;</div><div class=\"text\">${userData.progress?.videosWatched || 0}   </div></div>\n    <div class=\"achievement\"><div class=\"icon\">&#9200;</div><div class=\"text\">${Math.round((userData.progress?.learningTime || 0) / 60)}    </div></div>\n    <div class=\"price-box\">\n      <p>Premium -  </p>\n      <div class=\"price\">990  /</div>\n      <p style=\"color:#999;font-size:12px\">   1990 </p>\n    </div>\n    <a href=\"https://udarsy.dz/premium?uid=${userData._id}&utm_source=upgrade-nudge\" class=\"cta\"> Premium</a>\n  </div>\n  <div class=\"footer\">\n    <p>Udarsy - </p>\n    <p><a href=\"https://udarsy.dz/unsubscribe\"> </a></p>\n  </div>\n</div></body></html>`;\n\nreturn [{ json: { email: userData.email, displayName: userData.displayName, htmlEmail: html, userId: userData._id } }];"
+      },
+      "id": "build-email-html",
+      "name": "Build Personalized Email HTML",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        980,
+        400
+      ]
+    },
+    {
+      "parameters": {
+        "fromEmail": "upgrade@udarsy.dz",
+        "toEmail": "={{ $json.email }}",
+        "subject": "={{ $json.displayName }}   Premium -     !",
+        "html": "={{ $json.htmlEmail }}",
+        "options": {}
+      },
+      "id": "send-upgrade-email",
+      "name": "Send Personalized Upgrade Email",
+      "type": "n8n-nodes-base.emailSend",
+      "typeVersion": 2.1,
+      "position": [
+        1220,
+        400
+      ],
+      "credentials": {
+        "smtp": {
+          "id": "SMTP_CREDENTIAL_ID",
+          "name": "Udarsy SMTP"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "aggregate",
+        "collection": "users",
+        "query": "[\n  {\n    \"$match\": {\n      \"subscription.plan\": { \"$in\": [\"premium\", \"pro\"] },\n      \"subscription.expiresAt\": {\n        \"$gte\": { \"$dateSubtract\": { \"startDate\": \"$$NOW\", \"unit\": \"day\", \"amount\": 0 } },\n        \"$lte\": { \"$dateAdd\": { \"startDate\": \"$$NOW\", \"unit\": \"day\", \"amount\": 3 } }\n      }\n    }\n  },\n  {\n    \"$project\": {\n      \"_id\": 1,\n      \"displayName\": 1,\n      \"email\": 1,\n      \"subscription\": 1,\n      \"progress.completedLessons\": 1\n    }\n  }\n]",
+        "options": {}
+      },
+      "id": "mongo-trial-expiring",
+      "name": "MongoDB: Trial Expiring in 3 Days",
+      "type": "n8n-nodes-base.mongoDb",
+      "typeVersion": 1.1,
+      "position": [
+        480,
+        680
+      ],
+      "credentials": {
+        "mongoDb": {
+          "id": "MONGO_CREDENTIAL_ID",
+          "name": "Udarsy MongoDB"
+        }
+      },
+      "notes": "Finds premium/pro users whose subscription expires within 3 days"
+    },
+    {
+      "parameters": {
+        "fromEmail": "urgent@udarsy.dz",
+        "toEmail": "={{ $json.email }}",
+        "subject": "  !   Udarsy Premium  3 ",
+        "html": "<!DOCTYPE html><html dir='rtl' lang='ar'><head><meta charset='UTF-8'><style>body{font-family:'Segoe UI',Tahoma,sans-serif;background:#f4f6f9;margin:0;padding:0;direction:rtl}.container{max-width:600px;margin:20px auto;background:#fff;border-radius:12px;overflow:hidden;box-shadow:0 2px 12px rgba(0,0,0,.08)}.header{background:linear-gradient(135deg,#e74c3c,#c0392b);padding:40px 30px;text-align:center;color:#fff}.header h1{margin:0;font-size:26px}.body{padding:30px}.body p{color:#555;line-height:1.8}.urgency-box{background:#fff5f5;border:2px solid #e74c3c;border-radius:12px;padding:20px;text-align:center;margin:20px 0}.urgency-box .timer{font-size:36px;font-weight:700;color:#e74c3c}.cta{display:block;width:fit-content;margin:24px auto;padding:16px 48px;background:#e74c3c;color:#fff;text-decoration:none;border-radius:8px;font-size:18px;font-weight:700}.footer{text-align:center;padding:20px;color:#999;font-size:12px;border-top:1px solid #eee}</style></head><body><div class='container'><div class='header'><h1>   !</h1></div><div class='body'><p> {{ $json.displayName }},</p><p>  Premium   <strong>3 </strong>.      :</p><ul><li>    </li><li>   </li><li>  </li><li>  AI</li></ul><div class='urgency-box'><div class='timer'>3 </div><p>     </p></div><p><strong>  :</strong>   20%    !</p><a href='https://udarsy.dz/premium/renew?uid={{ $json._id }}&discount=RENEW20&utm_source=expiry-nudge' class='cta'>  20%</a></div><div class='footer'><p>Udarsy - </p></div></div></body></html>",
+        "options": {}
+      },
+      "id": "send-urgency-email",
+      "name": "Send Trial Expiry Urgency Email",
+      "type": "n8n-nodes-base.emailSend",
+      "typeVersion": 2.1,
+      "position": [
+        740,
+        680
+      ],
+      "credentials": {
+        "smtp": {
+          "id": "SMTP_CREDENTIAL_ID",
+          "name": "Udarsy SMTP"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "append",
+        "documentId": {
+          "__rl": true,
+          "mode": "id",
+          "value": "GOOGLE_SHEET_ID"
+        },
+        "sheetName": {
+          "__rl": true,
+          "mode": "name",
+          "value": "Upgrade Nudge Log"
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "Date": "={{ $now.toISO() }}",
+            "Email": "={{ $json.email }}",
+            "User Name": "={{ $json.displayName }}",
+            "Type": "upgrade-nudge",
+            "User ID": "={{ $json.userId || $json._id }}"
+          }
+        },
+        "options": {}
+      },
+      "id": "log-to-sheets",
+      "name": "Log to Google Sheets",
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.5,
+      "position": [
+        1460,
+        400
+      ],
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "GEdm4SCZIB4132yL",
+          "name": "Google Sheets account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "append",
+        "documentId": {
+          "__rl": true,
+          "mode": "id",
+          "value": "GOOGLE_SHEET_ID"
+        },
+        "sheetName": {
+          "__rl": true,
+          "mode": "name",
+          "value": "Upgrade Nudge Log"
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "Date": "={{ $now.toISO() }}",
+            "Email": "={{ $json.email }}",
+            "User Name": "={{ $json.displayName }}",
+            "Type": "trial-expiry-urgency",
+            "User ID": "={{ $json._id }}"
+          }
+        },
+        "options": {}
+      },
+      "id": "log-expiry-sheets",
+      "name": "Log Expiry to Sheets",
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.5,
+      "position": [
+        980,
+        680
+      ],
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "GEdm4SCZIB4132yL",
+          "name": "Google Sheets account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "rule": {
+          "interval": [
+            {
+              "triggerAtDay": 1,
+              "triggerAtHour": 10
+            }
+          ]
+        }
+      },
+      "id": "cron-weekly-conversion",
+      "name": "Weekly Monday 10AM",
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.2,
+      "position": [
+        240,
+        900
+      ]
+    },
+    {
+      "parameters": {
+        "operation": "aggregate",
+        "collection": "users",
+        "query": "[\n  { \"$facet\": {\n    \"freeUsers\": [ { \"$match\": { \"subscription.plan\": \"free\" } }, { \"$count\": \"count\" } ],\n    \"premiumUsers\": [ { \"$match\": { \"subscription.plan\": \"premium\" } }, { \"$count\": \"count\" } ],\n    \"proUsers\": [ { \"$match\": { \"subscription.plan\": \"pro\" } }, { \"$count\": \"count\" } ],\n    \"newPremiumThisWeek\": [\n      { \"$match\": { \"subscription.plan\": { \"$in\": [\"premium\", \"pro\"] }, \"updatedAt\": { \"$gte\": { \"$dateSubtract\": { \"startDate\": \"$$NOW\", \"unit\": \"week\", \"amount\": 1 } } } } },\n      { \"$count\": \"count\" }\n    ]\n  } }\n]",
+        "options": {}
+      },
+      "id": "mongo-conversion-stats",
+      "name": "MongoDB: Conversion Stats",
+      "type": "n8n-nodes-base.mongoDb",
+      "typeVersion": 1.1,
+      "position": [
+        480,
+        900
+      ],
+      "credentials": {
+        "mongoDb": {
+          "id": "MONGO_CREDENTIAL_ID",
+          "name": "Udarsy MongoDB"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "chatId": "={{ $env.TELEGRAM_CHAT_ID }}",
+        "text": "=**Udarsy Conversion Weekly Report**\n\nFree users: {{ $json.freeUsers?.[0]?.count || 0 }}\nPremium users: {{ $json.premiumUsers?.[0]?.count || 0 }}\nPro users: {{ $json.proUsers?.[0]?.count || 0 }}\nNew premium this week: {{ $json.newPremiumThisWeek?.[0]?.count || 0 }}\n\nConversion rate: {{ (($json.premiumUsers?.[0]?.count || 0) + ($json.proUsers?.[0]?.count || 0)) / (($json.freeUsers?.[0]?.count || 1) + ($json.premiumUsers?.[0]?.count || 0) + ($json.proUsers?.[0]?.count || 0)) * 100 }}%",
+        "additionalFields": {
+          "parse_mode": "Markdown"
+        }
+      },
+      "id": "telegram-conversion",
+      "name": "Telegram: Weekly Conversion Report",
+      "type": "n8n-nodes-base.telegram",
+      "typeVersion": 1.2,
+      "position": [
+        740,
+        900
+      ],
+      "credentials": {
+        "telegramApi": {
+          "id": "XKvv8ek8iXO8xWJT",
+          "name": "Telegram account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "run-upgrade-nudge",
+        "responseMode": "immediatelyAfterReceive",
+        "options": {}
+      },
+      "id": "webhook-trigger-bot",
+      "name": "Webhook Trigger (from Bot)",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2,
+      "position": [
+        240,
+        520
+      ],
+      "webhookId": "run-upgrade-nudge"
+    },
+    {
+      "parameters": {
+        "jsCode": "// Gets chatId from Telegram command center webhook, or falls back to env var\nconst fromWebhook = $input.first().json.body?.chatId;\nconst chatId = fromWebhook || $env.TELEGRAM_CHAT_ID;\nreturn [{ json: { chatId } }];"
+      },
+      "id": "get-chat-id-bot",
+      "name": "Get ChatId",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        480,
+        460
+      ]
+    }
+  ],
+  "connections": {
+    "Daily 9AM Trigger": {
+      "main": [
+        [
+          {
+            "node": "Get ChatId",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "MongoDB: Find Power Free Users": {
+      "main": [
+        [
+          {
+            "node": "AI: Personalize Upgrade Message",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "AI: Personalize Upgrade Message": {
+      "main": [
+        [
+          {
+            "node": "Build Personalized Email HTML",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Build Personalized Email HTML": {
+      "main": [
+        [
+          {
+            "node": "Send Personalized Upgrade Email",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Send Personalized Upgrade Email": {
+      "main": [
+        [
+          {
+            "node": "Log to Google Sheets",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "MongoDB: Trial Expiring in 3 Days": {
+      "main": [
+        [
+          {
+            "node": "Send Trial Expiry Urgency Email",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Send Trial Expiry Urgency Email": {
+      "main": [
+        [
+          {
+            "node": "Log Expiry to Sheets",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Weekly Monday 10AM": {
+      "main": [
+        [
+          {
+            "node": "MongoDB: Conversion Stats",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "MongoDB: Conversion Stats": {
+      "main": [
+        [
+          {
+            "node": "Telegram: Weekly Conversion Report",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Webhook Trigger (from Bot)": {
+      "main": [
+        [
+          {
+            "node": "Get ChatId",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Get ChatId": {
+      "main": [
+        [
+          {
+            "node": "MongoDB: Find Power Free Users",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "settings": {
+    "executionOrder": "v1",
+    "saveManualExecutions": true,
+    "callerPolicy": "workflowsFromSameOwner"
+  },
+  "staticData": null,
+  "tags": [
+    {
+      "name": "udarsy"
+    },
+    {
+      "name": "engagement"
+    },
+    {
+      "name": "upsell"
+    },
+    {
+      "name": "conversion"
+    }
+  ],
+  "triggerCount": 2,
+  "updatedAt": "2026-04-02T00:00:00.000Z",
+  "versionId": "1"
+}

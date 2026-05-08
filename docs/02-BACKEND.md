@@ -1,6 +1,6 @@
-# Darsy Backend — Function Reference
+# Udarsy Backend — Function Reference
 
-Entry: [darsy-backend/src/server.ts](../darsy-backend/src/server.ts)
+Entry: [udarsy-backend/src/server.ts](../udarsy-backend/src/server.ts)
 Base URL: `http://localhost:5000/api`
 
 ## Bootstrap (server.ts)
